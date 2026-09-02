@@ -1,0 +1,7 @@
+PERSONAL.md
+.env
+.env.*
+node_modules/
+dist/
+build/ 
+!.env.example
