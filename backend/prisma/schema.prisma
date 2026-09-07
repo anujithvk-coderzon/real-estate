@@ -17,6 +17,57 @@ enum UserRole {
   ADMIN
 }
 
+enum ListingType {
+  SALE
+  RENT
+  PG
+}
+
+enum PropertyType {
+  APARTMENT
+  INDEPENDENT_HOUSE
+  VILLA
+  PLOT
+  COMMERCIAL
+  OFFICE
+  ROOM
+}
+
+enum PostedBy {
+  OWNER
+  BROKER
+  BUILDER
+  DEALER
+}
+
+enum Furnishing {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FULLY_FURNISHED
+}
+
+enum PropertyStatus {
+  READY_TO_MOVE
+  UNDER_CONSTRUCTION
+}
+
+enum AreaUnit {
+  SQFT
+  SQM
+  CENT
+  ACRE
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  RENTED
+  EXPIRED
+}
+
+
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -27,4 +78,81 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@map("users")
+  listings Listing[]
 }
+
+model Listing {
+  id String @id @default(uuid())
+  //basic info
+  title String
+  description String
+  listingType ListingType
+  propertyType PropertyType
+  postedBy      PostedBy
+  //price
+  price         Decimal @db.Decimal(12,2)
+  isNegotiable  Boolean @default(false)
+  securityDeposit Decimal? @db.Decimal(12,2)
+  maintenance     Decimal? @db.Decimal(10,2)
+  //area
+  areaUnit    AreaUnit
+  areaValue   Decimal @db.Decimal(12,2)
+  areaSqft    Decimal @db.Decimal(12,2)
+  // configuration
+  bedrooms  Int?
+  bathrooms Int?
+  balconies Int?
+  furnishing Furnishing?
+  floorNumber Int?
+  totalFloors Int?
+  propertyStatus  PropertyStatus?
+  availableFrom   DateTime?
+  //location  
+  addressLine String
+  landmark  String?
+  locality  String
+  city    String
+  state   String
+  pincode String
+  latitude Float?
+  longitude Float?
+  //contact 
+  contactName String?
+  contactPhone String?
+  //status
+  status ListingStatus @default(DRAFT)
+  expiresAt DateTime?
+  //owner details
+  ownerId String
+  owner User @relation(fields: [ownerId],references: [id],onDelete: Restrict) 
+  //
+  listingImages ListingImages[]
+  amenities     Amenity[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([city,listingType,status])
+  @@index([status,createdAt])
+  @@index([price])
+  @@index([areaSqft])
+  @@index([ownerId])
+  @@map("listings")
+}
+
+model ListingImages {
+  id String @id @default(uuid())
+  path String
+  position Int @default(0)
+  listingId String
+  listing  Listing @relation(fields: [listingId],references: [id],onDelete:Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([listingId])
+  @@map("listing_images")
+}
+
+model Amenity {
+  id String @id @default(uuid())
+  name String @unique
+  listing Listing[]
+}
+
