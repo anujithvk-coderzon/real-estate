@@ -154,5 +154,7 @@ model Amenity {
   id String @id @default(uuid())
   name String @unique
   listing Listing[]
+  createdAt DateTime @default(now())
+  @@map("amenities")
 }
 
