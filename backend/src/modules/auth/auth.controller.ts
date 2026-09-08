@@ -8,7 +8,7 @@ import {
   regVerification,
   resetPasswordService,
   rotateService,
-} from "./auth.services.js";
+} from "./auth.service.js";
 import { BadRequestError, UnauthorizedError } from "../../errors/Errors.js";
 import redis from "../../lib/redis.js";
 
