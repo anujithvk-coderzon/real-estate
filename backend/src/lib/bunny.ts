@@ -1,6 +1,6 @@
 import { InternalServerError } from "../errors/Errors.js"
 
-const BUNNY_IMAGE_HOST='storage.bunnycdn.com'
+const BUNNY_IMAGE_HOST='sg.storage.bunnycdn.com'
 const BUNNY_VIDEO_HOST='video.bunnycdn.com'
 const BUNNY_STORAGE=process.env.BUNNY_STORAGE
 const BUNNY_PULL_ZONE=process.env.BUNNY_PULL_ZONE
@@ -12,7 +12,8 @@ const BUNNY_STREAM_API_KEY=process.env.BUNNY_STREAM_API_KEY
 const storageUrl=(path:string)=>{
     return `https://${BUNNY_IMAGE_HOST}/${BUNNY_STORAGE}/${path}`
 }
-export const cdnUrl=(path:string)=>`${BUNNY_PULL_ZONE}/${path}`
+export const cdnUrl=(path:string)=>`https://${BUNNY_PULL_ZONE}/${path}`
+
 
 
 

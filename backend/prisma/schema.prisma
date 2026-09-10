@@ -164,6 +164,7 @@ model ListingVideos {
 model Amenity {
   id String @id @default(uuid())
   name String @unique
+  category String
   listing Listing[]
   createdAt DateTime @default(now())
   @@map("amenities")

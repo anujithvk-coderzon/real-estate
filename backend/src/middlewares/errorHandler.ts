@@ -25,11 +25,11 @@ export const errorHandler = (
   if (err instanceof MulterError) {
   const message =
     err.code === "LIMIT_FILE_SIZE"
-      ? "File too large. Maximum size is 30MB."
+      ? "File too large."
       : err.code === "LIMIT_FILE_COUNT"
-        ? "Too many files. Maximum is 10."
+        ? "Too many files in this request."
         : err.code === "LIMIT_UNEXPECTED_FILE"
-          ? `Unexpected field: ${err.field}`
+          ? `Unexpected file, or too many files`
           : "File upload failed";
 
   return res.status(400).json({ status: "error", message });
