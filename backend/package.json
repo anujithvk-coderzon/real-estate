@@ -16,6 +16,7 @@
   "type": "module",
   "description": "Backend for the real estate application",
   "dependencies": {
+    "@getbrevo/brevo": "^6.0.3",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@visulima/disposable-email-domains": "^1.1.0",

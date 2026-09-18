@@ -1,18 +1,25 @@
-import { createTransport } from "nodemailer";
+import { BrevoClient } from "@getbrevo/brevo";
 
-export const transporter = createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+export const brevo=new BrevoClient({
+    apiKey:process.env.BREVO_API_KEY!
+  })
 
-export async function sendEmail(to: string, subject: string, html: string) {
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    html,
-  });
+export async function sendEmail(to:string,subject:string,html:string) {
+  const sender = { email: process.env.BREVO_SENDER, name: process.env.BREVO_SENDER_NAME };
+  try {
+    await brevo.transactionalEmails.sendTransacEmail({
+    htmlContent:html,
+    sender:{
+      email:sender.email,
+      name:sender.name
+    },
+    to:[{
+      email:to
+    }],
+    subject
+  })
+  } catch (error) {
+    console.error("[email] Brevo rejected it", error);  
+  }
+
 }
