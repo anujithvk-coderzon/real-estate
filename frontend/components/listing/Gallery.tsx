@@ -26,7 +26,7 @@ const Gallery = ({ images, title }: Props) => {
         <img
           src={images[active].path}
           alt={`${title} — photo ${active + 1}`}
-          className="aspect-[4/3] w-full object-contain sm:aspect-[16/9]"
+          className="aspect-[4/3] w-full object-contain sm:aspect-[16/9] lg:max-h-[460px]"
         />
         {count > 1 && (
           <>

@@ -21,7 +21,6 @@ const fetchPage = async (page: number) => {
 const ListAll = () => {
   const [listings, setListings] = useState<PublicListingSummary[] | null>(null);
   const [total, setTotal] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreFailed, setLoadMoreFailed] = useState(false);
@@ -32,20 +31,33 @@ const ListAll = () => {
   // Blocks a second request while one is in flight; a ref updates immediately,
   // unlike state, so fast scrolling cannot trigger two loads.
   const loading = useRef(false);
+  // The last page loaded and how many listings are shown. Refs, not state: an
+  // observer from an earlier render can still fire, and it must see the latest
+  // values, or it would fetch the same page again and show it twice.
+  const lastPage = useRef(0);
+  const loadedCount = useRef(0);
 
-  const applyPage = (pageNumber: number, data: PageResponse, loadedBefore: number) => {
-    setListings((prev) => (pageNumber === 1 ? data.lists : [...(prev ?? []), ...data.lists]));
-    setPage(pageNumber);
+  const applyPage = (pageNumber: number, data: PageResponse) => {
+    lastPage.current = pageNumber;
+    loadedCount.current = pageNumber === 1 ? data.lists.length : loadedCount.current + data.lists.length;
+
+    setListings((prev) => {
+      if (pageNumber === 1 || !prev) return data.lists;
+      // A listing published while the visitor scrolls shifts every page by one,
+      // so the next page can repeat the last card. Skip anything already shown.
+      const shown = new Set(prev.map((listing) => listing.slug));
+      return [...prev, ...data.lists.filter((listing) => !shown.has(listing.slug))];
+    });
     if (typeof data.total === "number") setTotal(data.total);
     // With a total we know exactly; without one, an empty page means the end.
     setHasMore(
-      typeof data.total === "number" ? loadedBefore + data.lists.length < data.total : data.lists.length > 0,
+      typeof data.total === "number" ? loadedCount.current < data.total : data.lists.length > 0,
     );
   };
 
   useEffect(() => {
     fetchPage(1)
-      .then((data) => applyPage(1, data, 0))
+      .then((data) => applyPage(1, data))
       .catch((error) => {
         setFailed(true);
         errorToast(apiMessage(error));
@@ -53,12 +65,13 @@ const ListAll = () => {
   }, []);
 
   const loadNext = async () => {
-    if (loading.current || !listings) return;
+    if (loading.current || lastPage.current === 0) return;
     loading.current = true;
     setLoadingMore(true);
     setLoadMoreFailed(false);
     try {
-      applyPage(page + 1, await fetchPage(page + 1), listings.length);
+      const next = lastPage.current + 1;
+      applyPage(next, await fetchPage(next));
     } catch (error) {
       errorToast(apiMessage(error));
       setLoadMoreFailed(true); // stop auto-loading; the visitor can retry
@@ -69,7 +82,7 @@ const ListAll = () => {
   };
 
   // No dependency array on purpose: the observer is rebuilt after each render,
-  // so it always calls the loadNext that sees the latest page and listings.
+  // so it reads the latest hasMore; loadNext itself reads the page from a ref.
   useEffect(() => {
     const marker = endOfList.current;
     if (!marker || !hasMore || loadMoreFailed) return;

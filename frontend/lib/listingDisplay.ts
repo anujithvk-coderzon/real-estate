@@ -46,3 +46,17 @@ export const groupAmenities = <T extends Amenity>(amenities: T[]) => {
 
 export const googleMapsUrl = (latitude: number, longitude: number) =>
   `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+// "Pattom, Thiruvananthapuram": empty parts and repeats are dropped, because
+// the city is often the district too.
+export const placeName = (...parts: (string | null | undefined)[]) =>
+  [...new Set(parts.filter(Boolean))].join(", ");
+
+// Sellers often type "Near X" themselves; strip it so the page never says "Near Near X".
+export const landmarkText = (landmark: string) => landmark.replace(/^near\s+/i, "");
+
+// "1 Nov 2026", or "Available now" once that date has passed.
+export const availabilityText = (availableFrom: string | null) => {
+  if (!availableFrom) return undefined;
+  return new Date(availableFrom).getTime() <= Date.now() ? "Now" : formatDate(availableFrom);
+};
