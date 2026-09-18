@@ -11,6 +11,7 @@ import {
 } from "./auth.service.js";
 import { BadRequestError, UnauthorizedError } from "../../errors/Errors.js";
 import redis from "../../lib/redis.js";
+import { prisma } from "../../lib/prisma.js";
 
 export const register = async (
   req: Request,
@@ -123,3 +124,12 @@ export const change_password=async(req:Request,res:Response,_next:NextFunction)=
  const response=await passwordChangeService(userId,validated.data.new_password,validated.data.current_password)
  return res.status(200).json({message:response})
 }
+
+export const me = async (req: Request, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+    select: { id: true, name: true, email: true },
+  });
+  if (!user) throw new UnauthorizedError("Unauthorized");
+  res.status(200).json({ message: "User fetched", user });
+};

@@ -112,6 +112,7 @@ model Listing {
   landmark  String?
   locality  String
   city    String
+  district String
   state   String
   pincode String
   latitude Float?

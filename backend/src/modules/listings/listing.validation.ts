@@ -5,7 +5,7 @@ const RENTABLE = ["RENT", "PG"];
 
 export const listingFields=z.object({
      title: z.string().trim().min(10, "Title should be 10 characters long").max(150, "Title should be under 150 characters"),
-    description: z.string().trim().min(30).max(5000),
+    description: z.string().trim().min(30, "Description should be at least 30 characters").max(5000, "Description should be under 5000 characters"),
     propertyType: z.enum([
       "APARTMENT",
       "INDEPENDENT_HOUSE",
@@ -18,41 +18,42 @@ export const listingFields=z.object({
     listingType: z.enum(["SALE", "RENT", "PG"]),
     postedBy: z.enum(["OWNER", "BROKER", "BUILDER", "DEALER"]),
 
-    price: z.number().positive(),
+    price: z.number("Enter a price").positive("Price must be more than zero"),
     isNegotiable: z.boolean().default(false),
-    securityDeposit: z.number().positive().optional(),
-    maintenance: z.number().positive().optional(),
+    securityDeposit: z.number("Enter a security deposit").positive("Security deposit must be more than zero").optional(),
+    maintenance: z.number("Enter a maintenance amount").positive("Maintenance must be more than zero").optional(),
 
-    areaValue: z.number().positive(),
+    areaValue: z.number("Enter the area").positive("Area must be more than zero"),
     areaUnit: z.enum(["SQFT", "SQM", "CENT", "ACRE"]),
 
-    bedrooms: z.number().int().min(1).optional(),
-    bathrooms: z.number().int().min(1).optional(),
-    balconies: z.number().int().min(0).optional(),
+    bedrooms: z.number().int("Bedrooms must be a whole number").min(1, "Enter at least 1 bedroom").optional(),
+    bathrooms: z.number().int("Bathrooms must be a whole number").min(1, "Enter at least 1 bathroom").optional(),
+    balconies: z.number().int("Balconies must be a whole number").min(0, "Balconies cannot be negative").optional(),
     furnishing: z
       .enum(["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"])
       .optional(),
-    floorNumber: z.number().int().min(0).optional(),
-    totalFloors: z.number().int().min(1).optional(),
+    floorNumber: z.number().int("Floor number must be a whole number").min(0, "Floor number cannot be negative").optional(),
+    totalFloors: z.number().int("Total floors must be a whole number").min(1, "Enter at least 1 floor").optional(),
     propertyStatus: z.enum(["READY_TO_MOVE", "UNDER_CONSTRUCTION"]).optional(),
     availableFrom: z.coerce.date().optional(),
 
-    addressLine: z.string().trim().min(5),
+    addressLine: z.string().trim().min(5, "Enter the property name or number"),
     landmark: z.string().trim().optional(),
-    locality: z.string().trim().min(2),
-    city: z.string().trim().min(2),
-    state: z.string().trim().min(2),
+    locality: z.string().trim().min(2, "Enter the locality or street"),
+    district: z.string().trim().min(2, "Enter the district"),
+    city: z.string().trim().min(2, "Enter the city or town"),
+    state: z.string().trim().min(2, "Enter the state"),
     pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits"),
-    latitude: z.number().min(6.5).max(37.6).optional(),
-    longitude: z.number().min(68.1).max(97.4).optional(),
+    latitude: z.number().min(6.5, "Location must be inside India").max(37.6, "Location must be inside India").optional(),
+    longitude: z.number().min(68.1, "Location must be inside India").max(97.4, "Location must be inside India").optional(),
 
-    contactName: z.string().trim().min(2).optional(),
+    contactName: z.string().trim().min(2, "Contact name is too short").optional(),
     contactPhone: z
       .string()
       .regex(/^\d{10}$/, "Phone must be 10 digits")
       .optional(),
 
-    amenityIds: z.array(z.string().uuid()).optional(),
+    amenityIds: z.array(z.string().uuid("Invalid amenity")).optional(),
   })
 
 export const registeringValidation = listingFields.superRefine((data, ctx) => {

@@ -1,9 +1,13 @@
-import { BadRequestError, NotFoundError } from "../../errors/Errors.js";
+import axios from "axios";
+import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { toSQFT } from "../../lib/area.js";
 import { cdnUrl, deleteImage, deleteListingFiles, deleteVideo, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
 import type { CreateListingInput, UpdateListingInput } from "./listing.validation.js";
+import redis from "../../lib/redis.js";
+import type { ListingOrderBy, ListingStatus } from "./listing.type.js";
+import type { ListingWhereInput } from "../../generated/prisma/models.js";
 
 export const createListingService=async(userId:string,data:CreateListingInput)=>{
 const user=await prisma.user.findUnique({where:{id:userId}})
@@ -33,6 +37,7 @@ const post=await prisma.listing.create({data:{
     addressLine:data.addressLine,
     landmark:data.landmark??null,
     locality:data.locality,
+    district:data.district,
     city:data.city,
     state:data.state,
     pincode:data.pincode,
@@ -46,6 +51,15 @@ const post=await prisma.listing.create({data:{
     select:{id:true,title:true,description:true}
 })
 return post
+}
+export const listingPublishingService=async(userId:string,listingId:string)=>{
+  const existingUser=await prisma.user.findUnique({where:{id:userId}})
+  if(!existingUser) throw new BadRequestError("Invalid Token")
+  const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId}})
+  if(!listing) throw new NotFoundError("Listing not found")
+  if(listing.status==='ACTIVE') throw new BadRequestError("Already Published")
+  await prisma.listing.update({where:{id:listingId},data:{status:'ACTIVE'}})
+  return 'Published successfully'
 }
 
 export const updateListingService=async(userId:string,listingId:string,newData:UpdateListingInput)=>{
@@ -120,14 +134,93 @@ export const videoUploadService=async(userId:string,listingId:string,video:Expre
  const listing=await prisma.listing.findUnique({where:{id:listingId}})
  if(!listing) throw new NotFoundError("Listing not found")
  if(listing.ownerId !== userId) throw new BadRequestError("You can only add images to your own listings")
+const listingVideo=await prisma.listingVideos.findUnique({where:{listingId}})
+ if(listingVideo) throw new AlreadyExistError("This listing already has a video. Remove it first to upload a new one.")
  const id=await uploadVideo(video)
  await prisma.listingVideos.create({data:{videoId:id,listingId}})
 return `video uploaded successfully`
 }
 
-export const listsFetchingService=async()=>{
-const lists=await prisma.listing.findMany({orderBy:{createdAt:'desc'}})
+export const imageFetchingService=async(userId:string,listingId:string)=>{
+ const user=await prisma.user.findUnique({where:{id:userId}})
+ if(!user) throw new BadRequestError("Invalid Token")
+ const listing=await prisma.listing.findUnique({where:{id:listingId}})
+ if(!listing) throw new NotFoundError("listing not found")
+ if(listing.ownerId !== userId) return
+ const response=await prisma.listingImages.findMany({where:{listingId,listing:{ownerId:userId}},select:{id:true,path:true,position:true}})
+  response.forEach((img) => {
+    img.path = cdnUrl(img.path);
+  });
+ return response;
+}
+
+export const videoFetchingService=async(userId:string,listingId:string)=>{
+  const user=await prisma.user.findUnique({where:{id:userId}})
+ if(!user) throw new BadRequestError("Invalid Token")
+ const listing=await prisma.listing.findUnique({where:{id:listingId}})
+ if(!listing) throw new NotFoundError("listing not found")
+ if(listing.ownerId !== userId) return
+ const response=await prisma.listingVideos.findMany({where:{listingId,listing:{ownerId:userId}},select:{id:true,videoId:true}})
+ response.forEach((vid)=>{
+  vid.videoId =videoEmbedUrl(vid.videoId)
+ })
+ return response
+}
+
+export const listsFetchingService=async(page:number)=>{
+const take=20;
+const skip=(page-1)*take
+const lists=await prisma.listing.findMany({take,skip,orderBy:{createdAt:'desc'}})
 return lists
+}
+
+export const OwnerListsFetchingService=async(userId:string,page:number,orderBy:ListingOrderBy,status?:string,search?:string)=>{
+  const take=10;
+  const skip=(page-1)*take
+  const existingUser=await prisma.user.findUnique({where:{id:userId}})
+  if(!existingUser) throw new BadRequestError("Invalid Token")
+  const where:ListingWhereInput={
+   ownerId:userId,
+   ...(status && {
+    status:status as ListingStatus
+   }),
+   ...(search && {
+    OR:[
+      {
+        title:{
+          contains:search,
+          mode:"insensitive",
+        }
+      },
+      {
+        description: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        addressLine: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      { locality: { contains: search, mode: "insensitive" } },
+{ city: { contains: search, mode: "insensitive" } },
+{ district: { contains: search, mode: "insensitive" } },
+    ]
+   })
+
+  }
+  const[response,total]=await Promise.all([
+   prisma.listing.findMany({where,include:{listingImages:{where:{position:0},select:{path:true,position:true}}},take,skip,orderBy}),
+   prisma.listing.count({where})
+  ])
+     response.forEach((res)=>{
+    res.listingImages.forEach((img)=>{
+        img.path=cdnUrl(img.path)
+    })
+  })
+return {response,total}
 }
 
 export const SpecificListFetchingService=async(id:string)=>{
@@ -143,7 +236,21 @@ return {
     listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo?.videoId)} : null
 }
 }
-
+export const OwnerSpecificListFetchingService=async(userId:string,listingId:string)=>{
+ const existingUSer=await prisma.user.findUnique({where:{id:userId}})
+ if(!existingUSer) throw new BadRequestError("Invalid Token")
+ const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId},include:{amenities:{select:{id:true,name:true,category:true}},listingImages:{orderBy:{position:"asc"},select:{id:true,path:true,position:true}},listingVideo:{select:{id:true,videoId:true}},owner:{select:{id:true,name:true}}}})
+ if(!listing) throw new NotFoundError("Listing not found")
+ return {
+    ...listing,
+    listingImages:listing.listingImages.map((img)=>({
+        id:img.id,
+        position:img.position,
+        path:cdnUrl(img.path),
+    })),
+    listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo?.videoId)} : null
+}
+}
 export const listingImageDeleteService=async(userId:string,imageId:string)=>{
   const user=await prisma.user.findUnique({where:{id:userId}})
  if(!user) throw new BadRequestError("Invalid Token")
@@ -175,4 +282,76 @@ export const deleteListingService=async(userId:string,listingId:string)=>{
      await deleteVideo(listing.listingVideo.videoId)
    }
    return 'Listing deleted successfully'
+}
+
+
+export const coordinates=(response:any[],postalcode:string)=>{
+  if (response.length === 0) return null
+    const matching = response.filter((result: any) => {
+  return result.display_name.includes(postalcode);
+});
+if (matching.length>0) {
+  return {
+    lat: Number(matching[0].lat),
+    lon: Number(matching[0].lon),
+  };
+}
+else{
+  return{
+    lat:Number(response[0].lat),
+    lon:Number(response[0].lon)
+  }
+}
+}
+
+export const geoCodingService=async(street:string|undefined,city:string,state:string,country:string,postalcode:string)=>{
+   let response;
+   const cached=await redis.get(`geoLocation:${street}|${city}|${state}|${postalcode}`)
+   if(cached){
+    console.log(JSON.parse(cached));
+    
+    return JSON.parse(cached)
+   }
+    response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    timeout:5000,
+    params:{street,city,state,country,postalcode,
+    format:"jsonv2"
+    },
+  })
+ if(response.data.length>0){
+  const result=coordinates(response.data,postalcode)
+  await redis.set(`geoLocation:${street}|${city}|${state}|${postalcode}`,JSON.stringify(result),{expiration:{type:'EX',value:60*60*24}})
+  return result
+  }
+  if(response.data.length===0){
+    response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    timeout:5000,
+    params:{country,postalcode,
+    format:"jsonv2"
+    },
+  })
+const result=coordinates(response.data,postalcode)
+await redis.set(`geoLocation:${street}|${city}|${state}|${postalcode}`,JSON.stringify(result),{expiration:{type:'EX',value:60*60*24*5}})
+return result
+  }
+}
+
+export const reverseGeoCodingService=async(lat:number,lon:number)=>{
+  const cached=await redis.get(`reverseGeo:${lat}|${lon}`)
+  if(cached){
+    return JSON.parse(cached)
+  }
+  const response=await axios.get(process.env.NOMINATIM_REVERSE_API!,{
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    params:{
+      lat:lat,
+      lon:lon,
+      format:"jsonv2"
+    }
+  })
+  await redis.set(`reverseGeo:${lat}|${lon}`,JSON.stringify(response.data.address),{expiration:{type:"EX",value:60*60*24
+  }})
+  return response.data.address
 }

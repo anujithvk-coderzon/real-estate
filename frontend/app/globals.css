@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  /* One palette, built from the sidebar's forest green. The content area stays
+     light for readability; every colour on it is a tint or shade of the same hue. */
+
+  /* content */
+  --color-ground: #edf2ef;       /* page background, a pale wash of the rail green */
+  --color-panel: #ffffff;        /* cards and inputs */
+  --color-ink: #0f241f;          /* text, a near-black version of the rail */
+  --color-muted: #55685f;        /* secondary text */
+  --color-line: #d3ddd7;         /* borders */
+
+  --color-accent: #145c4a;       /* primary buttons and links */
+  --color-accent-hover: #0d2a24; /* hovering deepens to the sidebar colour */
+  --color-accent-soft: #dcefe6;  /* highlights, a light tint of the rail mint */
+
+  --color-warn: #8a5a00;         /* warnings that need attention */
+  --color-danger: #b3452f;       /* destructive actions, darker twin of rail-danger */
+
+  /* sidebar */
+  --color-rail: #0d2a24;
+  --color-rail-raised: #163a31;
+  --color-rail-line: #24473e;
+  --color-rail-ink: #e9f2ed;
+  --color-rail-muted: #9db5ab;
+  --color-rail-accent: #8fe0bf;
+  --color-rail-danger: #f4a58f;
+
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+}
+
+@layer base {
+  /* Number inputs: no spinner arrows, and the mouse wheel must not change values */
+  input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}

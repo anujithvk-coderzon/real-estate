@@ -5,6 +5,7 @@ import {
   forgot_password,
   login,
   logout,
+  me,
   register,
   reset_password,
   rotateAccessToken,
@@ -23,5 +24,5 @@ router.post("/logout", isAuthorized, logout);
 router.post("/forgot",rateLimit(forgotPassIPLimiter),rateLimit(forgotPassEmailLimiter),forgot_password)
 router.post("/reset/:token",reset_password)
 router.patch("/change/password",isAuthorized,rateLimit(changePassLimiter),change_password)
-
+router.get('/me',isAuthorized,me)
 export default router;
