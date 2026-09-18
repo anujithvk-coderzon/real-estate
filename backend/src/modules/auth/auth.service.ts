@@ -11,6 +11,7 @@ import {
 import redis from "../../lib/redis.js";
 import { checkDisposableEmail } from "../../lib/disposible_email.js";
 import { sendEmail } from "../../lib/email.js";
+import { goolgeClient } from "../../lib/google.js";
 
 type regValidation = {
   name: string;
@@ -154,8 +155,8 @@ export const loginService = async (validatedData: logValidation) => {
   const existingUser = await prisma.user.findUnique({
     where: { email: validatedData.email,isVerified:true},
   });
-  if (!existingUser)
-    throw new BadRequestError("Invalid credentials");
+  if (!existingUser) throw new BadRequestError("Invalid credentials");
+  if (!existingUser.password) throw new BadRequestError("Invalid credentials");
   const isCorrectPassword = await compare(
     validatedData.password,
     existingUser.password,
@@ -168,6 +169,33 @@ export const loginService = async (validatedData: logValidation) => {
   });
   return { accessToken, refreshToken };
 };
+
+export const googleLoginService=async(code:string)=>{
+  const {tokens}=await goolgeClient.getToken(code);
+  const ticket=await goolgeClient.verifyIdToken({
+    idToken:tokens.id_token as string,
+    audience:process.env.GOOGLE_CLIENT_ID as string
+  })
+  const google=ticket.getPayload();
+  if(!google?.email||!google.email_verified) throw new BadRequestError("Google account has no verified email");
+  const user=await prisma.user.upsert({
+    where:{email:google.email},
+    update:{googleId:google.sub,avatarUrl:google.picture ?? null,isVerified:true},
+    create:{
+      name:google.name ?? google.email,
+      email:google.email,
+      googleId:google.sub,
+      avatarUrl:google.picture??null,
+      isVerified:true
+    }
+  })
+  const accessToken=await generateAccessToken(user.id);
+  const refreshToken=await generateRefreshToken(user.id);
+  await redis.set(`refresh_token:${user.id}`,refreshToken,{
+    expiration:{type:'EX',value:7*24*60*60}
+  })
+  return{accessToken,refreshToken}
+}
 
 export const rotateService = async (token: string) => {
   const decoded = await refreshTokenVerification(token);
@@ -234,6 +262,7 @@ return 'Password reset successfull'
 export const passwordChangeService=async(userId:string,newPass:string,currentPass:string)=>{
  const existingUser=await prisma.user.findUnique({where:{id:userId}})
  if(!existingUser) throw new NotFoundError("User not found")
+  if(!existingUser.password) throw new BadRequestError("Invalid credentials")
  const isSame=await compare(currentPass,existingUser.password)
  if(!isSame) throw new BadRequestError("Incorrect current password")
  const hashedNewPass=await hash(newPass,10)

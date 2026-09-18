@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Field } from "@/components/form/Field";
+import GoogleButton from "@/components/form/GoogleButton";
 import PasswordInput from "@/components/form/PasswordInput";
 import VerifyEmailNotice from "@/components/VerifyEmailNotice";
 import { api } from "@/lib/api";
@@ -106,6 +107,8 @@ const RegisterPage = () => {
           {submitting ? "Creating account…" : "Create account"}
         </button>
       </form>
+
+      <GoogleButton />
     </main>
   );
 };

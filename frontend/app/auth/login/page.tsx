@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Field } from "@/components/form/Field";
+import GoogleButton from "@/components/form/GoogleButton";
 import PasswordInput from "@/components/form/PasswordInput";
 import { api, setAccessToken } from "@/lib/api";
 import { errorToast, successToast } from "@/lib/toast";
@@ -74,6 +75,8 @@ const LoginPage = () => {
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
+
+      <GoogleButton />
 
       <p className="mt-6 text-[14px] text-muted">
         New here?{" "}

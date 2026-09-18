@@ -3,6 +3,8 @@ import {
   accountVerification,
   change_password,
   forgot_password,
+  googleCallback,
+  googleLogin,
   login,
   logout,
   me,
@@ -25,4 +27,6 @@ router.post("/forgot",rateLimit(forgotPassIPLimiter),rateLimit(forgotPassEmailLi
 router.post("/reset/:token",reset_password)
 router.patch("/change/password",isAuthorized,rateLimit(changePassLimiter),change_password)
 router.get('/me',isAuthorized,me)
+router.get("/google",googleLogin)
+router.get("/google/callback",googleCallback)
 export default router;

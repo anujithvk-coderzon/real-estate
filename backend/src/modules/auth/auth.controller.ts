@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { changePasswordSchema, forgotSchema, loginSchema, registerSchema, resetSchema } from "./auth.validation.js";
 import {
   forgotPasswordService,
+  googleLoginService,
   loginService,
   passwordChangeService,
   registerService,
@@ -12,6 +13,7 @@ import {
 import { BadRequestError, UnauthorizedError } from "../../errors/Errors.js";
 import redis from "../../lib/redis.js";
 import { prisma } from "../../lib/prisma.js";
+import { goolgeClient } from "../../lib/google.js";
 
 export const register = async (
   req: Request,
@@ -128,8 +130,31 @@ export const change_password=async(req:Request,res:Response,_next:NextFunction)=
 export const me = async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, avatarUrl: true },
   });
   if (!user) throw new UnauthorizedError("Unauthorized");
   res.status(200).json({ message: "User fetched", user });
 };
+
+export const googleLogin=(req:Request,res:Response)=>{
+  const url=goolgeClient.generateAuthUrl({
+    scope:["openid","email","profile"],
+    prompt:"select_account"
+  })
+  res.redirect(url)
+}
+
+export const googleCallback=async(req:Request,res:Response)=>{
+  try {
+    const response=await googleLoginService(req.query.code as string);
+    res.cookie("refresh_real_estate",response.refreshToken,{
+      httpOnly:true,
+      maxAge:7*24*60*60,
+      sameSite:'strict',
+      secure:process.env.NODE_ENV==="production",
+    })
+    res.redirect(process.env.FRONTEND_URL as string);
+  } catch  {
+    res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
+  }
+}

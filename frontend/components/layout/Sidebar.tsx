@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api, setAccessToken } from "@/lib/api";
 
-type User = { name: string; email: string };
+type User = { name: string; email: string; avatarUrl: string | null };
 
 /* ---------- icons (24px grid, drawn with the current text colour) ---------- */
 
@@ -103,6 +103,7 @@ const Sidebar = () => {
   const [menuOpen, setMenuOpen] = useState(false); // phones
   const [collapsed, setCollapsed] = useState(false); // desktop
   const [loggingOut, setLoggingOut] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false); // falls back to initials
 
   useEffect(() => {
     api
@@ -142,9 +143,21 @@ const Sidebar = () => {
       <div className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}>
         <span
           title={collapsed ? user?.name : undefined}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-[15px] font-semibold tracking-wide text-white"
+          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent text-[15px] font-semibold tracking-wide text-white"
         >
-          {user ? initialsOf(user.name) : ""}
+          {user?.avatarUrl && !avatarFailed ? (
+            // Google profile photos refuse requests that send a Referer, hence no-referrer.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatarUrl}
+              alt=""
+              referrerPolicy="no-referrer"
+              onError={() => setAvatarFailed(true)}
+              className="h-full w-full rounded-2xl object-cover"
+            />
+          ) : (
+            user && initialsOf(user.name)
+          )}
         </span>
 
         <div className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
