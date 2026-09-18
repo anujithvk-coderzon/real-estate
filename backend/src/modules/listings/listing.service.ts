@@ -8,12 +8,14 @@ import type { CreateListingInput, UpdateListingInput } from "./listing.validatio
 import redis from "../../lib/redis.js";
 import type { ListingOrderBy, ListingStatus } from "./listing.type.js";
 import type { ListingWhereInput } from "../../generated/prisma/models.js";
+import { listNameSluggify } from "../../lib/slug.js";
 
 export const createListingService=async(userId:string,data:CreateListingInput)=>{
 const user=await prisma.user.findUnique({where:{id:userId}})
 if(!user) throw new BadRequestError("Invalid Token")
 const post=await prisma.listing.create({data:{
     title:data.title,
+    slug:listNameSluggify(data.title),
     ownerId:userId,
     description:data.description,
     propertyType:data.propertyType,
@@ -167,12 +169,34 @@ export const videoFetchingService=async(userId:string,listingId:string)=>{
  return response
 }
 
-export const listsFetchingService=async(page:number)=>{
-const take=20;
-const skip=(page-1)*take
-const lists=await prisma.listing.findMany({take,skip,orderBy:{createdAt:'desc'}})
-return lists
-}
+export const listsFetchingService = async (page: number) => {
+  const take = 20;
+  const where = { status: "ACTIVE" as const };   // only published listings are public
+
+  const [lists, total] = await Promise.all([
+    prisma.listing.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      take,
+      skip: (page - 1) * take,
+      select: {                                   // only what a card shows, nothing private
+        slug:true, title: true, listingType: true, propertyType: true, price: true,
+        locality: true, city: true, district: true, bedrooms: true, bathrooms: true,
+        areaValue: true, areaUnit: true, createdAt: true, updatedAt: true, status: true,
+        listingImages: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
+      },
+    }),
+    prisma.listing.count({ where }),
+  ]);
+
+  return {
+    total,
+    lists: lists.map((listing) => ({
+      ...listing,
+      listingImages: listing.listingImages.map((image) => ({ path: cdnUrl(image.path) })),
+    })),
+  };
+};
 
 export const OwnerListsFetchingService=async(userId:string,page:number,orderBy:ListingOrderBy,status?:string,search?:string)=>{
   const take=10;
@@ -223,17 +247,28 @@ export const OwnerListsFetchingService=async(userId:string,page:number,orderBy:L
 return {response,total}
 }
 
-export const SpecificListFetchingService=async(id:string)=>{
-const listing=await prisma.listing.findUnique({where:{id},include:{amenities:{select:{id:true,name:true,category:true}},listingImages:{orderBy:{position:"asc"},select:{id:true,path:true,position:true}},listingVideo:{select:{id:true,videoId:true}},owner:{select:{id:true,name:true}}}})
+export const SpecificListFetchingService=async(slug:string,userId?:string)=>{
+const signedIn=userId ? Boolean(await prisma.user.findUnique({where:{id:userId},select:{id:true}})) : false
+const listing=await prisma.listing.findUnique({
+    where:{slug,status:'ACTIVE'},
+    omit:{id:true,ownerId:true},
+    include:{
+        amenities:{select:{name:true,category:true}},
+        listingImages:{orderBy:{position:"asc"},select:{path:true,position:true}},
+        listingVideo:{select:{videoId:true}},
+        owner:{select:{name:true}},
+    },
+})
 if(!listing) throw new NotFoundError("Listing not found")
+const {contactName,contactPhone,...publicFields}=listing
 return {
-    ...listing,
+    ...publicFields,
+    ...(signedIn && {contactName,contactPhone}),
     listingImages:listing.listingImages.map((img)=>({
-        id:img.id,
         position:img.position,
         path:cdnUrl(img.path),
     })),
-    listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo?.videoId)} : null
+    listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null
 }
 }
 export const OwnerSpecificListFetchingService=async(userId:string,listingId:string)=>{

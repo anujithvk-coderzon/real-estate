@@ -28,7 +28,7 @@ const LoginPage = () => {
       const response = await api.post("/auth/login", fields);
       setAccessToken(response.data.accessToken);
       successToast(response.data.message);
-      router.push("/list/create");
+      router.push("/");
     } catch (error) {
       errorToast(apiMessage(error));
       setSubmitting(false);

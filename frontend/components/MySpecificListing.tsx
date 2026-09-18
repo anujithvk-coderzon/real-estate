@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Gallery from "@/components/listing/Gallery";
 import { api } from "@/lib/api";
-import { formatDate, formatNumber, formatRupees, formatRupeesShort } from "@/lib/format";
+import { formatDate, formatRupees, formatRupeesShort } from "@/lib/format";
 import { amenityCategoryLabel, isRental, labelOf, listingLocation } from "@/lib/listing";
+import { detailRows, googleMapsUrl, groupAmenities, keyFacts, withValues } from "@/lib/listingDisplay";
 import { errorToast, successToast } from "@/lib/toast";
-import type { Listing, ListingAmenity, ListingStatus } from "@/lib/types";
+import type { Listing, ListingStatus } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
@@ -34,10 +35,6 @@ const STATUS_DISPLAY: Record<ListingStatus, { text: string; badge: string; note:
     note: "This listing has expired and is hidden from search.",
   },
 };
-
-// Keeps only the rows that have a value, so empty fields are not shown.
-const withValues = (rows: [string, string | undefined][]) =>
-  rows.filter((row): row is [string, string] => Boolean(row[1]));
 
 const sectionHeading = "text-[20px] font-semibold tracking-tight";
 
@@ -106,33 +103,9 @@ const MySpecificListing = ({ id }: Props) => {
   ];
   const readyToPublish = checklist.every(([, done]) => done);
 
-  const facts = withValues([
-    ["Area", `${formatNumber(listing.areaValue)} ${labelOf(listing.areaUnit)}`],
-    ["Bedrooms", listing.bedrooms?.toString()],
-    ["Bathrooms", listing.bathrooms?.toString()],
-    ["Furnishing", labelOf(listing.furnishing)],
-  ]);
-
-  const floor =
-    listing.floorNumber !== null && listing.totalFloors !== null
-      ? `${listing.floorNumber} of ${listing.totalFloors}`
-      : (listing.floorNumber ?? listing.totalFloors)?.toString();
-
-  const details = withValues([
-    [
-      "Area in sq ft",
-      listing.areaUnit === "SQFT" ? undefined : `${formatNumber(listing.areaSqft)} sq ft`,
-    ],
-    ["Balconies", listing.balconies?.toString()],
-    [listing.floorNumber === null ? "Total floors" : "Floor", floor],
-    ["Construction", labelOf(listing.propertyStatus)],
-    ["Available from", formatDate(listing.availableFrom)],
-  ]);
-
-  const amenitiesByCategory: Record<string, ListingAmenity[]> = {};
-  for (const amenity of listing.amenities) {
-    (amenitiesByCategory[amenity.category] ??= []).push(amenity);
-  }
+  const facts = keyFacts(listing);
+  const details = detailRows(listing);
+  const amenitiesByCategory = groupAmenities(listing.amenities);
 
   const handlePublish = async () => {
     try {
@@ -314,7 +287,7 @@ const MySpecificListing = ({ id }: Props) => {
             </address>
             {location ? (
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${location[1]},${location[0]}`}
+                href={googleMapsUrl(location[1], location[0])}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`mt-4 inline-block ${secondaryButton}`}

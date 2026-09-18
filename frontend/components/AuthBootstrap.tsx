@@ -1,5 +1,5 @@
 "use client"
-import { api, setAccessToken } from "@/lib/api"
+import { api, setAccessToken, setAuthReady } from "@/lib/api"
 import { useEffect, useRef } from "react"
 
 export const AuthBootStrap=()=>{
@@ -12,6 +12,7 @@ export const AuthBootStrap=()=>{
        .catch(()=>{
        
        })
+       .finally(setAuthReady)
     }, []);
     return null
 }

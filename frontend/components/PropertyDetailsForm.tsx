@@ -1,12 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import AmenitiesPicker from "@/components/form/AmenitiesPicker";
 import { Field, Select } from "@/components/form/Field";
+import { api } from "@/lib/api";
 import {
   AREA_UNITS,
   FURNISHING,
   POSTED_BY,
   PROPERTY_STATUS,
   SQFT_PER_UNIT,
+  amenityCategoriesFor,
   clearInapplicableFields,
   floorsInconsistent,
   hasFloorNumber,
@@ -16,7 +20,7 @@ import {
   propertyTypeOptions,
 } from "@/lib/listing";
 import { formatNumber } from "@/lib/format";
-import type { ListingFormData } from "@/lib/types";
+import type { ListingAmenity, ListingFormData } from "@/lib/types";
 import { inputClass } from "@/lib/ui";
 
 type Props = {
@@ -37,11 +41,43 @@ const blurNumberInputOnWheel = (event: React.WheelEvent) => {
 };
 
 const PropertyDetailsForm = ({ data, setData }: Props) => {
+  const [amenities, setAmenities] = useState<ListingAmenity[]>([]);
+
+  useEffect(() => {
+    api
+      .get("/list/amenities")
+      .then((response) => setAmenities(response.data.amenities))
+      .catch(() => {
+        // The rest of the form still works without the amenity list.
+      });
+  }, []);
+
   const handleChange = (event: ChangeEvent) => {
     const { name, value, type } = event.target;
     const nextValue = type === "checkbox" ? (event.target as HTMLInputElement).checked : value;
-    setData((prev) => clearInapplicableFields({ ...prev, [name]: nextValue }));
+
+    setData((prev) => {
+      const next = clearInapplicableFields({ ...prev, [name]: nextValue });
+      if (name !== "listingType" && name !== "propertyType") return next;
+
+      // Changing the type hides some amenity categories; drop those selections
+      // too, so a plot does not keep a "Lift" picked for an apartment.
+      const allowed = amenityCategoriesFor(next.listingType, next.propertyType);
+      const categoryOf = new Map(amenities.map((amenity) => [amenity.id, amenity.category]));
+      return {
+        ...next,
+        amenityIds: next.amenityIds.filter((id) => allowed.includes(categoryOf.get(id) ?? "")),
+      };
+    });
   };
+
+  const toggleAmenity = (amenityId: string) =>
+    setData((prev) => ({
+      ...prev,
+      amenityIds: prev.amenityIds.includes(amenityId)
+        ? prev.amenityIds.filter((id) => id !== amenityId)
+        : [...prev.amenityIds, amenityId],
+    }));
 
   // Props shared by every whole-number input on this form.
   const numberInput = (name: keyof ListingFormData, placeholder: string) => ({
@@ -232,6 +268,26 @@ const PropertyDetailsForm = ({ data, setData }: Props) => {
             </div>
           </div>
         )
+      )}
+
+      {/* ---------- amenities ---------- */}
+      {propertyType !== "" && amenities.length > 0 && (
+        <div className="space-y-4 border-t border-line pt-6">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className={groupTitle}>
+              Amenities <span className="font-normal text-muted">(optional)</span>
+            </h3>
+            {data.amenityIds.length > 0 && (
+              <p className="text-[13px] text-muted">{data.amenityIds.length} selected</p>
+            )}
+          </div>
+          <AmenitiesPicker
+            amenities={amenities}
+            categories={amenityCategoriesFor(listingType, propertyType)}
+            selected={data.amenityIds}
+            onToggle={toggleAmenity}
+          />
+        </div>
       )}
 
       {/* ---------- availability ---------- */}

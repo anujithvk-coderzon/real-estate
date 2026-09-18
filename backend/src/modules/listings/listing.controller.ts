@@ -3,6 +3,7 @@ import { registeringValidation, updateValidation } from "./listing.validation.js
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
 import { createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
+import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
 
 
 export const createListingPost=async(req:Request,res:Response)=>{
@@ -62,8 +63,8 @@ export const fetchListingVideo=async(req:Request,res:Response)=>{
 
 export const fetchListings=async(req:Request,res:Response)=>{
     const page=Number(req.query?.page)|| 1;
-    const lists=await listsFetchingService(page)
-    return res.status(200).json({message:"Listings fetched successfully",lists})
+    const { lists, total } = await listsFetchingService(page);
+   return res.status(200).json({ message: "Listings fetched successfully", lists, total });
 }
 
 export const fetchOwnerListings=async(req:Request,res:Response)=>{
@@ -82,10 +83,16 @@ export const fetchOwnerListings=async(req:Request,res:Response)=>{
     return res.status(200).json({message:"Lists fetched successfully",lists: response, total})
 }
 
+// Public route: works for everyone. A valid token only adds the contact details.
 export const fetchSpecificListings=async(req:Request,res:Response)=>{
-    const listId=req.params?.id as string
-    if(!listId) throw new BadRequestError("listingId required")
-    const lists=await SpecificListFetchingService(listId)
+    const slug=req.params?.id as string
+    if(!slug) throw new BadRequestError("Listing Id required")
+    const token=req.headers.authorization?.split(" ")[1]
+    let userId:string|undefined
+    if(token){
+            userId=(await accessTokenVerification(token)).id as string
+    }
+    const lists=await SpecificListFetchingService(slug,userId)
     return res.status(200).json({message:"Listings fetched successfully",lists})
 }
 export const fetchOwnerSpecificListing=async(req:Request,res:Response)=>{

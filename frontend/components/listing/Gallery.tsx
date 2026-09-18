@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { ListingImage } from "@/lib/types";
 
 type Props = {
-  images: ListingImage[];
+  images: Pick<ListingImage, "path">[]; // only the URL is needed, so public pages work without ids
   title: string;
 };
 
@@ -46,7 +46,7 @@ const Gallery = ({ images, title }: Props) => {
       {count > 1 && (
         <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
           {images.map((image, index) => (
-            <li key={image.id} className="shrink-0">
+            <li key={image.path} className="shrink-0">
               <button
                 type="button"
                 onClick={() => setActive(index)}

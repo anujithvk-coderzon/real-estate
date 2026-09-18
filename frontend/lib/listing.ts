@@ -68,6 +68,19 @@ const AMENITY_CATEGORY_LABELS: Record<string, string> = {
 export const amenityCategoryLabel = (category: string) =>
   AMENITY_CATEGORY_LABELS[category] ?? category;
 
+// Amenity categories that make sense for a listing, so a plot is not offered
+// a lift and an office is not offered a swimming pool.
+export const amenityCategoriesFor = (listingType: string, propertyType: string) => {
+  if (propertyType === "") return [];
+  if (propertyType === "PLOT") return ["PLOT"];
+  if (listingType === "PG") return ["PG", "UNIT", "BUILDING", "SECURITY", "PARKING"];
+  if (propertyType === "COMMERCIAL" || propertyType === "OFFICE") {
+    return ["COMMERCIAL", "BUILDING", "SECURITY", "PARKING"];
+  }
+  if (propertyType === "ROOM") return ["UNIT", "BUILDING", "SECURITY", "PARKING"];
+  return ["UNIT", "BUILDING", "SECURITY", "PARKING", "RECREATION"];
+};
+
 // Shown when no location is known, so the whole country is visible.
 export const INDIA_CENTER: LngLat = [78.9629, 20.5937];
 
@@ -191,6 +204,8 @@ export const buildListingPayload = (data: ListingFormData, location: LngLat | nu
 
   contactName: textOrUndefined(data.contactName),
   contactPhone: textOrUndefined(data.contactPhone),
+
+  amenityIds: data.amenityIds,
 });
 
 // "4500000.00" → "4500000", null → ""
@@ -226,9 +241,10 @@ export const listingToFormData = (listing: Listing): ListingFormData => ({
   district: listing.district,
   state: listing.state,
   pincode: listing.pincode,
+  amenityIds: listing.amenities.map((amenity) => amenity.id),
 });
 
-export const listingLocation = (listing: Listing): LngLat | null =>
+export const listingLocation = (listing: Pick<Listing, "latitude" | "longitude">): LngLat | null =>
   listing.latitude !== null && listing.longitude !== null
     ? [listing.longitude, listing.latitude]
     : null;

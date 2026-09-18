@@ -58,6 +58,8 @@ export type ListingFormData = {
   district: string;
   state: string;
   pincode: string;
+
+  amenityIds: string[];
 };
 
 export const emptyListing: ListingFormData = {
@@ -89,6 +91,7 @@ export const emptyListing: ListingFormData = {
   district: "",
   state: "",
   pincode: "",
+  amenityIds: [],
 };
 
 /* ---------- API responses ---------- */
@@ -114,6 +117,7 @@ export type ListingAmenity = {
 // as strings and nullable columns as null.
 export type Listing = {
   id: string;
+  slug: string | null; // public URL name; null for listings created before slugs existed
   title: string;
   description: string;
   listingType: ListingType;
@@ -159,6 +163,7 @@ export type Listing = {
 export type ListingSummary = Pick<
   Listing,
   | "id"
+  | "slug"
   | "title"
   | "status"
   | "listingType"
@@ -176,4 +181,23 @@ export type ListingSummary = Pick<
 > & {
   // The cover photo. Optional until the backend includes it.
   listingImages?: { path: string }[];
+};
+
+// A listing on public pages. The database id is never sent to the public;
+// the slug identifies the listing instead.
+export type PublicListingSummary = Omit<ListingSummary, "id">;
+
+// A listing on its public page (GET /list/:slug). Same as Listing, minus every
+// internal id: the listing's, the owner's, and those of its photos, video and amenities.
+export type PublicListing = Omit<
+  Listing,
+  "id" | "owner" | "amenities" | "listingImages" | "listingVideo" | "contactName" | "contactPhone"
+> & {
+  owner: { name: string };
+  // Only sent to signed-in users; missing for visitors.
+  contactName?: string | null;
+  contactPhone?: string | null;
+  amenities: Omit<ListingAmenity, "id">[];
+  listingImages: Omit<ListingImage, "id">[];
+  listingVideo: Omit<ListingVideo, "id"> | null;
 };

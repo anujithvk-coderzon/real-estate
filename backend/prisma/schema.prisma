@@ -86,6 +86,7 @@ model Listing {
   //basic info
   title String
   description String
+  slug      String? @unique
   listingType ListingType
   propertyType PropertyType
   postedBy      PostedBy

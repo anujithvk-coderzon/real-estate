@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { api, setAccessToken } from "@/lib/api";
 
 type User = { name: string; email: string };
@@ -20,11 +20,18 @@ const iconProps = {
   className: "h-5 w-5 shrink-0",
 };
 
-const ListingsIcon = () => (
+const HomeIcon = () => (
   <svg {...iconProps}>
     <path d="M3.5 10.5 12 4l8.5 6.5" />
     <path d="M5.5 9v10.5h13V9" />
     <path d="M10 19.5v-5h4v5" />
+  </svg>
+);
+
+const ListingsIcon = () => (
+  <svg {...iconProps}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+    <path d="M7.5 9.5h9M7.5 14.5h6" />
   </svg>
 );
 
@@ -51,6 +58,7 @@ const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
 );
 
 const NAV_ITEMS = [
+  { href: "/", label: "Home", Icon: HomeIcon },
   { href: "/list/my/listings", label: "My listings", Icon: ListingsIcon },
   { href: "/list/create", label: "List a property", Icon: AddIcon },
 ];
@@ -70,10 +78,10 @@ const ContourArt = () => (
   <svg
     viewBox="0 0 300 320"
     aria-hidden="true"
-    className="pointer-events-none absolute -bottom-16 -right-24 -z-10 hidden h-[420px] w-[400px] text-rail-line lg:block"
+    className="pointer-events-none absolute -bottom-16 -right-24 -z-10 hidden h-[420px] w-[400px] text-line lg:block"
   >
     {CONTOURS.map((d, index) => (
-      <path key={index} d={d} fill="none" stroke="currentColor" strokeWidth={1.1} opacity={0.9 - index * 0.08} />
+      <path key={index} d={d} fill="none" stroke="currentColor" strokeWidth={1.1} opacity={0.6 - index * 0.06} />
     ))}
   </svg>
 );
@@ -87,11 +95,10 @@ const initialsOf = (name: string) =>
     .join("");
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rail-accent";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false); // phones
   const [collapsed, setCollapsed] = useState(false); // desktop
@@ -113,7 +120,10 @@ const Sidebar = () => {
     } finally {
       // Leave this browser signed out even if the request failed.
       setAccessToken(null);
-      router.push("/auth/login");
+      // A full load, not router.push: it clears everything this tab remembered
+      // about the user, and works even when logging out from the home page itself.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- the full reload is intended
+      window.location.assign("/");
     }
   };
 
@@ -122,8 +132,8 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`relative isolate overflow-hidden bg-rail text-rail-ink lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0 lg:flex-col lg:transition-[width] lg:duration-200 motion-reduce:transition-none ${
-        collapsed ? "lg:w-[76px]" : "lg:w-72"
+      className={`relative isolate overflow-hidden border-b border-line bg-panel text-ink lg:border-b-0 lg:border-r lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0 lg:flex-col lg:transition-[width] lg:duration-200 motion-reduce:transition-none ${
+        collapsed ? "lg:w-[76px]" : "lg:w-60"
       }`}
     >
       <ContourArt />
@@ -132,7 +142,7 @@ const Sidebar = () => {
       <div className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}>
         <span
           title={collapsed ? user?.name : undefined}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rail-accent text-[15px] font-semibold tracking-wide text-rail"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-[15px] font-semibold tracking-wide text-white"
         >
           {user ? initialsOf(user.name) : ""}
         </span>
@@ -140,13 +150,13 @@ const Sidebar = () => {
         <div className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
           {user ? (
             <>
-              <p className="truncate font-display text-[21px] leading-tight">{user.name}</p>
-              <p className="mt-0.5 truncate text-[12.5px] text-rail-muted">{user.email}</p>
+              <p className="truncate font-display text-[19px] leading-tight">{user.name}</p>
+              <p className="mt-0.5 truncate text-[12.5px] text-muted">{user.email}</p>
             </>
           ) : (
             <div className="space-y-2" aria-hidden="true">
-              <div className="h-4 w-28 animate-pulse rounded bg-rail-raised" />
-              <div className="h-3 w-36 animate-pulse rounded bg-rail-raised" />
+              <div className="h-4 w-28 animate-pulse rounded bg-accent-soft" />
+              <div className="h-3 w-36 animate-pulse rounded bg-accent-soft" />
             </div>
           )}
         </div>
@@ -156,7 +166,7 @@ const Sidebar = () => {
           onClick={() => setMenuOpen(!menuOpen)}
           aria-expanded={menuOpen}
           aria-controls="sidebar-menu"
-          className={`rounded-lg border border-rail-line px-3 py-1.5 text-[14px] font-medium lg:hidden ${focusRing}`}
+          className={`rounded-lg border border-line px-3 py-1.5 text-[14px] font-medium lg:hidden ${focusRing}`}
         >
           {menuOpen ? "Close" : "Menu"}
         </button>
@@ -167,7 +177,8 @@ const Sidebar = () => {
         <nav aria-label="Main">
           <ul className="space-y-1">
             {NAV_ITEMS.map(({ href, label, Icon }) => {
-              const active = pathname.startsWith(href);
+              // "/" is the start of every path, so Home only matches exactly.
+              const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
                 <li key={href}>
                   <Link
@@ -178,12 +189,12 @@ const Sidebar = () => {
                     title={collapsed ? label : undefined}
                     className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${focusRing} ${
                       collapsed ? "lg:justify-center" : ""
-                    } ${active ? "bg-rail-raised text-rail-ink" : "text-rail-muted hover:bg-rail-raised/60 hover:text-rail-ink"}`}
+                    } ${active ? "bg-accent-soft text-ink" : "text-muted hover:bg-accent-soft/60 hover:text-ink"}`}
                   >
                     {active && (
-                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-rail-accent" />
+                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-accent" />
                     )}
-                    <span className={active ? "text-rail-accent" : ""}>
+                    <span className={active ? "text-accent" : ""}>
                       <Icon />
                     </span>
                     <span className={hideWhenCollapsed}>{label}</span>
@@ -195,14 +206,14 @@ const Sidebar = () => {
         </nav>
 
         {/* ---------- bottom ---------- */}
-        <div className="mt-6 space-y-1 border-t border-rail-line pt-3 lg:mt-auto">
+        <div className="mt-6 space-y-1 border-t border-line pt-3 lg:mt-auto">
           <button
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
             aria-label={collapsed ? "Log out" : undefined}
             title={collapsed ? "Log out" : undefined}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-rail-muted transition-colors hover:bg-rail-raised/60 hover:text-rail-danger disabled:opacity-60 ${focusRing} ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-muted transition-colors hover:bg-accent-soft/60 hover:text-danger disabled:opacity-60 ${focusRing} ${
               collapsed ? "lg:justify-center" : ""
             }`}
           >
@@ -215,7 +226,7 @@ const Sidebar = () => {
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-rail-muted transition-colors hover:bg-rail-raised/60 hover:text-rail-ink lg:flex ${focusRing} ${
+            className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-muted transition-colors hover:bg-accent-soft/60 hover:text-ink lg:flex ${focusRing} ${
               collapsed ? "lg:justify-center" : ""
             }`}
           >
