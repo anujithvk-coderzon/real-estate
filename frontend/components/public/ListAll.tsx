@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PublicListingCard from "@/components/listing/PublicListingCard";
+import ListPropertyPrompt from "@/components/public/ListPropertyPrompt";
 import { api } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
 import type { PublicListingSummary } from "@/lib/types";
@@ -100,13 +101,18 @@ const ListAll = () => {
   return (
     <div className="min-h-dvh">
       <main className="mx-auto w-full max-w-7xl px-5 py-10 lg:px-10">
-        <h1 className="font-display text-[40px] leading-[1.05] tracking-tight lg:text-[56px]">
-          Homes, plots and rooms
-          <br className="hidden sm:block" /> across Kerala
-        </h1>
-        <p className="mt-3 text-[15px] text-muted">
-          {listings === null ? "Loading listings…" : `${count} ${count === 1 ? "property" : "properties"} listed`}
-        </p>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="font-display text-[40px] leading-[1.05] tracking-tight lg:text-[56px]">
+              Homes, plots and rooms
+              <br className="hidden sm:block" /> across Kerala
+            </h1>
+            <p className="mt-3 text-[15px] text-muted">
+              {listings === null ? "Loading listings…" : `${count} ${count === 1 ? "property" : "properties"} listed`}
+            </p>
+          </div>
+          <ListPropertyPrompt />
+        </div>
 
         {failed ? (
           <div className="mt-10 rounded-2xl bg-panel p-10 text-center ring-1 ring-line">
