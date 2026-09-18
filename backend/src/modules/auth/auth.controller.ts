@@ -149,7 +149,7 @@ export const googleCallback=async(req:Request,res:Response)=>{
     const response=await googleLoginService(req.query.code as string);
     res.cookie("refresh_real_estate",response.refreshToken,{
       httpOnly:true,
-      maxAge:7*24*60*60,
+      maxAge:7*24*60*60*1000,
       sameSite:'strict',
       secure:process.env.NODE_ENV==="production",
     })
