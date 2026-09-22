@@ -116,6 +116,22 @@ const CreateListingPage = () => {
 
       <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <section className="rounded-lg border border-line bg-panel p-5">
+          {/* Shown before the choice, so people know the most accurate way first. */}
+          <div className="mb-4 flex gap-3 rounded-md bg-accent-soft px-3.5 py-3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-accent">
+              <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+              <path d="M11 18.5h2" />
+            </svg>
+            <div>
+              <p className="text-[13px] font-semibold text-accent">Recommended: be at the property</p>
+              <p className="mt-1 text-[13px] leading-snug text-ink/80">
+                Open this page on your phone while you&apos;re at the property and tap{" "}
+                <span className="font-medium text-ink">Use my current location</span>. Phone GPS is accurate to
+                a few metres, so buyers and renters see exactly where the property is.
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-2.5">
             <button type="button" onClick={detectCurrentLocation} className={`w-full ${primaryButton}`}>
               Use my current location
