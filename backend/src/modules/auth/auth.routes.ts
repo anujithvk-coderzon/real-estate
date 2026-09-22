@@ -2,6 +2,7 @@ import express from "express";
 import {
   accountVerification,
   change_password,
+  changeAvatar,
   forgot_password,
   googleCallback,
   googleLogin,
@@ -11,10 +12,13 @@ import {
   register,
   reset_password,
   rotateAccessToken,
+  set_password,
+  update_profile,
 } from "./auth.controller.js";
 import { isAuthorized } from "../../middlewares/jwtTokens.js";
 import { rateLimit } from "../../middlewares/rateLimit.js";
 import { changePassLimiter, forgotPassEmailLimiter, forgotPassIPLimiter, loginIpLimiter, registerIpLimiter, RegisterLoginemailLimiter } from "../../lib/rateLimiter.js";
+import { upload } from "../../lib/multer.js";
 
 const router = express.Router();
 
@@ -27,6 +31,9 @@ router.post("/forgot",rateLimit(forgotPassIPLimiter),rateLimit(forgotPassEmailLi
 router.post("/reset/:token",reset_password)
 router.patch("/change/password",isAuthorized,rateLimit(changePassLimiter),change_password)
 router.get('/me',isAuthorized,me)
+router.patch("/profile",isAuthorized,update_profile)
+router.post("/password/set",isAuthorized,rateLimit(changePassLimiter),set_password)
 router.get("/google",googleLogin)
 router.get("/google/callback",googleCallback)
+router.patch("/change/avatar",isAuthorized,upload.single("avatar"),changeAvatar)
 export default router;

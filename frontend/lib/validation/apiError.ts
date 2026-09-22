@@ -34,6 +34,8 @@ const FIELD_LABELS: Record<string, string> = {
   name: "Name",
   email: "Email",
   password: "Password",
+  current_password: "Current password",
+  new_password: "New password",
 };
 
 export const apiMessage = (error: unknown) => {

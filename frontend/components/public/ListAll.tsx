@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PublicListingCard from "@/components/listing/PublicListingCard";
 import ListPropertyPrompt from "@/components/public/ListPropertyPrompt";
+import SearchBar from "@/components/public/SearchBar";
 import { api } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
 import type { PublicListingSummary } from "@/lib/types";
@@ -112,6 +113,10 @@ const ListAll = () => {
             </p>
           </div>
           <ListPropertyPrompt />
+        </div>
+
+        <div className="mt-8">
+          <SearchBar />
         </div>
 
         {failed ? (

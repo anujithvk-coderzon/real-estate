@@ -1,9 +1,11 @@
 import {  type Request, type Response } from "express";
 import { registeringValidation, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
-import { createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
+import { createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
 import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
+import type { ListingType, PropertyType } from "../../generated/prisma/enums.js";
+// import { parseSearch} from "../../lib/searchProcessing.js";
 
 
 export const createListingPost=async(req:Request,res:Response)=>{
@@ -153,4 +155,14 @@ const lat=Number(req.query.lat);
 const lon=Number(req.query.lon);
 const response=await reverseGeoCodingService(lat,lon)
 return res.status(200).json({message:"reverseGeoCoded successfully",response})
+}
+
+export const userSearch=async(req:Request,res:Response)=>{
+    const listingType=req.query.listingType as ListingType;
+    const propertyType=req.query.propertyType as PropertyType;
+    const location=req.query.location as string;
+    if(!location) throw new BadRequestError("Location required")
+    console.log(listingType,propertyType,location);
+    const result=await searchService(location,listingType,propertyType)
+    return res.status(200).json({message:"Search results fetched successfully",lists:result})
 }

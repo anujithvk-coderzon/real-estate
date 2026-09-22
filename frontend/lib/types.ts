@@ -185,7 +185,13 @@ export type ListingSummary = Pick<
 
 // A listing on public pages. The database id is never sent to the public;
 // the slug identifies the listing instead.
-export type PublicListingSummary = Omit<ListingSummary, "id">;
+export type PublicListingSummary = Omit<ListingSummary, "id"> & {
+  // The map pin. Sent by the search results; missing when the seller placed no pin.
+  latitude?: number | null;
+  longitude?: number | null;
+  // Only on search results: how far the listing is from the searched place.
+  distanceKm?: number;
+};
 
 // A listing on its public page (GET /list/:slug). Same as Listing, minus every
 // internal id: the listing's, the owner's, and those of its photos, video and amenities.

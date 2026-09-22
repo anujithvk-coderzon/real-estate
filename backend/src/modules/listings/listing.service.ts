@@ -1,14 +1,15 @@
 import axios from "axios";
 import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
-import type { Prisma } from "../../generated/prisma/client.js";
+import type { ListingType, Prisma, PropertyType } from "../../generated/prisma/client.js";
 import { toSQFT } from "../../lib/area.js";
 import { cdnUrl, deleteImage, deleteListingFiles, deleteVideo, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
 import type { CreateListingInput, UpdateListingInput } from "./listing.validation.js";
 import redis from "../../lib/redis.js";
-import type { ListingOrderBy, ListingStatus } from "./listing.type.js";
+import { ListingStatus, type ListingOrderBy } from "./listing.type.js";
 import type { ListingWhereInput } from "../../generated/prisma/models.js";
 import { listNameSluggify } from "../../lib/slug.js";
+import { boxAround, distanceKm } from "../../lib/geo.js";
 
 export const createListingService=async(userId:string,data:CreateListingInput)=>{
 const user=await prisma.user.findUnique({where:{id:userId}})
@@ -389,4 +390,59 @@ export const reverseGeoCodingService=async(lat:number,lon:number)=>{
   await redis.set(`reverseGeo:${lat}|${lon}`,JSON.stringify(response.data.address),{expiration:{type:"EX",value:60*60*24
   }})
   return response.data.address
+}
+
+export const searchService=async(location:string,type?:ListingType,property?:PropertyType)=>{
+const km=10
+const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    timeout:5000,
+    params:{q:location,
+    format:"jsonv2"
+}})
+const result = response.data[0];
+if (!result) return [];
+const lat = Number(result.lat);
+const long = Number(result.lon);
+
+const where:ListingWhereInput=({
+  status:ListingStatus.ACTIVE,
+  ...(type && {
+    listingType:type
+  }),
+  ...(property && {
+    propertyType:property
+  }),
+  OR: [
+  boxAround(lat, long, km),                                      
+  { locality: { contains: location, mode: "insensitive" } },     
+  { city: { contains: location, mode: "insensitive" } },
+  { district: { contains: location, mode: "insensitive" } },
+],
+})
+
+const listings=await prisma.listing.findMany({where,select: {
+  slug: true,
+  title: true,
+  price: true,
+  district:true,
+  listingType: true,
+  propertyType: true,
+  locality: true,
+  city: true,
+  bedrooms: true,
+  bathrooms: true,
+  areaValue: true,
+  areaUnit: true,
+  latitude: true,
+  longitude: true,
+  listingImages: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
+}})
+const final_result=listings.map((list)=>({
+  ...list,
+  distanceKm:distanceKm(lat,long,list.latitude!,list.longitude!),
+  listingImages: list.listingImages.map((image) => ({ path: cdnUrl(image.path) })),
+})).filter((list)=>list.distanceKm<=km)
+   .sort((a,b)=>a.distanceKm - b.distanceKm)
+return final_result
 }

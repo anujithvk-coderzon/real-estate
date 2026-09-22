@@ -12,6 +12,7 @@ import redis from "../../lib/redis.js";
 import { checkDisposableEmail } from "../../lib/disposible_email.js";
 import { sendEmail } from "../../lib/email.js";
 import { goolgeClient } from "../../lib/google.js";
+import { avatarImageUpload, avatarPublicUrl, deleteImage, isOwnAvatar } from "../../lib/bunny.js";
 
 type regValidation = {
   name: string;
@@ -122,7 +123,7 @@ export const registerService = async (validatedData: regValidation) => {
       font-weight: bold;
     "
   >
-    Verify 
+    Reset password
   </a>
 
   <p>This verification link will expire in 15 minutes.</p>
@@ -180,7 +181,7 @@ export const googleLoginService=async(code:string)=>{
   if(!google?.email||!google.email_verified) throw new BadRequestError("Google account has no verified email");
   const user=await prisma.user.upsert({
     where:{email:google.email},
-    update:{googleId:google.sub,avatarUrl:google.picture ?? null,isVerified:true},
+    update:{googleId:google.sub,isVerified:true},
     create:{
       name:google.name ?? google.email,
       email:google.email,
@@ -218,11 +219,11 @@ export const forgotPasswordService=async(email:string)=>{
  await redis.set(`forgotPassword_verification_token:${existing_user.id}`, token, {
     expiration: { type: "EX", value: 900 },
   });
-  const verification_link = `${process.env.FRONTEND_URL}/forgot/${token}`;
+  const verification_link = `${process.env.FRONTEND_URL}/auth/reset/${token}`;
   const html = `
-  <h2>Fogot your password</h2>
+  <h2>Reset your password</h2>
 
-  <p>Please click the button below to reset your Password :</p>
+  <p>Click the button below to choose a new password:</p>
 
   <a
     href="${verification_link}"
@@ -236,7 +237,7 @@ export const forgotPasswordService=async(email:string)=>{
       font-weight: bold;
     "
   >
-    Verify 
+    Reset password
   </a>
 
   <p>This verification link will expire in 15 minutes.</p>
@@ -256,7 +257,8 @@ if(!redisToken || redisToken!==token) throw new BadRequestError("Invalid link")
 const hashedPassword=await hash(newPassword,10)
 await prisma.user.update({where:{id:user.id},data:{password:hashedPassword}})
 await redis.del(`forgotPassword_verification_token:${user.id}`)
-return 'Password reset successfull'
+await redis.del(`refresh_token:${user.id}`)
+return 'Password reset successfully. Sign in with your new password.'
 }
 
 export const passwordChangeService=async(userId:string,newPass:string,currentPass:string)=>{
@@ -265,7 +267,60 @@ export const passwordChangeService=async(userId:string,newPass:string,currentPas
   if(!existingUser.password) throw new BadRequestError("Invalid credentials")
  const isSame=await compare(currentPass,existingUser.password)
  if(!isSame) throw new BadRequestError("Incorrect current password")
+ const isConflict=await compare(newPass,existingUser.password)
+ if(isConflict) throw new BadRequestError("New password can't be existing password")
  const hashedNewPass=await hash(newPass,10)
  await prisma.user.update({where:{id:userId},data:{password:hashedNewPass}})
- return 'Password updated successfully'
+ const accessToken=await generateAccessToken(existingUser.id)
+ const refreshToken = await generateRefreshToken(existingUser.id);
+ await redis.set(`refresh_token:${existingUser.id}`, refreshToken,{
+    expiration:{type:"EX",value:7*24*60*60}
+  });
+ return {message:"Password updated Successfully",accessToken,refreshToken}
+}
+
+const issueFreshTokens = async (userId: string) => {
+  const accessToken = await generateAccessToken(userId);
+  const refreshToken = await generateRefreshToken(userId);
+  await redis.set(`refresh_token:${userId}`, refreshToken, {
+    expiration: { type: "EX", value: 7 * 24 * 60 * 60 },
+  });
+  return { accessToken, refreshToken };
+};
+
+export const setPasswordService = async (userId: string, newPass: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new NotFoundError("User not found");
+  if (user.password) throw new BadRequestError("This account already has a password. Use Change password instead.");
+  await prisma.user.update({ where: { id: userId }, data: { password: await hash(newPass, 10) } });
+  return { message: "Password created. You can now also sign in with your email.", ...(await issueFreshTokens(userId)) };
+};
+
+export const updateProfileService = async (userId: string, data: { name: string }) => {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { name: data.name },
+    select: { name: true, email: true, avatarUrl: true },
+  });
+  // The stored value may be a Bunny path; send the loadable URL, like /auth/me does.
+  return { ...user, avatarUrl: avatarPublicUrl(user.avatarUrl) };
+};
+
+// Settings → Profile photo.
+// Order matters: save the new photo first, clean up the old one last, so a failed
+// cleanup can never leave the user without a photo.
+export const imageService=async(userId:string,image:Express.Multer.File)=>{
+const existingUser=await prisma.user.findUnique({where:{id:userId}})
+if(!existingUser) throw new BadRequestError("Invalid Token")
+
+const path=await avatarImageUpload(image)
+await prisma.user.update({where:{id:userId},data:{avatarUrl:path}})
+
+// Only photos we uploaded live on Bunny; a Google photo URL is simply replaced.
+const old=existingUser.avatarUrl
+if(isOwnAvatar(old)){
+  // Cleanup only: the new photo is already saved, so this must not fail the request.
+  await deleteImage(old).catch((error)=>console.error("Old avatar not deleted:",old,error))
+}
+return { message: "Avatar updated successfully", avatarUrl: avatarPublicUrl(path) };
 }

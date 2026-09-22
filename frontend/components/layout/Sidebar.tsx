@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api, setAccessToken } from "@/lib/api";
+import { PROFILE_UPDATED } from "@/lib/events";
 
 type User = { name: string; email: string; avatarUrl: string | null };
 
@@ -39,6 +40,13 @@ const AddIcon = () => (
   <svg {...iconProps}>
     <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
     <path d="M12 8.5v7M8.5 12h7" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg {...iconProps}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
   </svg>
 );
 
@@ -106,12 +114,17 @@ const Sidebar = () => {
   const [avatarFailed, setAvatarFailed] = useState(false); // falls back to initials
 
   useEffect(() => {
-    api
-      .get("/auth/me")
-      .then((response) => setUser(response.data.user))
-      .catch(() => {
-        // The sidebar still works without the name.
-      });
+    const loadUser = () =>
+      api
+        .get("/auth/me")
+        .then((response) => setUser(response.data.user))
+        .catch(() => {
+          // The sidebar still works without the name.
+        });
+    loadUser();
+    // Settings fires this after the name is edited, so the sidebar shows the new one.
+    window.addEventListener(PROFILE_UPDATED, loadUser);
+    return () => window.removeEventListener(PROFILE_UPDATED, loadUser);
   }, []);
 
   const handleLogout = async () => {
@@ -130,6 +143,32 @@ const Sidebar = () => {
 
   // Labels disappear on desktop when collapsed, but stay on phones.
   const hideWhenCollapsed = collapsed ? "lg:hidden" : "";
+
+  // One sidebar link, highlighted when its page is open. Used by the main list and by Settings.
+  const navLink = ({ href, label, Icon }: { href: string; label: string; Icon: () => React.ReactNode }) => {
+    // "/" is the start of every path, so Home only matches exactly.
+    const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+    return (
+      <li key={href}>
+        <Link
+          href={href}
+          onClick={() => setMenuOpen(false)}
+          aria-current={active ? "page" : undefined}
+          aria-label={collapsed ? label : undefined}
+          title={collapsed ? label : undefined}
+          className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${focusRing} ${
+            collapsed ? "lg:justify-center" : ""
+          } ${active ? "bg-accent-soft text-ink" : "text-muted hover:bg-accent-soft/60 hover:text-ink"}`}
+        >
+          {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-accent" />}
+          <span className={active ? "text-accent" : ""}>
+            <Icon />
+          </span>
+          <span className={hideWhenCollapsed}>{label}</span>
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <aside
@@ -189,37 +228,15 @@ const Sidebar = () => {
         {/* ---------- navigation ---------- */}
         <nav aria-label="Main">
           <ul className="space-y-1">
-            {NAV_ITEMS.map(({ href, label, Icon }) => {
-              // "/" is the start of every path, so Home only matches exactly.
-              const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    onClick={() => setMenuOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    aria-label={collapsed ? label : undefined}
-                    title={collapsed ? label : undefined}
-                    className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors ${focusRing} ${
-                      collapsed ? "lg:justify-center" : ""
-                    } ${active ? "bg-accent-soft text-ink" : "text-muted hover:bg-accent-soft/60 hover:text-ink"}`}
-                  >
-                    {active && (
-                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-accent" />
-                    )}
-                    <span className={active ? "text-accent" : ""}>
-                      <Icon />
-                    </span>
-                    <span className={hideWhenCollapsed}>{label}</span>
-                  </Link>
-                </li>
-              );
-            })}
+            {NAV_ITEMS.map((item) => navLink(item))}
           </ul>
         </nav>
 
         {/* ---------- bottom ---------- */}
         <div className="mt-6 space-y-1 border-t border-line pt-3 lg:mt-auto">
+          {/* Account things live at the bottom, apart from the everyday links above. */}
+          <ul>{navLink({ href: "/list/settings", label: "Settings", Icon: SettingsIcon })}</ul>
+
           <button
             type="button"
             onClick={handleLogout}

@@ -140,6 +140,7 @@ model Listing {
   @@index([price])
   @@index([areaSqft])
   @@index([ownerId])
+  @@index([status,latitude,longitude])
   @@map("listings")
 }
 

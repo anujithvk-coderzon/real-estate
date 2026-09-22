@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { isAuthorized } from "../../middlewares/jwtTokens.js";
-import { createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo } from "./listing.controller.js";
+import { createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch } from "./listing.controller.js";
 import { upload } from "../../lib/multer.js";
 
 const router=Router()
@@ -13,6 +13,7 @@ router.post('/images/:id',isAuthorized,upload.array("images",10),uploadListingIm
 router.post('/video/:id',isAuthorized,upload.single("video"),uploadListingVideo)
 router.get('/all',fetchListings)
 router.get('/owner/all',isAuthorized,fetchOwnerListings)
+router.get('/search',userSearch)
 router.get('/:id',fetchSpecificListings)
 router.get('/owner/:id',isAuthorized,fetchOwnerSpecificListing)
 router.delete('/image/delete/:imageId',isAuthorized,deleteListingImage)

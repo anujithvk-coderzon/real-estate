@@ -14,6 +14,15 @@ const storageUrl=(path:string)=>{
 }
 export const cdnUrl=(path:string)=>`https://${BUNNY_PULL_ZONE}/${path}`
 
+// Avatars we uploaded are stored as a Bunny path ("profile/image/…");
+// Google photos are stored as a full URL. Only our own paths live on Bunny.
+export const isOwnAvatar=(avatarUrl:string|null|undefined): avatarUrl is string =>
+    Boolean(avatarUrl?.startsWith("profile/image/"))
+
+// The URL the browser can load, whichever kind it is.
+export const avatarPublicUrl=(avatarUrl:string|null)=>
+    isOwnAvatar(avatarUrl) ? cdnUrl(avatarUrl) : avatarUrl
+
 
 
 
@@ -21,6 +30,19 @@ type UploadFile ={
     buffer:Buffer,
     mimetype:string,
     originalname:string
+}
+
+export const avatarImageUpload=async(file:UploadFile)=>{
+    const safe=file.originalname.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const path=`profile/image/${Date.now()}-${safe}`
+    const res=await fetch(storageUrl(path),{
+         method:"PUT",
+        headers:{AccessKey:BUNNY_API_KEY!,"Content-Type":file.mimetype},
+        body:new Uint8Array(file.buffer),
+        signal:AbortSignal.timeout(30_000)
+    })
+    if(!res.ok) throw new InternalServerError(`Bunny upload failed (${res.status})`)
+    return path;
 }
 
 export const uploadImage=async(listiningId:string,file:UploadFile)=>{
