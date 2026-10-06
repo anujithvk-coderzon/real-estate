@@ -3,6 +3,7 @@ import { Instrument_Sans, Instrument_Serif, IBM_Plex_Mono } from "next/font/goog
 import { Toaster } from "sonner";
 import "./globals.css";
 import AuthBootStrap from "@/components/AuthBootstrap";
+import OnboardingGate from "@/components/OnboardingGate";
 
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-ground font-sans text-ink">
         <AuthBootStrap/>
+        <OnboardingGate />
         {children}
         <Toaster position="top-center" richColors closeButton />
       </body>

@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { changePasswordSchema, forgotSchema, loginSchema, profileSchema, registerSchema, resetSchema, setPasswordSchema } from "./auth.validation.js";
 import {
+  agentReraService,
   forgotPasswordService,
   googleLoginService,
   imageService,
@@ -10,6 +11,7 @@ import {
   regVerification,
   resetPasswordService,
   rotateService,
+  publicProfileService,
   setPasswordService,
   updateProfileService,
 } from "./auth.service.js";
@@ -84,16 +86,21 @@ export const rotateAccessToken = async (
   res: Response,
   _next: NextFunction,
 ) => {
-  const token=req.cookies[REFRESH_COOKIE]
+  const token = req.cookies[REFRESH_COOKIE];
+  // 401, not 400: "you are not signed in" is an authentication answer, and the
+  // frontend interceptor already understands it.
   if (!token || typeof token !== "string") {
-    return res.status(400).json({
-      message: "Invalid token",
-    });
+    return res.status(401).json({ message: "Not signed in" });
   }
-  const response = await rotateService(token);
-  res
-    .status(200)
-    .json({ message: "Tokan refreshed successfully", accessToken: response });
+  try {
+    const accessToken = await rotateService(token);
+    return res.status(200).json({ message: "Tokan refreshed successfully", accessToken });
+  } catch {
+    // The cookie cannot work (deleted user, rotated token, expired session):
+    // remove it so the browser stops sending it on every page load.
+    res.clearCookie(REFRESH_COOKIE, refreshCookieOptions);
+    return res.status(401).json({ message: "Session expired" });
+  }
 };
 
 export const logout = async (
@@ -139,7 +146,7 @@ export const change_password=async(req:Request,res:Response,_next:NextFunction)=
 export const me = async (req: Request, res: Response) => {
   const result = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    select: { id: true, name: true, email: true, avatarUrl: true, password: true },
+    select: { id: true, name: true, email: true, avatarUrl: true, description: true, password: true,agentReraStatus:true,agentReraNumber:true,agentReraState:true,accountType:true},
   });
   if (!result) throw new UnauthorizedError("Unauthorized");
   const user={
@@ -147,7 +154,12 @@ export const me = async (req: Request, res: Response) => {
    name:result.name,
    email:result.email,
    avatarUrl:avatarPublicUrl(result.avatarUrl),
-   hasPassword:!!result.password
+   description:result.description,
+   hasPassword:!!result.password,
+   accountType:result.accountType,
+   agentReraStatus:result.agentReraStatus,
+   agentReraNumber:result.agentReraNumber,
+   agentReraState:result.agentReraState
   }
   res.status(200).json({ message: "User fetched", user });
 };
@@ -165,8 +177,10 @@ export const googleCallback=async(req:Request,res:Response)=>{
     const response=await googleLoginService(req.query.code as string);
     res.cookie(REFRESH_COOKIE, response.refreshToken, refreshCookieOptions)
     res.redirect(process.env.FRONTEND_URL as string);
-  } catch  {
-    res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
+  } catch (error) {
+    // Without this the reason is lost and every failure looks the same.
+    console.error("Google callback failed:", error);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=google`);
   }
 }
 
@@ -193,7 +207,6 @@ export const update_profile = async (req: Request, res: Response) => {
 const AVATAR_TYPES=["image/jpeg","image/png","image/webp"]
 const MAX_AVATAR_BYTES=10*1024*1024
 
-// PATCH /auth/change/avatar — multipart, one file in the "avatar" field.
 export const changeAvatar=async(req:Request,res:Response)=>{
   const id=req.user?.id
   if(!id) throw new UnauthorizedError("Unauthorized")
@@ -204,4 +217,24 @@ export const changeAvatar=async(req:Request,res:Response)=>{
   if(image.size>MAX_AVATAR_BYTES) throw new BadRequestError("Profile photo must be under 10 MB")
   const {message,avatarUrl}=await imageService(id,image)
   return res.status(200).json({message,user:{avatarUrl}})
+}
+
+export const agentRera=async(req:Request,res:Response)=>{
+ const userId=req.user?.id;
+ const agentReraState=req.body.agentReraState;
+ const agentReraNumber=req.body.agentReraNumber;
+ if(!userId) throw new UnauthorizedError("Unauthorized")
+ if(!agentReraState || !agentReraNumber) throw new BadRequestError("State and RERA number are required")
+ const response=await agentReraService(userId,agentReraState,agentReraNumber)
+ return res.status(200).json({message:response})
+}
+
+
+
+// GET /auth/public/:slug — no login needed; this is what buyers see.
+export const publicProfile=async(req:Request,res:Response)=>{
+  const slug=req.params?.slug as string
+  if(!slug) throw new BadRequestError("Profile not found")
+  const profile=await publicProfileService(slug)
+  return res.status(200).json({message:"Profile fetched successfully",profile})
 }

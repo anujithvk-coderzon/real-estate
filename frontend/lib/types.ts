@@ -8,7 +8,7 @@ export type PropertyType =
   | "COMMERCIAL"
   | "OFFICE"
   | "ROOM";
-export type PostedBy = "OWNER" | "BROKER" | "BUILDER" | "DEALER";
+export type PostedBy = "OWNER" | "BROKER" | "BUILDER";
 export type Furnishing = "UNFURNISHED" | "SEMI_FURNISHED" | "FULLY_FURNISHED";
 export type PropertyStatus = "READY_TO_MOVE" | "UNDER_CONSTRUCTION";
 export type AreaUnit = "SQFT" | "SQM" | "CENT" | "ACRE";
@@ -199,11 +199,53 @@ export type PublicListing = Omit<
   Listing,
   "id" | "owner" | "amenities" | "listingImages" | "listingVideo" | "contactName" | "contactPhone"
 > & {
-  owner: { name: string };
+  // Which project the unit is in, and whose word that is: inRecords means the
+  // builder registered it here, otherwise the lister typed it in.
+  project?: {
+    name: string;
+    slug?: string | null;
+    reraNumber?: string | null;
+    reraStatus: VerificationStatus;
+    isReraExempt: boolean;
+    builderName?: string | null;
+    builderSlug?: string | null;
+    statedBy: PostedBy;
+    inRecords: boolean;
+  } | null;
+  // Enough for the "Listed by" line and a link to the seller's public profile.
+  owner: {
+    name: string;
+    slug?: string | null;
+    avatarUrl?: string | null;
+    accountType?: PostedBy | null;
+    agentReraNumber?: string | null;
+    agentReraStatus?: VerificationStatus | null;
+  };
   // Only sent to signed-in users; missing for visitors.
   contactName?: string | null;
   contactPhone?: string | null;
   amenities: Omit<ListingAmenity, "id">[];
   listingImages: Omit<ListingImage, "id">[];
   listingVideo: Omit<ListingVideo, "id"> | null;
+};
+
+/* ---------- the signed-in user ---------- */
+
+// Whether a RERA registration has been checked. Matches the backend enum.
+export type VerificationStatus = "NONE" | "PENDING" | "VERIFIED" | "REVOKED";
+
+// What GET /auth/me returns. Shared by the sidebar, settings and the create flow,
+// so they can't drift apart.
+export type AuthUser = {
+  id?: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  // A few lines about themselves, shown on their profile.
+  description?: string | null;
+  hasPassword: boolean;
+  accountType: PostedBy;
+  agentReraStatus: VerificationStatus;
+  agentReraNumber?: string | null;
+  agentReraState?: string | null;
 };

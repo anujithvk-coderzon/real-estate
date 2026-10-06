@@ -16,7 +16,7 @@ export const listingFields=z.object({
       "ROOM",
     ]),
     listingType: z.enum(["SALE", "RENT", "PG"]),
-    postedBy: z.enum(["OWNER", "BROKER", "BUILDER", "DEALER"]),
+    postedBy: z.enum(["OWNER", "BROKER", "BUILDER"]),
 
     price: z.number("Enter a price").positive("Price must be more than zero"),
     isNegotiable: z.boolean().default(false),
@@ -54,6 +54,12 @@ export const listingFields=z.object({
       .optional(),
 
     amenityIds: z.array(z.string().uuid("Invalid amenity")).optional(),
+    // The builder's project this unit belongs to; its RERA number covers the sale.
+    projectId: z.string().trim().min(1,"Choose a project").optional(),
+    // Used instead of projectId when the project is not in our records.
+    projectNameText: z.string().trim().min(2,"Project name is too short").max(120).optional(),
+    projectReraText: z.string().trim().min(4,"RERA number is too short").max(60).optional(),
+    builderNameText: z.string().trim().min(2,"Builder name is too short").max(120).optional(),
   })
 
 export const registeringValidation = listingFields.superRefine((data, ctx) => {

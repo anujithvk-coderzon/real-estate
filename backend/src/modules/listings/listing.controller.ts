@@ -1,7 +1,7 @@
 import {  type Request, type Response } from "express";
 import { registeringValidation, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
-import { createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
+import { sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
 import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
 import type { ListingType, PropertyType } from "../../generated/prisma/enums.js";
@@ -85,7 +85,6 @@ export const fetchOwnerListings=async(req:Request,res:Response)=>{
     return res.status(200).json({message:"Lists fetched successfully",lists: response, total})
 }
 
-// Public route: works for everyone. A valid token only adds the contact details.
 export const fetchSpecificListings=async(req:Request,res:Response)=>{
     const slug=req.params?.id as string
     if(!slug) throw new BadRequestError("Listing Id required")
@@ -165,4 +164,12 @@ export const userSearch=async(req:Request,res:Response)=>{
     console.log(listingType,propertyType,location);
     const result=await searchService(location,listingType,propertyType)
     return res.status(200).json({message:"Search results fetched successfully",lists:result})
+}
+
+export const fetchSellerListings=async(req:Request,res:Response)=>{
+    const slug=req.params?.slug as string
+    if(!slug) throw new BadRequestError("Profile not found")
+    const page=Number(req.query.page) || 1;
+    const {lists,total}=await sellerListsFetchingService(slug,page)
+    return res.status(200).json({message:"Listings fetched successfully",lists,total})
 }

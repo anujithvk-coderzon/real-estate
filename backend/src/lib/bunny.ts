@@ -58,6 +58,19 @@ export const uploadImage=async(listiningId:string,file:UploadFile)=>{
     return path;
 }
 
+export const uploadProjectImage=async(projectId:string,file:UploadFile)=>{
+    const safe=file.originalname.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const path=`projects/${projectId}/images/${Date.now()}-${safe}`;
+    const res=await fetch(storageUrl(path),{
+        method:"PUT",
+        headers:{AccessKey:BUNNY_API_KEY!,"Content-Type":file.mimetype},
+        body:new Uint8Array(file.buffer),
+        signal:AbortSignal.timeout(30_000)
+    })
+    if(!res.ok) throw new InternalServerError(`Bunny upload failed (${res.status})`)
+    return path;
+}
+
 export const deleteImage=async(path:string)=>{
     const res=await fetch(storageUrl(path),{
         method:"DELETE",

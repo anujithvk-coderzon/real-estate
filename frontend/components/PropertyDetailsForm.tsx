@@ -26,6 +26,8 @@ import { inputClass } from "@/lib/ui";
 type Props = {
   data: ListingFormData;
   setData: React.Dispatch<React.SetStateAction<ListingFormData>>;
+  // Create flow: the start screen already asked "for sale or rent" and "who are you".
+  hideTypeAndRole?: boolean;
 };
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
@@ -40,7 +42,7 @@ const blurNumberInputOnWheel = (event: React.WheelEvent) => {
   if (target instanceof HTMLInputElement && target.type === "number") target.blur();
 };
 
-const PropertyDetailsForm = ({ data, setData }: Props) => {
+const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) => {
   const [amenities, setAmenities] = useState<ListingAmenity[]>([]);
 
   useEffect(() => {
@@ -106,15 +108,17 @@ const PropertyDetailsForm = ({ data, setData }: Props) => {
     <div className="space-y-7" onWheelCapture={blurNumberInputOnWheel}>
       {/* ---------- what is being listed ---------- */}
       <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field id="listingType" label="Listing for">
-            <Select
-              id="listingType"
-              value={listingType}
-              options={listingTypeOptions(propertyType)}
-              onChange={handleChange}
-            />
-          </Field>
+        <div className={`grid gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}>
+          {!hideTypeAndRole && (
+            <Field id="listingType" label="Listing for">
+              <Select
+                id="listingType"
+                value={listingType}
+                options={listingTypeOptions(propertyType)}
+                onChange={handleChange}
+              />
+            </Field>
+          )}
           <Field id="propertyType" label="Property type">
             <Select
               id="propertyType"
@@ -123,9 +127,11 @@ const PropertyDetailsForm = ({ data, setData }: Props) => {
               onChange={handleChange}
             />
           </Field>
-          <Field id="postedBy" label="You are the">
-            <Select id="postedBy" value={data.postedBy} options={POSTED_BY} onChange={handleChange} />
-          </Field>
+          {!hideTypeAndRole && (
+            <Field id="postedBy" label="You are the">
+              <Select id="postedBy" value={data.postedBy} options={POSTED_BY} onChange={handleChange} />
+            </Field>
+          )}
         </div>
 
         <Field id="title" label="Title" hint="At least 10 characters.">

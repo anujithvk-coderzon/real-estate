@@ -1,5 +1,6 @@
 import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
 import { prisma } from "../../lib/prisma.js";
+import type { PostedBy } from "../../generated/prisma/enums.js";
 import { compare, hash } from "bcrypt";
 import {
   emailTokenVerification,
@@ -12,7 +13,8 @@ import redis from "../../lib/redis.js";
 import { checkDisposableEmail } from "../../lib/disposible_email.js";
 import { sendEmail } from "../../lib/email.js";
 import { goolgeClient } from "../../lib/google.js";
-import { avatarImageUpload, avatarPublicUrl, deleteImage, isOwnAvatar } from "../../lib/bunny.js";
+import { avatarImageUpload, avatarPublicUrl, cdnUrl, deleteImage, isOwnAvatar } from "../../lib/bunny.js";
+import { listNameSluggify} from "../../lib/slug.js";
 
 type regValidation = {
   name: string;
@@ -92,11 +94,13 @@ export const registerService = async (validatedData: regValidation) => {
   
   if (isDisposable)throw new BadRequestError("Disposable email addresses are not allowed. Please use a valid email address.",);
   const hashedPassword = await hash(validatedData.password, 10);
+  const name=`${validatedData.name}-${validatedData.email.split("@")[0]}`
   const user = await prisma.user.create({
     data: {
       name: validatedData.name,
       email: validatedData.email,
       password: hashedPassword,
+      slug:listNameSluggify(name)
     },
   });
   const token = await generateEmailToken(user.id);
@@ -179,6 +183,7 @@ export const googleLoginService=async(code:string)=>{
   })
   const google=ticket.getPayload();
   if(!google?.email||!google.email_verified) throw new BadRequestError("Google account has no verified email");
+   const name=`${google.name}-${google.email.split("@")[0]}`
   const user=await prisma.user.upsert({
     where:{email:google.email},
     update:{googleId:google.sub,isVerified:true},
@@ -187,7 +192,8 @@ export const googleLoginService=async(code:string)=>{
       email:google.email,
       googleId:google.sub,
       avatarUrl:google.picture??null,
-      isVerified:true
+      isVerified:true,
+      slug:listNameSluggify(name)
     }
   })
   const accessToken=await generateAccessToken(user.id);
@@ -296,19 +302,24 @@ export const setPasswordService = async (userId: string, newPass: string) => {
   return { message: "Password created. You can now also sign in with your email.", ...(await issueFreshTokens(userId)) };
 };
 
-export const updateProfileService = async (userId: string, data: { name: string }) => {
+export const updateProfileService = async (
+  userId: string,
+  data: { name?: string | undefined; description?: string | undefined; accountType?: PostedBy | undefined },
+) => {
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { name: data.name },
-    select: { name: true, email: true, avatarUrl: true },
+    // Only the fields that were sent are touched, so one screen never wipes
+    // what another screen saved.
+    data: {
+      ...(data.name && { name: data.name }),
+      // Sent but empty means "remove it", so it is stored as null, not "".
+      ...(data.description !== undefined && { description: data.description.trim() || null }),
+      ...(data.accountType && { accountType: data.accountType }),
+    },
+    select: { name: true, email: true, avatarUrl: true, description: true, accountType: true },
   });
-  // The stored value may be a Bunny path; send the loadable URL, like /auth/me does.
   return { ...user, avatarUrl: avatarPublicUrl(user.avatarUrl) };
 };
-
-// Settings → Profile photo.
-// Order matters: save the new photo first, clean up the old one last, so a failed
-// cleanup can never leave the user without a photo.
 export const imageService=async(userId:string,image:Express.Multer.File)=>{
 const existingUser=await prisma.user.findUnique({where:{id:userId}})
 if(!existingUser) throw new BadRequestError("Invalid Token")
@@ -323,4 +334,62 @@ if(isOwnAvatar(old)){
   await deleteImage(old).catch((error)=>console.error("Old avatar not deleted:",old,error))
 }
 return { message: "Avatar updated successfully", avatarUrl: avatarPublicUrl(path) };
+}
+
+export const agentReraService=async(userId:string,agentReraState:string,agentReraNumber:string)=>{
+const existingUser=await prisma.user.findUnique({where:{id:userId}})
+if(!existingUser) throw new BadRequestError("Invalid Token")
+ const claimed = await prisma.user.findUnique({
+  where: { agentReraNumber },
+  select: { id: true },
+});
+if (claimed && claimed.id !== userId) {
+  throw new BadRequestError("This RERA number is already linked to another account");
+}
+// Nobody has checked this number yet, so it stays PENDING. The account's role is
+// chosen by the user and must not change here.
+await prisma.user.update({where:{id:userId},data:{agentReraState,agentReraNumber,agentReraStatus:"PENDING"}})
+return "Agent RERA registration updated successfully."
+}
+
+
+
+// A seller's public profile, reached from "Listed by …" on a listing.
+// Email and phone are never public; the RERA number is, because buyers check it.
+export const publicProfileService=async(slug:string)=>{
+ const user=await prisma.user.findUnique({
+  where:{slug},
+  select:{
+    name:true,slug:true,avatarUrl:true,description:true,accountType:true,
+    agentReraNumber:true,agentReraState:true,agentReraStatus:true,createdAt:true,
+    _count:{select:{listings:{where:{status:"ACTIVE"}}}},
+    projects:{
+      orderBy:{createdAt:"desc"},
+      select:{
+        id:true,name:true,slug:true,status:true,propertyType:true,totalUnits:true,
+        locality:true,city:true,reraNumber:true,reraStatus:true,isReraExempt:true,
+        images:{orderBy:{position:"asc"},take:1,select:{path:true}},
+      },
+    },
+  },
+ })
+ if(!user) throw new NotFoundError("Profile not found")
+
+ return {
+  name:user.name,
+  slug:user.slug,
+  avatarUrl:avatarPublicUrl(user.avatarUrl),
+  description:user.description,
+  accountType:user.accountType,
+  agentReraNumber:user.agentReraNumber,
+  agentReraState:user.agentReraState,
+  agentReraStatus:user.agentReraStatus,
+  memberSince:user.createdAt,
+  listingCount:user._count.listings,
+  // Only builders have projects, so an empty list simply hides the section.
+  projects:user.projects.map((project)=>({
+    ...project,
+    images:project.images.map((image)=>({path:cdnUrl(image.path)})),
+  })),
+ }
 }

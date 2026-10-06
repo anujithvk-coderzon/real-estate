@@ -165,11 +165,43 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
           <p className="mt-1.5 text-[14px] text-muted">The seller has not added a phone number.</p>
         )}
 
-        <p className="mt-4 text-[13px] text-muted">
-          Listed by <span className="font-medium text-ink">{listing.owner.name}</span> ({labelOf(listing.postedBy).toLowerCase()})
-          {" · "}
-          <time dateTime={listing.createdAt}>{formatDate(listing.createdAt)}</time>
-        </p>
+        {/* Who is selling, and a way to see everything else they have listed. */}
+        <div className="mt-4 border-t border-line pt-4">
+          <p className="text-[13px] text-muted">
+            Listed by{" "}
+            {listing.owner.slug ? (
+              <Link href={`/seller/${listing.owner.slug}`} className="font-medium text-ink hover:text-accent hover:underline">
+                {listing.owner.name}
+              </Link>
+            ) : (
+              <span className="font-medium text-ink">{listing.owner.name}</span>
+            )}{" "}
+            ({labelOf(listing.postedBy).toLowerCase()})
+            {" · "}
+            <time dateTime={listing.createdAt}>{formatDate(listing.createdAt)}</time>
+          </p>
+
+          {/* The agent's own licence, not the project's registration, and only on a
+              listing they posted as an agent: on their own property they are the
+              owner, and the number would read as if the property were registered. */}
+          {listing.postedBy === "BROKER" && listing.owner.agentReraNumber && (
+            <p className="mt-1 text-[12px] text-muted">
+              Agent RERA <span className="font-mono">{listing.owner.agentReraNumber}</span>
+              {listing.owner.agentReraStatus === "VERIFIED"
+                ? " · checked against the state register"
+                : " · as provided by the agent"}
+            </p>
+          )}
+
+          {listing.owner.slug && (
+            <Link
+              href={`/seller/${listing.owner.slug}`}
+              className="mt-2 inline-block text-[13px] font-medium text-accent hover:underline"
+            >
+              See their other properties
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -180,6 +212,82 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
 // Public page for one listing, found by its slug. Built to answer a buyer's
 // questions in order: what is it, what does it cost, how do I reach the seller,
 // then the details.
+// Which project the unit is in. The colour says where the words came from: a
+// project the builder registered here is read from our records, while a name an
+// agent typed in is only their claim, and a buyer must be able to tell apart.
+const ProjectBlock = ({ project }: { project: NonNullable<PublicListing["project"]> }) => {
+  const registered = project.inRecords;
+  const tone = registered
+    ? { box: "bg-accent-soft", heading: "text-accent", rule: "ring-accent/20" }
+    : { box: "bg-warn/10", heading: "text-warn", rule: "ring-warn/20" };
+
+  return (
+    <section aria-labelledby="project-heading">
+      <h2 id="project-heading" className={sectionHeading}>
+        Project
+      </h2>
+
+      <div className={`mt-5 rounded-xl px-5 py-4 ring-1 ${tone.box} ${tone.rule}`}>
+        <p className={`text-[17px] font-semibold ${tone.heading}`}>{project.name}</p>
+
+        {/* Who the builder is, and whose word the RERA number is. A name on its own
+            would not tell a buyer which of the two they are reading. */}
+        <dl className="mt-4 grid gap-4 border-t border-current/10 pt-4 text-[14px] sm:grid-cols-2">
+          <div>
+            <dt className="text-[13px] text-muted">Builder</dt>
+            <dd className="mt-0.5">
+              {registered && project.builderSlug ? (
+                <Link
+                  href={`/seller/${project.builderSlug}`}
+                  className="font-medium text-ink hover:text-accent hover:underline"
+                >
+                  {project.builderName}
+                </Link>
+              ) : project.builderName ? (
+                <span className="font-medium">{project.builderName}</span>
+              ) : (
+                <span className="text-muted">Not given</span>
+              )}
+            </dd>
+          </div>
+
+          {/* The number, or plainly why there is none. Never a badge: nobody checked it. */}
+          <div>
+            <dt className="text-[13px] text-muted">RERA registration</dt>
+            <dd className="mt-0.5">
+            {project.reraNumber ? (
+              <>
+                <span className="font-mono font-medium">{project.reraNumber}</span>
+                <span className="text-muted">
+                  {project.reraStatus === "VERIFIED"
+                    ? " · checked against the state register"
+                    : registered
+                      ? " · as given by the builder"
+                      : ""}
+                </span>
+              </>
+            ) : project.isReraExempt ? (
+              <span className="text-muted">Exempt: the builder states the project has 8 units or fewer</span>
+            ) : (
+              <span className="text-muted">Not given</span>
+            )}
+            </dd>
+          </div>
+        </dl>
+
+        {!registered && (
+          <p className="mt-4 text-[13px] leading-snug text-muted">
+            The project name, the builder and the number above were given by the{" "}
+            {labelOf(project.statedBy).toLowerCase() || "lister"}, not by the builder, who has not
+            registered this project on our site. Check the number on your state RERA website before you pay
+            anything.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+};
+
 const ListSpecific = ({ slug }: Props) => {
   const [listing, setListing] = useState<PublicListing>();
   const [notFound, setNotFound] = useState(false);
@@ -299,6 +407,8 @@ const ListSpecific = ({ slug }: Props) => {
               ))}
             </dl>
           </section>
+
+          {listing.project && <ProjectBlock project={listing.project} />}
 
           <section aria-labelledby="about-heading">
             <h2 id="about-heading" className={sectionHeading}>About this property</h2>

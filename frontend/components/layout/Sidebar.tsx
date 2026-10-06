@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api, setAccessToken } from "@/lib/api";
 import { PROFILE_UPDATED } from "@/lib/events";
+import type { AuthUser } from "@/lib/types";
 
-type User = { name: string; email: string; avatarUrl: string | null };
+type User = Pick<AuthUser, "name" | "email" | "avatarUrl">;
 
 /* ---------- icons (24px grid, drawn with the current text colour) ---------- */
 
@@ -26,6 +27,13 @@ const HomeIcon = () => (
     <path d="M3.5 10.5 12 4l8.5 6.5" />
     <path d="M5.5 9v10.5h13V9" />
     <path d="M10 19.5v-5h4v5" />
+  </svg>
+);
+
+const ProfileIcon = () => (
+  <svg {...iconProps}>
+    <circle cx="12" cy="8.5" r="3.8" />
+    <path d="M4.5 20c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5" />
   </svg>
 );
 
@@ -67,6 +75,7 @@ const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", Icon: HomeIcon },
+  { href: "/list/my/profile", label: "My profile", Icon: ProfileIcon },
   { href: "/list/my/listings", label: "My listings", Icon: ListingsIcon },
   { href: "/list/create", label: "List a property", Icon: AddIcon },
 ];

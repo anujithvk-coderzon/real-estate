@@ -1,8 +1,8 @@
 import axios from "axios";
 import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
-import type { ListingType, Prisma, PropertyType } from "../../generated/prisma/client.js";
+import type { ListingType, PostedBy, Prisma, PropertyType, VerificationStatus } from "../../generated/prisma/client.js";
 import { toSQFT } from "../../lib/area.js";
-import { cdnUrl, deleteImage, deleteListingFiles, deleteVideo, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
+import { avatarPublicUrl, cdnUrl, deleteImage, deleteListingFiles, deleteVideo, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
 import type { CreateListingInput, UpdateListingInput } from "./listing.validation.js";
 import redis from "../../lib/redis.js";
@@ -14,6 +14,56 @@ import { boxAround, distanceKm } from "../../lib/geo.js";
 export const createListingService=async(userId:string,data:CreateListingInput)=>{
 const user=await prisma.user.findUnique({where:{id:userId}})
 if(!user) throw new BadRequestError("Invalid Token")
+
+// An under-construction unit is sold off-plan, so its project must be registered
+// before it is advertised. A ready unit can stand alone: a resale, a single plot,
+// or a project finished before RERA came into force.
+const sellerSale=(data.postedBy==="BUILDER" || data.postedBy==="BROKER") && data.listingType==="SALE"
+const offPlan=sellerSale && data.propertyStatus==="UNDER_CONSTRUCTION"
+
+// Two ways to name the project, and they must not both be used: one is a record
+// in our database, the other is the lister's word for it.
+if(data.projectId && data.projectNameText){
+  throw new BadRequestError("Choose the project from our records, or type its name, not both")
+}
+
+if(data.projectId){
+  // A builder lists in a project they registered; an agent lists in the builder's.
+  const where=user.accountType==="BUILDER"
+    ? {id:data.projectId,builderId:userId}
+    : {id:data.projectId}
+  const project=await prisma.project.findFirst({where,select:{reraNumber:true,isReraExempt:true}})
+  if(!project) throw new NotFoundError("Project not found")
+
+  // Checked here too, where it matters, rather than trusting the project form:
+  // an off-plan advertisement must carry a number, or say why there is none.
+  if(offPlan && !project.reraNumber && !project.isReraExempt){
+    throw new BadRequestError("This project has no RERA registration number. Add it to the project before advertising a unit under construction.")
+  }
+}
+
+// A builder is the one who registers their project, so they add it to their
+// profile rather than typing its name here.
+if(data.projectNameText && user.accountType==="BUILDER"){
+  throw new BadRequestError("Add the project to your profile, then choose it here")
+}
+
+// A project nobody registered here carries nothing of its own, so the lister must
+// supply all three: without the number the name cannot be checked anywhere, and
+// without the builder a buyer does not know whose project they are buying into.
+if(data.projectNameText && !data.projectReraText){
+  throw new BadRequestError("Give the project's RERA registration number, or say the unit is not part of a project")
+}
+if(data.projectNameText && !data.builderNameText){
+  throw new BadRequestError("Give the name of the builder of this project")
+}
+
+// Off-plan: there is no "not part of a project" answer, because such a unit is
+// sold out of a project that must be registered before it is advertised.
+if(offPlan && !data.projectId && !data.projectNameText){
+  throw new BadRequestError("An under-construction unit must name its project. Choose it from our records, or type its name and RERA number.")
+}
+
 const post=await prisma.listing.create({data:{
     title:data.title,
     slug:listNameSluggify(data.title),
@@ -37,6 +87,11 @@ const post=await prisma.listing.create({data:{
     totalFloors:data.totalFloors??null,
     propertyStatus:data.propertyStatus??null,
     availableFrom:data.availableFrom??null,
+    projectId:data.projectId??null,
+    // Only kept when the project is not one of our records.
+    projectNameText:data.projectId ? null : (data.projectNameText??null),
+    projectReraText:data.projectId ? null : (data.projectReraText??null),
+    builderNameText:data.projectId ? null : (data.builderNameText??null),
     addressLine:data.addressLine,
     landmark:data.landmark??null,
     locality:data.locality,
@@ -248,28 +303,79 @@ export const OwnerListsFetchingService=async(userId:string,page:number,orderBy:L
 return {response,total}
 }
 
+// Which project a unit is in, and whose word that is. A record in our database was
+// registered by the builder who owns it; a typed name is only what the lister said,
+// so the two are never shown as the same thing.
+const projectClaim=(listing:{
+  postedBy:PostedBy
+  projectNameText:string|null
+  projectReraText:string|null
+  builderNameText:string|null
+  project:{name:string,slug:string|null,reraNumber:string|null,reraStatus:VerificationStatus,
+           isReraExempt:boolean,builder:{name:string,slug:string|null}}|null
+})=>{
+  if(listing.project){
+    const {project}=listing
+    return {
+      name:project.name,
+      slug:project.slug,
+      reraNumber:project.reraNumber,
+      reraStatus:project.reraStatus,
+      isReraExempt:project.isReraExempt,
+      builderName:project.builder.name,
+      builderSlug:project.builder.slug,
+      statedBy:"BUILDER" as const,
+      inRecords:true,
+    }
+  }
+  if(!listing.projectNameText) return null
+  return {
+    name:listing.projectNameText,
+    slug:null,
+    reraNumber:listing.projectReraText,
+    reraStatus:"NONE" as VerificationStatus,
+    isReraExempt:false,
+    builderName:listing.builderNameText,
+    builderSlug:null,
+    // The agent or owner who posted it typed this name; the builder never confirmed it.
+    statedBy:listing.postedBy,
+    inRecords:false,
+  }
+}
+
 export const SpecificListFetchingService=async(slug:string,userId?:string)=>{
 const signedIn=userId ? Boolean(await prisma.user.findUnique({where:{id:userId},select:{id:true}})) : false
 const listing=await prisma.listing.findUnique({
     where:{slug,status:'ACTIVE'},
-    omit:{id:true,ownerId:true},
+    omit:{id:true,ownerId:true,projectId:true},
     include:{
         amenities:{select:{name:true,category:true}},
+        // The registered project, when the unit is in one of our records.
+        project:{select:{name:true,slug:true,reraNumber:true,reraStatus:true,isReraExempt:true,
+                         builder:{select:{name:true,slug:true}}}},
         listingImages:{orderBy:{position:"asc"},select:{path:true,position:true}},
         listingVideo:{select:{videoId:true}},
-        owner:{select:{name:true}},
+        // Enough for the "Listed by" line and a link to their public profile.
+        owner:{select:{name:true,slug:true,avatarUrl:true,accountType:true,agentReraNumber:true,agentReraStatus:true}},
     },
 })
 if(!listing) throw new NotFoundError("Listing not found")
-const {contactName,contactPhone,...publicFields}=listing
+// The raw columns are replaced by one answer, so the page cannot read a typed
+// name and a registered one the same way.
+const {contactName,contactPhone,
+  project:_project,projectNameText:_name,projectReraText:_rera,builderNameText:_builder,
+  ...publicFields}=listing
 return {
     ...publicFields,
     ...(signedIn && {contactName,contactPhone}),
+    project:projectClaim(listing),
     listingImages:listing.listingImages.map((img)=>({
         position:img.position,
         path:cdnUrl(img.path),
     })),
-    listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null
+    listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null,
+    // The stored avatar may be a Bunny path; send the URL the browser can load.
+    owner:{...listing.owner,avatarUrl:avatarPublicUrl(listing.owner.avatarUrl)},
 }
 }
 export const OwnerSpecificListFetchingService=async(userId:string,listingId:string)=>{
@@ -445,4 +551,37 @@ const final_result=listings.map((list)=>({
 })).filter((list)=>list.distanceKm<=km)
    .sort((a,b)=>a.distanceKm - b.distanceKm)
 return final_result
+}
+
+// A seller's published listings for their public profile: one page at a time,
+// never the whole lot, and the same card fields as search (no id, no address).
+export const sellerListsFetchingService=async(slug:string,page:number)=>{
+  const take=9;
+  const seller=await prisma.user.findUnique({where:{slug},select:{id:true}})
+  if(!seller) throw new NotFoundError("Profile not found")
+  const where:ListingWhereInput={status:ListingStatus.ACTIVE,ownerId:seller.id}
+
+  const[lists,total]=await Promise.all([
+    prisma.listing.findMany({
+      where,
+      orderBy:[{createdAt:"desc"},{id:"asc"}],
+      take,
+      skip:(page-1)*take,
+      select:{
+        slug:true,title:true,listingType:true,propertyType:true,price:true,
+        locality:true,city:true,district:true,bedrooms:true,bathrooms:true,
+        areaValue:true,areaUnit:true,createdAt:true,updatedAt:true,status:true,
+        listingImages:{orderBy:{position:"asc"},take:1,select:{path:true}},
+      },
+    }),
+    prisma.listing.count({where}),
+  ])
+
+  return {
+    total,
+    lists:lists.map((listing)=>({
+      ...listing,
+      listingImages:listing.listingImages.map((image)=>({path:cdnUrl(image.path)})),
+    })),
+  }
 }

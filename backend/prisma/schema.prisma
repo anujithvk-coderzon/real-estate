@@ -37,7 +37,6 @@ enum PostedBy {
   OWNER
   BROKER
   BUILDER
-  DEALER
 }
 
 enum Furnishing {
@@ -66,112 +65,192 @@ enum ListingStatus {
   EXPIRED
 }
 
+enum VerificationStatus {
+  NONE
+  PENDING
+  VERIFIED
+  REVOKED
+}
 
+enum ProjectStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
 
 model User {
+  id                  String             @id @default(uuid())
+  slug                String?            @unique
+  name                String
+  email               String             @unique
+  description         String?
+  password            String?
+  googleId            String?            @unique
+  avatarUrl           String?
+  role                UserRole           @default(USER)
+  isVerified          Boolean            @default(false)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  listings            Listing[]
+  accountType         PostedBy?
+  agentReraNumber     String?            @unique
+  agentReraState      String?
+  agentReraName       String?
+  agentReraStatus     VerificationStatus @default(NONE)
+  agentReraVerifiedAt DateTime?
+  projects            Project[]          @relation("BuiltProjects")
+
+  @@map("users")
+}
+
+model Project {
+  id             String             @id @default(ulid())
+  name           String
+  description    String?
+  slug           String?            @unique
+  status         ProjectStatus
+  propertyType   PropertyType?
+  totalUnits     Int?
+  minPrice       Decimal?           @db.Decimal(12, 2)
+  maxPrice       Decimal?           @db.Decimal(12, 2)
+  startedAt      DateTime?
+  handoverAt     DateTime?
+  locality       String
+  city           String
+  district       String
+  state          String
+  pincode        String
+  latitude       Float?
+  longitude      Float?
+  reraNumber     String?            @unique
+  reraState      String?
+  reraStatus     VerificationStatus @default(NONE)
+  reraVerifiedAt DateTime?
+  isReraExempt   Boolean            @default(false)
+  exemptReason   String?
+  builderId      String
+  builder        User               @relation("BuiltProjects", fields: [builderId], references: [id], onDelete: Restrict)
+  images         ProjectImages[]
+  listings       Listing[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([builderId])
+  @@map("projects")
+}
+
+model ProjectImages {
   id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String?
-  googleId  String?  @unique
-  avatarUrl String?
-  role      UserRole @default(USER)
-  isVerified Boolean @default(false)
+  path      String
+  position  Int      @default(0)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  @@map("users")
-  listings Listing[]
+
+  @@index([projectId])
+  @@map("project_images")
 }
 
 model Listing {
-  id String @id @default(uuid())
-  //basic info
-  title String
-  description String
-  slug      String? @unique
-  listingType ListingType
-  propertyType PropertyType
-  postedBy      PostedBy
+  id              String          @id @default(uuid())
+  projectId       String?
+  project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  // Stated by the lister when the project is not in our records. Nobody has
+  // checked either value, so they are shown as a claim, not as a fact.
+  projectNameText String?
+  projectReraText String?
+  builderNameText String?
+  title           String
+  description     String
+  slug            String?         @unique
+  listingType     ListingType
+  propertyType    PropertyType
+  postedBy        PostedBy
   //price
-  price         Decimal @db.Decimal(12,2)
-  isNegotiable  Boolean @default(false)
-  securityDeposit Decimal? @db.Decimal(12,2)
-  maintenance     Decimal? @db.Decimal(10,2)
+  price           Decimal         @db.Decimal(12, 2)
+  isNegotiable    Boolean         @default(false)
+  securityDeposit Decimal?        @db.Decimal(12, 2)
+  maintenance     Decimal?        @db.Decimal(10, 2)
   //area
-  areaUnit    AreaUnit
-  areaValue   Decimal @db.Decimal(12,2)
-  areaSqft    Decimal @db.Decimal(12,2)
+  areaUnit        AreaUnit
+  areaValue       Decimal         @db.Decimal(12, 2)
+  areaSqft        Decimal         @db.Decimal(12, 2)
   // configuration
-  bedrooms  Int?
-  bathrooms Int?
-  balconies Int?
-  furnishing Furnishing?
-  floorNumber Int?
-  totalFloors Int?
+  bedrooms        Int?
+  bathrooms       Int?
+  balconies       Int?
+  furnishing      Furnishing?
+  floorNumber     Int?
+  totalFloors     Int?
   propertyStatus  PropertyStatus?
   availableFrom   DateTime?
   //location  
-  addressLine String
-  landmark  String?
-  locality  String
-  city    String
-  district String
-  state   String
-  pincode String
-  latitude Float?
-  longitude Float?
+  addressLine     String
+  landmark        String?
+  locality        String
+  city            String
+  district        String
+  state           String
+  pincode         String
+  latitude        Float?
+  longitude       Float?
   //contact 
-  contactName String?
-  contactPhone String?
+  contactName     String?
+  contactPhone    String?
   //status
-  status ListingStatus @default(DRAFT)
-  expiresAt DateTime?
+  status          ListingStatus   @default(DRAFT)
+  expiresAt       DateTime?
   //owner details
-  ownerId String
-  owner User @relation(fields: [ownerId],references: [id],onDelete: Restrict) 
+  ownerId         String
+  owner           User            @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   //
-  listingImages ListingImages[]
-  amenities     Amenity[]
-  listingVideo  ListingVideos?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  @@index([city,listingType,status])
-  @@index([status,createdAt])
+  listingImages   ListingImages[]
+  amenities       Amenity[]
+  listingVideo    ListingVideos?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([city, listingType, status])
+  @@index([status, createdAt])
   @@index([price])
   @@index([areaSqft])
   @@index([ownerId])
-  @@index([status,latitude,longitude])
+  @@index([status, latitude, longitude])
+  @@index([projectId])
   @@map("listings")
 }
 
 model ListingImages {
-  id String @id @default(uuid())
-  path String
-  position Int @default(0)
+  id        String   @id @default(uuid())
+  path      String
+  position  Int      @default(0)
   listingId String
-  listing  Listing @relation(fields: [listingId],references: [id],onDelete:Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([listingId])
   @@map("listing_images")
 }
 
 model ListingVideos {
-  id String @id @default(uuid())
-  videoId String @unique
-  listingId String @unique
-  listing Listing @relation(fields: [listingId],references: [id],onDelete:Cascade)
+  id        String   @id @default(uuid())
+  videoId   String   @unique
+  listingId String   @unique
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("listing_videos")
 }
 
 model Amenity {
-  id String @id @default(uuid())
-  name String @unique
-  category String
-  listing Listing[]
-  createdAt DateTime @default(now())
+  id        String    @id @default(uuid())
+  name      String    @unique
+  category  String
+  listing   Listing[]
+  createdAt DateTime  @default(now())
+
   @@map("amenities")
 }
-

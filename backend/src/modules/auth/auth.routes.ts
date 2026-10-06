@@ -1,6 +1,7 @@
 import express from "express";
 import {
   accountVerification,
+  agentRera,
   change_password,
   changeAvatar,
   forgot_password,
@@ -9,6 +10,7 @@ import {
   login,
   logout,
   me,
+  publicProfile,
   register,
   reset_password,
   rotateAccessToken,
@@ -31,9 +33,11 @@ router.post("/forgot",rateLimit(forgotPassIPLimiter),rateLimit(forgotPassEmailLi
 router.post("/reset/:token",reset_password)
 router.patch("/change/password",isAuthorized,rateLimit(changePassLimiter),change_password)
 router.get('/me',isAuthorized,me)
+router.get('/public/:slug',publicProfile)
 router.patch("/profile",isAuthorized,update_profile)
 router.post("/password/set",isAuthorized,rateLimit(changePassLimiter),set_password)
 router.get("/google",googleLogin)
 router.get("/google/callback",googleCallback)
 router.patch("/change/avatar",isAuthorized,upload.single("avatar"),changeAvatar)
+router.patch('/agent-rera',isAuthorized,agentRera)
 export default router;

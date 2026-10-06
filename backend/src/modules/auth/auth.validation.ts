@@ -66,12 +66,17 @@ export const changePasswordSchema=z.object({
   path:['new_password']
 })
 
-// Google accounts adding their first password.
 export const setPasswordSchema = z.object({
   new_password: strongPassword,
 });
 
 // Settings → Profile.
+// Every field is optional: settings sends name + description + role together,
+// while the welcome screen sends only the role. Whatever is sent gets saved.
 export const profileSchema = z.object({
-  name: z.string().trim().min(2, "Name is too short").max(60, "Name is too long"),
+  name: z.string().trim().min(2, "Name is too short").max(60, "Name is too long").optional(),
+  // A few lines about themselves, shown on their public profile. Empty removes it.
+  description: z.string().trim().max(500, "Keep it under 500 characters").optional(),
+  // Their usual role: pre-selects the choice when listing, and decides who sees projects.
+  accountType: z.enum(["OWNER", "BROKER", "BUILDER"]).optional(),
 });

@@ -22,9 +22,8 @@ export const PROPERTY_TYPES: Option[] = [
 
 export const POSTED_BY: Option[] = [
   { value: "OWNER", label: "Owner" },
-  { value: "BROKER", label: "Broker" },
+  { value: "BROKER", label: "Broker or dealer" },
   { value: "BUILDER", label: "Builder" },
-  { value: "DEALER", label: "Dealer" },
 ];
 
 export const FURNISHING: Option[] = [

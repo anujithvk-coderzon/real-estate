@@ -54,6 +54,20 @@ export const uploadImages = (
   });
 };
 
+// Project photos: same rules as listing photos, a different owner.
+export const uploadProjectImages = (
+  projectId: string,
+  files: File[],
+  onProgress?: (percent: number) => void,
+) => {
+  const form = new FormData();
+  files.forEach((file) => form.append("images", file));
+  return api.post(`/project/images/${projectId}`, form, {
+    timeout: UPLOAD_TIMEOUT,
+    onUploadProgress: (event) => onProgress?.(toPercent(event.loaded, event.total)),
+  });
+};
+
 export const uploadVideo = (
   listingId: string,
   file: File,
