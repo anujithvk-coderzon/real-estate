@@ -179,7 +179,7 @@ const SellerProfile = ({ slug }: { slug: string }) => {
           <h2 id="projects-heading" className="text-[20px] font-semibold tracking-tight">
             Projects
           </h2>
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {profile.projects.map((project) => (
               <li key={project.id} className="overflow-hidden rounded-xl bg-panel ring-1 ring-line">
                 {project.images[0] ? (
@@ -224,7 +224,7 @@ const SellerProfile = ({ slug }: { slug: string }) => {
         </h2>
 
         {listings === null ? (
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
             {Array.from({ length: 3 }, (_, index) => (
               <li key={index} className="overflow-hidden rounded-xl bg-panel ring-1 ring-line">
                 <div className="aspect-[16/10] animate-pulse bg-line/50" />
@@ -239,7 +239,7 @@ const SellerProfile = ({ slug }: { slug: string }) => {
           <p className="mt-3 text-[15px] text-muted">Nothing listed right now.</p>
         ) : (
           <>
-            <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map((listing, index) => (
                 <li key={listing.slug ?? `listing-${index}`}>
                   <PublicListingCard listing={listing} />

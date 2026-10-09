@@ -19,6 +19,7 @@ import {
   listingTypeOptions,
   propertyTypeOptions,
 } from "@/lib/listing";
+import { amountInput } from "@/lib/amount";
 import { formatNumber } from "@/lib/format";
 import type { ListingAmenity, ListingFormData } from "@/lib/types";
 import { inputClass } from "@/lib/ui";
@@ -94,6 +95,16 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
     className: monoInput,
   });
 
+  // Rupee amounts, shown grouped as they are typed.
+  const moneyInput = (name: keyof ListingFormData, placeholder: string) =>
+    amountInput({
+      name,
+      value: data[name] as string,
+      placeholder,
+      className: monoInput,
+      onValue: (amount) => setData((prev) => clearInapplicableFields({ ...prev, [name]: amount })),
+    });
+
   const { listingType, propertyType } = data;
   const rental = isRental(listingType);
   const isPlot = propertyType === "PLOT";
@@ -108,7 +119,7 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
     <div className="space-y-7" onWheelCapture={blurNumberInputOnWheel}>
       {/* ---------- what is being listed ---------- */}
       <div className="space-y-4">
-        <div className={`grid gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}>
+        <div className={`grid grid-cols-1 gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}>
           {!hideTypeAndRole && (
             <Field id="listingType" label="Listing for">
               <Select
@@ -164,13 +175,13 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
       <div className="space-y-4 border-t border-line pt-6">
         <h3 className={groupTitle}>Price</h3>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
             id="price"
             label={rental ? "Monthly rent (₹)" : "Price (₹)"}
             hint={listingType && (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")}
           >
-            <input {...numberInput("price", rental ? "18000" : "4500000")} inputMode="decimal" />
+            <input {...moneyInput("price", rental ? "18,000" : "45,00,000")} />
           </Field>
 
           <label className="flex items-center gap-2 self-end pb-2.5 text-[15px] text-ink">
@@ -186,12 +197,12 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
         </div>
 
         {rental && (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field id="securityDeposit" label="Security deposit (₹)">
-              <input {...numberInput("securityDeposit", "50000")} inputMode="decimal" />
+              <input {...moneyInput("securityDeposit", "50,000")} />
             </Field>
             <Field id="maintenance" label="Monthly maintenance (₹)" optional>
-              <input {...numberInput("maintenance", "1500")} inputMode="decimal" />
+              <input {...moneyInput("maintenance", "1,500")} />
             </Field>
           </div>
         )}
@@ -208,14 +219,17 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
                 {...numberInput("areaValue", data.areaUnit === "ACRE" ? "0.5" : data.areaUnit === "CENT" ? "10" : "1200")}
                 step="any"
                 inputMode="decimal"
-                className="w-full rounded-l-md bg-transparent px-3 py-2 font-mono text-[15px] text-ink placeholder:text-muted/60 focus:outline-none"
+                // min-w-0: without it the input refuses to shrink below its
+                // intrinsic 20-character width, and the row plus its unit select
+                // needs ~260px inside a 240px card — a sideways-scrolling page.
+                className="w-full min-w-0 rounded-l-md bg-transparent px-3 py-2 font-mono text-[16px] text-ink placeholder:text-muted/60 focus:outline-none sm:text-[15px]"
               />
               <select
                 name="areaUnit"
                 aria-label="Unit of measurement"
                 value={data.areaUnit}
                 onChange={handleChange}
-                className="shrink-0 rounded-r-md border-l border-line bg-transparent px-3 text-[15px] text-ink focus:outline-none"
+                className="shrink-0 rounded-r-md border-l border-line bg-transparent px-3 text-[16px] text-ink focus:outline-none sm:text-[15px]"
               >
                 {AREA_UNITS.map((unit) => (
                   <option key={unit.value} value={unit.value}>
@@ -238,7 +252,7 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
           <div className="space-y-4 border-t border-line pt-6">
             <h3 className={groupTitle}>Configuration</h3>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {isResidential(propertyType) && (
                 <Field id="bedrooms" label="Bedrooms">
                   <input {...numberInput("bedrooms", "2")} />
@@ -254,7 +268,7 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Field id="furnishing" label="Furnishing" optional>
                 <Select id="furnishing" value={data.furnishing} options={FURNISHING} onChange={handleChange} />
               </Field>
@@ -300,7 +314,7 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
       {(listingType === "SALE" && !isPlot) || rental ? (
         <div className="space-y-4 border-t border-line pt-6">
           <h3 className={groupTitle}>Availability</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {listingType === "SALE" && (
               <Field id="propertyStatus" label="Construction status" optional>
                 <Select
@@ -331,7 +345,7 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
       {/* ---------- contact ---------- */}
       <div className="space-y-4 border-t border-line pt-6">
         <h3 className={groupTitle}>Contact for visits</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field id="contactName" label="Name" optional>
             <input
               id="contactName"

@@ -20,7 +20,7 @@ const GoogleButton = () => (
       <span className="h-px flex-1 bg-line" />
     </div>
     <a
-      href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`}
+      href="/api/auth/google"
       className={`flex w-full items-center justify-center gap-3 bg-panel ${secondaryButton}`}
     >
       <GoogleLogo />

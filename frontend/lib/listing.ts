@@ -26,6 +26,17 @@ export const POSTED_BY: Option[] = [
   { value: "BUILDER", label: "Builder" },
 ];
 
+// How far from the searched place to look. The search page only: the home page
+// has no place to measure from. An empty value means the API's own default of
+// 10 km, which is why 10 is not in this list — it is the "no choice" choice,
+// so an old shared link with no radius keeps returning what it always did.
+export const RADIUS_OPTIONS: Option[] = [
+  { value: "20", label: "20 km" },
+  { value: "30", label: "30 km" },
+  { value: "40", label: "40 km" },
+  { value: "50", label: "50 km" },
+];
+
 export const FURNISHING: Option[] = [
   { value: "UNFURNISHED", label: "Unfurnished" },
   { value: "SEMI_FURNISHED", label: "Semi furnished" },
@@ -98,6 +109,51 @@ export const hasFloorNumber = (propertyType: string) =>
   ["APARTMENT", "OFFICE", "COMMERCIAL", "ROOM"].includes(propertyType);
 
 // A plot can only be sold.
+// Budgets only make sense within one kind of price: a sale price and a monthly
+// rent can't share a scale, so each listing type gets its own ladder.
+export const BUDGETS: Record<string, number[]> = {
+  SALE: [25_00_000, 50_00_000, 75_00_000, 1_00_00_000, 2_00_00_000, 5_00_00_000],
+  RENT: [10_000, 20_000, 30_000, 50_000, 1_00_000],
+  PG: [5_000, 8_000, 12_000, 20_000],
+};
+
+/* ---------- the budget slider's scale ---------- */
+
+// A budget runs from a ₹1,000 room to a ₹100 Cr estate — five orders of magnitude.
+// Spread that evenly along a track and every listing in Kerala lands in its first
+// few pixels, where one pixel of drag is worth lakhs.
+//
+// So each step is the same PERCENTAGE rather than the same number of rupees. Over
+// 100 steps that is about 15% per step, which is as precise at ₹12,000 as it is
+// at ₹12 Cr, and one scale then serves rents and sale prices alike.
+export const BUDGET_MIN = 1_000;
+export const BUDGET_MAX = 1_00_00_00_000;
+export const BUDGET_STEPS = 100;
+
+// Two significant figures, so the slider lands on ₹23,000 and not ₹23,148.
+const roundToTwoFigures = (value: number) => {
+  const unit = 10 ** (Math.floor(Math.log10(value)) - 1);
+  return Math.round(value / unit) * unit;
+};
+
+// Position 0 means no ceiling at all; 1..BUDGET_STEPS walk the scale.
+export const budgetAt = (position: number) =>
+  position <= 0
+    ? 0
+    : roundToTwoFigures(BUDGET_MIN * (BUDGET_MAX / BUDGET_MIN) ** (position / BUDGET_STEPS));
+
+// The inverse, for restoring the thumb from a URL.
+export const budgetPosition = (amount: number) =>
+  amount <= BUDGET_MIN
+    ? 0
+    : Math.min(
+        BUDGET_STEPS,
+        Math.round((BUDGET_STEPS * Math.log(amount / BUDGET_MIN)) / Math.log(BUDGET_MAX / BUDGET_MIN)),
+      );
+
+// Bedrooms mean nothing for these.
+export const NO_BEDROOMS = ["PLOT", "COMMERCIAL", "OFFICE"];
+
 export const listingTypeOptions = (propertyType: string) =>
   propertyType === "PLOT" ? LISTING_TYPES.filter((o) => o.value === "SALE") : LISTING_TYPES;
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PROPERTY_TYPES } from "@/lib/listing";
+import { PROPERTY_TYPES, RADIUS_OPTIONS } from "@/lib/listing";
 import { inputClass, labelClass, primaryButton } from "@/lib/ui";
 
 // What the user picked. "" means "any", and is not sent as a filter.
@@ -10,6 +10,8 @@ export type SearchValues = {
   listingType: string;
   propertyType: string;
   location: string;
+  // How far around the location to look. "" means the API's default of 10 km.
+  radius: string;
 };
 
 type Props = {
@@ -29,14 +31,31 @@ const MODES = [
 const MAX_LOCATION_LENGTH = 100;
 
 const PinIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-5 w-5 shrink-0">
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className="h-5 w-5 shrink-0"
+  >
     <path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11Z" />
     <circle cx="12" cy="10" r="2.5" />
   </svg>
 );
 
 const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true" className="h-5 w-5 shrink-0">
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    aria-hidden="true"
+    className="h-5 w-5 shrink-0"
+  >
     <circle cx="11" cy="11" r="6.5" />
     <path d="m20 20-4.2-4.2" />
   </svg>
@@ -45,9 +64,14 @@ const SearchIcon = () => (
 // Home page search section: pick Buy / Rent / PG and a property type, then type a location.
 const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   const router = useRouter();
-  const [listingType, setListingType] = useState(initialValues?.listingType ?? "");
-  const [propertyType, setPropertyType] = useState(initialValues?.propertyType ?? "");
+  const [listingType, setListingType] = useState(
+    initialValues?.listingType ?? "",
+  );
+  const [propertyType, setPropertyType] = useState(
+    initialValues?.propertyType ?? "",
+  );
   const [location, setLocation] = useState(initialValues?.location ?? "");
+  const [radius, setRadius] = useState(initialValues?.radius ?? "");
 
   const [expanded, setExpanded] = useState(false); // toolbar on phones: form hidden until tapped
 
@@ -55,7 +79,8 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   const canSearch = location.trim() !== "";
 
   // Clicking the selected mode again clears it, so "any" is always reachable.
-  const toggleMode = (value: string) => setListingType(listingType === value ? "" : value);
+  const toggleMode = (value: string) =>
+    setListingType(listingType === value ? "" : value);
 
   // A <form>, so Enter in the location box submits without any key handling.
   // The search goes into the URL; the results page reads it from there and fetches.
@@ -67,6 +92,9 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     if (listingType) params.set("listingType", listingType);
     if (propertyType) params.set("propertyType", propertyType);
     if (location.trim()) params.set("location", location.trim());
+    // Carried even where there is no control for it, so editing the search on the
+    // results page keeps the distance the visitor chose there.
+    if (radius) params.set("radius", radius);
     router.push(`/property/search?${params}`);
     setExpanded(false);
   };
@@ -74,7 +102,8 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   if (variant === "toolbar") {
     // "Kakkanad · Rent · Apartment". Choices left as "any" are simply not mentioned.
     const summary = [
-      location.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase()) || "Search a location",
+      location.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase()) ||
+        "Search a location",
       MODES.find((mode) => mode.value === listingType)?.label,
       PROPERTY_TYPES.find((type) => type.value === propertyType)?.label,
     ]
@@ -91,9 +120,13 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           aria-controls="search-toolbar"
           className="flex h-11 w-full items-center gap-2.5 rounded-lg bg-panel px-3.5 text-left text-[15px] ring-1 ring-line md:hidden"
         >
-          <span className="text-muted"><SearchIcon /></span>
+          <span className="text-muted">
+            <SearchIcon />
+          </span>
           <span className="min-w-0 flex-1 truncate font-medium">{summary}</span>
-          <span className="text-[13px] font-medium text-accent">{expanded ? "Close" : "Edit"}</span>
+          <span className="text-[13px] font-medium text-accent">
+            {expanded ? "Close" : "Edit"}
+          </span>
         </button>
 
         <form
@@ -104,7 +137,9 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           className={`${expanded ? "mt-2 grid" : "hidden"} gap-2 rounded-lg bg-panel p-3 ring-1 ring-line md:mt-0 md:flex md:items-center md:bg-transparent md:p-0 md:ring-0`}
         >
           <div className="relative md:min-w-0 md:flex-1">
-            <label htmlFor="toolbar-location" className="sr-only">Location</label>
+            <label htmlFor="toolbar-location" className="sr-only">
+              Location
+            </label>
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
               <PinIcon />
             </span>
@@ -119,12 +154,16 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
               required
               autoComplete="off"
               enterKeyHint="search"
-              className="h-10 w-full rounded-lg border border-line bg-panel pl-10 pr-3 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:text-[15px] [&::-webkit-search-cancel-button]:hidden"
+              className="h-11 w-full rounded-lg border border-line bg-panel pl-10 pr-12 md:h-10 md:pr-3 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:text-[15px] [&::-webkit-search-cancel-button]:hidden"
             />
           </div>
 
           {/* Buy / Rent / PG as one joined control; clicking the selected one clears it. */}
-          <div role="group" aria-label="Looking to" className="flex h-10 shrink-0 rounded-lg bg-panel p-1 ring-1 ring-line">
+          <div
+            role="group"
+            aria-label="Looking to"
+            className="flex h-11 shrink-0 rounded-lg bg-panel p-1 ring-1 ring-line md:h-10"
+          >
             {MODES.map((mode) => {
               const selected = listingType === mode.value;
               return (
@@ -134,7 +173,9 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
                   onClick={() => toggleMode(mode.value)}
                   aria-pressed={selected}
                   className={`flex-1 rounded-md px-3.5 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent md:flex-none ${
-                    selected ? "bg-accent text-white" : "text-muted hover:text-ink"
+                    selected
+                      ? "bg-accent text-white"
+                      : "text-muted hover:text-ink"
                   }`}
                 >
                   {mode.label}
@@ -143,16 +184,20 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             })}
           </div>
 
-          <label htmlFor="toolbar-type" className="sr-only">Property type</label>
+          <label htmlFor="toolbar-type" className="sr-only">
+            Property type
+          </label>
           <select
             id="toolbar-type"
             value={propertyType}
             onChange={(event) => setPropertyType(event.target.value)}
-            className="h-10 shrink-0 rounded-lg border border-line bg-panel px-3 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:w-44"
+            className="h-11 shrink-0 rounded-lg border border-line bg-panel px-3 text-[16px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:h-10 md:w-44 md:text-[15px]"
           >
             <option value="">Any type</option>
             {PROPERTY_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>{type.label}</option>
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
             ))}
           </select>
 
@@ -160,7 +205,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             type="submit"
             disabled={!canSearch}
             title={canSearch ? undefined : "Enter a location to search"}
-            className={`h-10 shrink-0 !py-0 ${primaryButton}`}
+            className={`h-11 shrink-0 !py-0 md:h-10 ${primaryButton}`}
           >
             Search
           </button>
@@ -170,104 +215,151 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   }
 
   return (
-    <section aria-labelledby="search-heading" className="w-full rounded-2xl bg-panel p-5 shadow-sm ring-1 ring-line sm:p-6">
-      <h2 id="search-heading" className="text-[18px] font-semibold tracking-tight">
+    <section
+      aria-labelledby="search-heading"
+      className="w-full rounded-2xl bg-panel p-5 shadow-sm ring-1 ring-line sm:p-6"
+    >
+      <h2
+        id="search-heading"
+        className="text-[18px] font-semibold tracking-tight"
+      >
         Search what you want
       </h2>
-      <p className="mt-1 text-[14px] text-muted">Pick what you&apos;re looking for, then tell us where.</p>
+      <p className="mt-1 text-[14px] text-muted">
+        Pick what you&apos;re looking for, then tell us where.
+      </p>
 
+      {/* suppressHydrationWarning on the form controls: extensions tag inputs with
+          their own attributes before React hydrates. See app/layout.tsx. */}
       <form
         role="search"
         onSubmit={handleSubmit}
-        className="mt-5 grid gap-4 md:grid-cols-[auto_minmax(0,14rem)_minmax(0,1fr)_auto] md:items-end"
+        className="mt-5 space-y-4"
+        suppressHydrationWarning
       >
-        {/* ---------- mode ---------- */}
-        <fieldset>
-          <legend className={labelClass}>Looking to</legend>
-          <div className="flex gap-1.5">
-            {MODES.map((mode) => {
-              const selected = listingType === mode.value;
-              return (
+        {/* What you are looking for. Three controls side by side needs 768px;
+            below that they stack, which is also the 320px layout. */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto_minmax(0,13rem)_minmax(0,10rem)] md:items-end">
+          {/* ---------- mode ---------- */}
+          <fieldset>
+            <legend className={labelClass}>Looking to</legend>
+            <div className="flex gap-1.5">
+              {MODES.map((mode) => {
+                const selected = listingType === mode.value;
+                return (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    onClick={() => toggleMode(mode.value)}
+                    aria-pressed={selected}
+                    className={`h-11 rounded-md px-4 text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                      selected
+                        ? "bg-accent text-white"
+                        : "bg-ground text-muted hover:text-ink"
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {/* ---------- property type ---------- */}
+          <div>
+            <label htmlFor="search-type" className={labelClass}>
+              Property type
+            </label>
+            <select
+              id="search-type"
+              value={propertyType}
+              onChange={(event) => setPropertyType(event.target.value)}
+              className={`h-11 ${inputClass}`}
+              suppressHydrationWarning
+            >
+              <option value="">Any type</option>
+              {PROPERTY_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* ---------- how far out ---------- */}
+          <div>
+            <label htmlFor="search-radius" className={labelClass}>
+              Distance
+            </label>
+            <select
+              id="search-radius"
+              value={radius}
+              onChange={(event) => setRadius(event.target.value)}
+              className={`h-11 ${inputClass}`}
+              suppressHydrationWarning
+            >
+              {/* The empty value is 10 km: the API's own default, so a search
+                  made without touching this is the search it always was. */}
+              <option value="">Within 10 km</option>
+              {RADIUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  Within {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* ---------- where, and go ---------- */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div>
+            <label htmlFor="search-location" className={labelClass}>
+              Location{" "}
+              <span className="text-danger" aria-hidden="true">
+                *
+              </span>
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+                <PinIcon />
+              </span>
+              <input
+                id="search-location"
+                name="search-location"
+                type="search"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                maxLength={MAX_LOCATION_LENGTH}
+                placeholder="e.g. Kakkanad, Kannur"
+                required
+                autoComplete="off"
+                enterKeyHint="search"
+                className="h-11 w-full rounded-md border border-line bg-panel pl-10 pr-12 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 [&::-webkit-search-cancel-button]:hidden"
+                suppressHydrationWarning
+              />
+              {location && (
                 <button
-                  key={mode.value}
                   type="button"
-                  onClick={() => toggleMode(mode.value)}
-                  aria-pressed={selected}
-                  className={`h-11 rounded-md px-4 text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                    selected ? "bg-accent text-white" : "bg-ground text-muted hover:text-ink"
-                  }`}
+                  onClick={() => setLocation("")}
+                  aria-label="Clear location"
+                  className="absolute inset-y-0 right-1 my-auto flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors hover:bg-ground hover:text-ink md:right-1.5 md:h-8 md:w-8"
                 >
-                  {mode.label}
+                  ✕
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
-        </fieldset>
 
-        {/* ---------- property type ---------- */}
-        <div>
-          <label htmlFor="search-type" className={labelClass}>
-            Property type
-          </label>
-          <select
-            id="search-type"
-            value={propertyType}
-            onChange={(event) => setPropertyType(event.target.value)}
-            className={`h-11 ${inputClass}`}
+          {/* Disabled until a location is typed; the title explains why on hover. */}
+          <button
+            type="submit"
+            disabled={!canSearch}
+            title={canSearch ? undefined : "Enter a location to search"}
+            className={`h-11 ${primaryButton}`}
           >
-            <option value="">Any type</option>
-            {PROPERTY_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
+            Search
+          </button>
         </div>
-
-        {/* ---------- location: the only field you type in ---------- */}
-        <div>
-          <label htmlFor="search-location" className={labelClass}>
-            Location <span className="text-danger" aria-hidden="true">*</span>
-          </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
-              <PinIcon />
-            </span>
-            <input
-              id="search-location"
-              name="search-location"
-              type="search"
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              maxLength={MAX_LOCATION_LENGTH}
-              placeholder="e.g. Kakkanad, Kannur"
-              required
-              autoComplete="off"
-              enterKeyHint="search"
-              className="h-11 w-full rounded-md border border-line bg-panel pl-10 pr-10 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 [&::-webkit-search-cancel-button]:hidden"
-            />
-            {location && (
-              <button
-                type="button"
-                onClick={() => setLocation("")}
-                aria-label="Clear location"
-                className="absolute inset-y-0 right-1.5 my-auto flex h-8 w-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-ground hover:text-ink"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Disabled until a location is typed; the title explains why on hover. */}
-        <button
-          type="submit"
-          disabled={!canSearch}
-          title={canSearch ? undefined : "Enter a location to search"}
-          className={`h-11 ${primaryButton}`}
-        >
-          Search
-        </button>
       </form>
     </section>
   );

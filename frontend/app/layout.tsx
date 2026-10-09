@@ -29,9 +29,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // Browser extensions add their own attributes to <html> and to form controls
+    // before React hydrates, which React reports as a mismatch. Nothing here can
+    // prevent that, so these elements are excused from the attribute check.
     <html
       lang="en"
       className={`${instrumentSans.variable} ${instrumentSerif.variable} ${plexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-ground font-sans text-ink">
         <AuthBootStrap/>

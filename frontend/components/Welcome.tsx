@@ -57,7 +57,7 @@ const Welcome = () => {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-12 lg:py-16">
-      <h1 className="font-display text-[32px] leading-tight lg:text-[40px]">How will you use this site?</h1>
+      <h1 className="font-display text-[26px] leading-tight sm:text-[32px] lg:text-[40px]">How will you use this site?</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
         It only decides what we show you first. You can change it later in settings.
       </p>
@@ -93,18 +93,11 @@ const Welcome = () => {
           </div>
         </fieldset>
 
-        <div className="mt-8 flex flex-wrap items-center gap-4">
+        {/* No way past this screen: every account carries a type, and the rest
+            of the site reads it to decide what to offer. */}
+        <div className="mt-8">
           <button type="submit" disabled={saving} className={primaryButton}>
             {saving ? "Saving…" : "Continue"}
-          </button>
-          {/* Never a wall: someone who just wants to look around can pass. */}
-          <button
-            type="button"
-            onClick={() => router.replace("/")}
-            disabled={saving}
-            className="text-[14px] font-medium text-muted transition-colors hover:text-ink disabled:opacity-60"
-          >
-            Skip for now
           </button>
         </div>
       </form>

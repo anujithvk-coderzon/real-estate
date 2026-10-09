@@ -32,7 +32,33 @@
   --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
 }
 
+/* The filter sheet rises from the bottom of the screen, so the movement shows
+   where it came from and which edge dismisses it. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@layer components {
+  .sheet[open] {
+    animation: sheet-up 200ms ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet[open] {
+      animation: none;
+    }
+  }
+}
+
 @layer base {
+  /* An email address, a RERA number or a slug is one unbreakable word. On a 320px
+     screen a long one would push the page sideways, so let any word that cannot
+     fit break rather than overflow. Words that do fit are untouched. */
+  body {
+    overflow-wrap: break-word;
+  }
+
   /* Number inputs: no spinner arrows, and the mouse wheel must not change values */
   input[type="number"] {
     appearance: textfield;

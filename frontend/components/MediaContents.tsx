@@ -220,7 +220,7 @@ const MediaContents = ({ id }: Props) => {
           </button>
         ) : (
           <>
-            <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <ul className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {images.map((image, index) => (
                 <li key={image.key} className="overflow-hidden rounded-md border border-line">
                   <div className="relative aspect-[4/3] bg-ground">

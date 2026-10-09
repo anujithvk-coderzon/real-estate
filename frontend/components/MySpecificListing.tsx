@@ -122,14 +122,19 @@ const MySpecificListing = ({ id }: Props) => {
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-6 lg:px-8 lg:pt-8">
       {/* ---------- owner bar ---------- */}
-      <div className="sticky top-3 z-10 flex flex-col gap-3 rounded-lg border border-line bg-panel/95 px-4 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      {/* Static on a phone: stacked, this bar is ~130px tall, so sticking it over
+          a 568px screen would cover a quarter of the page for the whole scroll.
+          It only follows the reader once it fits on one line. */}
+      <div className="relative z-10 flex flex-col gap-3 rounded-lg border border-line bg-panel/95 px-4 py-3 backdrop-blur sm:sticky sm:top-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${status.badge}`}>
             {status.text}
           </span>
           <p className="text-[14px] text-muted">{status.note}</p>
         </div>
-        <div className="flex gap-2">
+        {/* grow at base: three buttons side by side need ~347px and have ~248px,
+            so they stack into full-width rows instead of splitting their labels. */}
+        <div className="flex flex-wrap gap-2 [&>*]:grow sm:[&>*]:grow-0">
           <button
             type="button"
             onClick={() => setConfirmingDelete(true)}
@@ -208,7 +213,7 @@ const MySpecificListing = ({ id }: Props) => {
       </header>
 
       {/* ---------- key facts ---------- */}
-      <ul className="flex flex-wrap gap-x-10 gap-y-4 border-b border-line py-6">
+      <ul className="flex flex-wrap gap-x-6 gap-y-4 border-b border-line py-6 sm:gap-x-10">
         {facts.map(([name, value]) => (
           <li key={name}>
             <p className="text-[20px] font-semibold leading-none">{value}</p>
@@ -217,7 +222,7 @@ const MySpecificListing = ({ id }: Props) => {
         ))}
       </ul>
 
-      <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_320px]">
+      <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_320px]">
         {/* ---------- main column ---------- */}
         <div className="min-w-0 space-y-12">
           <section>
@@ -230,7 +235,7 @@ const MySpecificListing = ({ id }: Props) => {
           {details.length > 0 && (
             <section>
               <h2 className={sectionHeading}>Details</h2>
-              <dl className="mt-5 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
+              <dl className="mt-5 grid grid-cols-1 gap-x-8 gap-y-5 min-[420px]:grid-cols-2 sm:grid-cols-3">
                 {details.map(([name, value]) => (
                   <div key={name}>
                     <dt className="text-[13px] text-muted">{name}</dt>

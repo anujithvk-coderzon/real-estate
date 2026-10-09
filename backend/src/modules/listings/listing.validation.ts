@@ -181,5 +181,13 @@ export const registeringValidation = listingFields.superRefine((data, ctx) => {
 
 export const updateValidation=listingFields.partial()
 
+// How far around the searched place to look. Exactly the five distances the UI
+// offers, and nothing else: an arbitrary ?radius=5000 would scan the country.
+// Absent means 10, so every link shared before this existed is unchanged.
+export const searchRadius = z.coerce
+  .number()
+  .refine((km) => [10, 20, 30, 40, 50].includes(km), "Choose 10, 20, 30, 40 or 50 km")
+  .default(10)
+
 export type CreateListingInput=z.infer<typeof registeringValidation>
 export type UpdateListingInput=z.infer<typeof updateValidation>

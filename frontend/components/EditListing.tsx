@@ -232,7 +232,7 @@ const EditListing = ({ id }: Props) => {
         Drag the pin to the exact spot. Moving the pin does not change the address unless you ask it to.
       </p>
 
-      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
+      <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <section className="rounded-lg border border-line bg-panel p-5">
           <AddressForm data={data} setData={setData} onLocate={(next) => setLocation(next)} />
           {location && (
@@ -253,7 +253,7 @@ const EditListing = ({ id }: Props) => {
           )}
         </section>
 
-        <section className="h-[420px] overflow-hidden rounded-lg border border-line bg-panel lg:h-[560px]">
+        <section className="h-[260px] overflow-hidden rounded-lg border border-line bg-panel sm:h-[420px] lg:h-[560px]">
           {location ? (
             <MapPicker center={location} setLocation={setLocation} />
           ) : (
@@ -303,7 +303,7 @@ const EditListing = ({ id }: Props) => {
           JPG, PNG or WebP up to 10 MB · one MP4 or WebM video up to 30 MB · 10 files in total
         </p>
 
-        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <ul className="mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           {savedImages.map((image, index) => {
             const removing = imagesToRemove.includes(image.id);
             return (

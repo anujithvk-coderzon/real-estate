@@ -2,7 +2,7 @@ import { passwordRules } from "@/lib/validation/auth";
 
 // Ticks off each password rule as the user types. Used wherever a new password is chosen.
 const PasswordRules = ({ id, value }: { id: string; value: string }) => (
-  <ul id={id} className="mt-2.5 grid gap-1 text-[13px] sm:grid-cols-2">
+  <ul id={id} className="mt-2.5 grid grid-cols-1 gap-1 text-[13px] sm:grid-cols-2">
     {passwordRules.map((rule) => {
       const met = rule.test(value);
       return (

@@ -261,7 +261,7 @@ const CreateListing = () => {
         search by this pin.
       </p>
 
-      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
+      <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <section className="rounded-lg border border-line bg-panel p-5">
           {/* Shown before the choice, so people know the most accurate way first. */}
           <div className="mb-4 flex gap-3 rounded-md bg-accent-soft px-3.5 py-3">
@@ -321,7 +321,7 @@ const CreateListing = () => {
           )}
         </section>
 
-        <section className="h-[420px] overflow-hidden rounded-lg border border-line bg-panel lg:h-[560px]">
+        <section className="h-[260px] overflow-hidden rounded-lg border border-line bg-panel sm:h-[420px] lg:h-[560px]">
           {location ? (
             <MapPicker center={location} setLocation={(next) => placePin(next, "pin")} />
           ) : (

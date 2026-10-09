@@ -1,6 +1,6 @@
 import axios from "axios";
 import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
-import type { ListingType, PostedBy, Prisma, PropertyType, VerificationStatus } from "../../generated/prisma/client.js";
+import { PropertyType, type ListingType, type PostedBy, type Prisma, type VerificationStatus } from "../../generated/prisma/client.js";
 import { toSQFT } from "../../lib/area.js";
 import { avatarPublicUrl, cdnUrl, deleteImage, deleteListingFiles, deleteVideo, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
@@ -14,36 +14,21 @@ import { boxAround, distanceKm } from "../../lib/geo.js";
 export const createListingService=async(userId:string,data:CreateListingInput)=>{
 const user=await prisma.user.findUnique({where:{id:userId}})
 if(!user) throw new BadRequestError("Invalid Token")
-
-// An under-construction unit is sold off-plan, so its project must be registered
-// before it is advertised. A ready unit can stand alone: a resale, a single plot,
-// or a project finished before RERA came into force.
 const sellerSale=(data.postedBy==="BUILDER" || data.postedBy==="BROKER") && data.listingType==="SALE"
 const offPlan=sellerSale && data.propertyStatus==="UNDER_CONSTRUCTION"
-
-// Two ways to name the project, and they must not both be used: one is a record
-// in our database, the other is the lister's word for it.
 if(data.projectId && data.projectNameText){
   throw new BadRequestError("Choose the project from our records, or type its name, not both")
 }
-
 if(data.projectId){
-  // A builder lists in a project they registered; an agent lists in the builder's.
   const where=user.accountType==="BUILDER"
     ? {id:data.projectId,builderId:userId}
     : {id:data.projectId}
   const project=await prisma.project.findFirst({where,select:{reraNumber:true,isReraExempt:true}})
   if(!project) throw new NotFoundError("Project not found")
-
-  // Checked here too, where it matters, rather than trusting the project form:
-  // an off-plan advertisement must carry a number, or say why there is none.
   if(offPlan && !project.reraNumber && !project.isReraExempt){
     throw new BadRequestError("This project has no RERA registration number. Add it to the project before advertising a unit under construction.")
   }
 }
-
-// A builder is the one who registers their project, so they add it to their
-// profile rather than typing its name here.
 if(data.projectNameText && user.accountType==="BUILDER"){
   throw new BadRequestError("Add the project to your profile, then choose it here")
 }
@@ -224,21 +209,40 @@ export const videoFetchingService=async(userId:string,listingId:string)=>{
  })
  return response
 }
+ type filterType = {
+    listingType:  ListingType | undefined,
+    propertyType: PropertyType | undefined,
+    postedBy:  PostedBy | undefined,
+    maxPrice: number | undefined,
+    beds: number | undefined,
+    sort:  string | undefined,
+  };
 
-export const listsFetchingService = async (page: number) => {
+export const listsFetchingService = async (page: number,filters:filterType) => {
   const take = 20;
-  const where = { status: "ACTIVE" as const };   // only published listings are public
-
+  const {listingType, propertyType, postedBy, maxPrice, beds, sort} =filters 
+  const where = { status: "ACTIVE" as const ,
+    ...(listingType && { listingType }),
+    ...(propertyType && { propertyType }),
+    ...(postedBy && { postedBy }),
+    ...(maxPrice && { price: { lte: maxPrice } }),
+    ...(beds && { bedrooms: { gte: beds } }),
+  };  
+  const orderBy: Prisma.ListingOrderByWithRelationInput[] =
+    sort === "price-asc"  ? [{ price: "asc"  }, { id: "asc" }] :
+    sort === "price-desc" ? [{ price: "desc" }, { id: "asc" }] :
+                            [{ createdAt: "desc" }, { id: "asc" }]; 
   const [lists, total] = await Promise.all([
     prisma.listing.findMany({
       where,
-      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      orderBy,
       take,
       skip: (page - 1) * take,
       select: {                                   // only what a card shows, nothing private
         slug:true, title: true, listingType: true, propertyType: true, price: true,
         locality: true, city: true, district: true, bedrooms: true, bathrooms: true,
         areaValue: true, areaUnit: true, createdAt: true, updatedAt: true, status: true,
+        postedBy: true,                           // the card says who listed it
         listingImages: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
       },
     }),
@@ -427,6 +431,23 @@ export const deleteListingService=async(userId:string,listingId:string)=>{
 }
 
 
+// India-only marketplace, so every Nominatim lookup is pinned to India. Without
+// this a six-digit Indian PIN is ambiguous: Russian postal codes are six digits
+// too, and a listing once landed in Amur Oblast.
+//
+// India-only marketplace, so no lookup may leave India. Without this a six-digit
+// Indian PIN is ambiguous: Russian postal codes are six digits too, and a listing
+// once landed in Amur Oblast.
+//
+// Two names for the same thing, because Nominatim has two query modes and they do
+// not share parameters. The address lookups below are structured (street, city,
+// state, postalcode) and take `country`. The search bar's lookup is free-form
+// (`q`), and Nominatim returns a 400 if a structured parameter is sent with `q`:
+// "Structured query parameters ... cannot be used together with 'q'". That one
+// takes `countrycodes`, an ISO filter that applies to both modes.
+const NOMINATIM_COUNTRY = "india"
+const NOMINATIM_COUNTRY_CODE = "in"
+
 export const coordinates=(response:any[],postalcode:string)=>{
   if (response.length === 0) return null
     const matching = response.filter((result: any) => {
@@ -446,7 +467,7 @@ else{
 }
 }
 
-export const geoCodingService=async(street:string|undefined,city:string,state:string,country:string,postalcode:string)=>{
+export const geoCodingService=async(street:string|undefined,city:string,state:string,postalcode:string)=>{
    let response;
    const cached=await redis.get(`geoLocation:${street}|${city}|${state}|${postalcode}`)
    if(cached){
@@ -457,7 +478,7 @@ export const geoCodingService=async(street:string|undefined,city:string,state:st
     response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
     headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
     timeout:5000,
-    params:{street,city,state,country,postalcode,
+    params:{street,city,state,postalcode,country:NOMINATIM_COUNTRY,
     format:"jsonv2"
     },
   })
@@ -470,7 +491,7 @@ export const geoCodingService=async(street:string|undefined,city:string,state:st
     response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
     headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
     timeout:5000,
-    params:{country,postalcode,
+    params:{postalcode,country:NOMINATIM_COUNTRY,
     format:"jsonv2"
     },
   })
@@ -498,12 +519,11 @@ export const reverseGeoCodingService=async(lat:number,lon:number)=>{
   return response.data.address
 }
 
-export const searchService=async(location:string,type?:ListingType,property?:PropertyType)=>{
-const km=10
+export const searchService=async(location:string,km:number,type?:ListingType,property?:PropertyType,)=>{
 const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
     headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
     timeout:5000,
-    params:{q:location,
+    params:{q:location,countrycodes:NOMINATIM_COUNTRY_CODE,
     format:"jsonv2"
 }})
 const result = response.data[0];
@@ -542,6 +562,11 @@ const listings=await prisma.listing.findMany({where,select: {
   areaUnit: true,
   latitude: true,
   longitude: true,
+  // The card says who listed it and when.
+  postedBy: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
   listingImages: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
 }})
 const final_result=listings.map((list)=>({
@@ -571,6 +596,7 @@ export const sellerListsFetchingService=async(slug:string,page:number)=>{
         slug:true,title:true,listingType:true,propertyType:true,price:true,
         locality:true,city:true,district:true,bedrooms:true,bathrooms:true,
         areaValue:true,areaUnit:true,createdAt:true,updatedAt:true,status:true,
+        postedBy:true,                            // the card says who listed it
         listingImages:{orderBy:{position:"asc"},take:1,select:{path:true}},
       },
     }),

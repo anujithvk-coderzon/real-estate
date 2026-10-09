@@ -69,7 +69,7 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
         <input {...input("locality", "Panampilly Nagar, 2nd Cross Road")} />
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field id="city" label="City or town">
           <input {...input("city", "Kochi")} />
         </Field>
@@ -108,7 +108,7 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
         </div>
       )}
 
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex flex-wrap items-center gap-3 pt-2">
         <button type="submit" disabled={searching} className={notFound ? secondaryButton : primaryButton}>
           {searching ? "Moving pin…" : notFound ? "Search again" : "Move pin to this address"}
         </button>

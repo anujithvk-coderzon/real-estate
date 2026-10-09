@@ -106,7 +106,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
         {rental && (listing.maintenance || listing.securityDeposit) && (
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-[14px]">
             {listing.maintenance && (
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap justify-between gap-x-4">
                 <dt className="text-muted">Maintenance</dt>
                 <dd>
                   <span className="font-mono">{formatRupees(listing.maintenance)}</span>
@@ -115,7 +115,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               </div>
             )}
             {listing.securityDeposit && (
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap justify-between gap-x-4">
                 <dt className="text-muted">Security deposit</dt>
                 <dd>
                   <span className="font-mono">{formatRupees(listing.securityDeposit)}</span>
@@ -144,7 +144,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
         ) : phone ? (
           <>
             {listing.contactName && <p className="mt-1.5 text-[15px]">{listing.contactName}</p>}
-            <div className="mt-4 grid gap-2">
+            <div className="mt-4 grid grid-cols-1 gap-2">
               <a href={`tel:+91${phone}`} className={`flex items-center justify-center gap-2 ${primaryButton}`}>
                 <PhoneIcon className="h-4 w-4" />
                 Call <span className="font-mono">+91 {phone}</span>
@@ -232,7 +232,7 @@ const ProjectBlock = ({ project }: { project: NonNullable<PublicListing["project
 
         {/* Who the builder is, and whose word the RERA number is. A name on its own
             would not tell a buyer which of the two they are reading. */}
-        <dl className="mt-4 grid gap-4 border-t border-current/10 pt-4 text-[14px] sm:grid-cols-2">
+        <dl className="mt-4 grid grid-cols-1 gap-4 border-t border-current/10 pt-4 text-[14px] sm:grid-cols-2">
           <div>
             <dt className="text-[13px] text-muted">Builder</dt>
             <dd className="mt-0.5">
@@ -319,7 +319,7 @@ const ListSpecific = ({ slug }: Props) => {
       <main className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-8" aria-busy="true">
         <p className="sr-only">Loading property…</p>
         <div className="aspect-[4/3] animate-pulse rounded-xl bg-line sm:aspect-[16/9]" />
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-3">
             <div className="h-5 w-40 animate-pulse rounded bg-line" />
             <div className="h-9 w-3/4 animate-pulse rounded bg-line" />
@@ -380,7 +380,7 @@ const ListSpecific = ({ slug }: Props) => {
 
       {/* Price and contact come before the details in the reading order; on
           large screens they move to a sticky right column. */}
-      <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-[1fr_360px]">
+      <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-8 lg:grid-cols-[1fr_360px]">
         {/* ---------- what it costs, who to call ---------- */}
         <aside
           aria-label="Price and contact"
@@ -393,7 +393,9 @@ const ListSpecific = ({ slug }: Props) => {
         <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
           <section aria-labelledby="glance-heading">
             <h2 id="glance-heading" className={sectionHeading}>At a glance</h2>
-            <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {/* One column at base: two 134px tiles minus padding and the icon
+                leave 54px for the text, which clips "Bathrooms". */}
+            <dl className="mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3">
               {facts.map(({ label, value, Icon }) => (
                 <div key={label} className="flex items-start gap-3 rounded-xl bg-panel p-4 ring-1 ring-line">
                   <span className="rounded-lg bg-accent-soft p-2 text-accent">
@@ -444,7 +446,7 @@ const ListSpecific = ({ slug }: Props) => {
                     <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted">
                       {amenityCategoryLabel(category)}
                     </h3>
-                    <ul className="mt-3 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                    <ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
                       {amenities.map((amenity) => (
                         <li key={amenity.name} className="flex items-center gap-2.5 text-[15px]">
                           <CheckIcon className="h-4 w-4 text-accent" />

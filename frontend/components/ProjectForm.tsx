@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Field, Select } from "@/components/form/Field";
+import { amountInput } from "@/lib/amount";
 import { api } from "@/lib/api";
 import { PROPERTY_TYPES } from "@/lib/listing";
 import {
@@ -51,6 +52,16 @@ const ProjectForm = ({ projectId, initial }: Props) => {
     });
   };
 
+  // Rupee amounts, shown grouped as they are typed.
+  const moneyInput = (name: "minPrice" | "maxPrice", placeholder: string) =>
+    amountInput({
+      name,
+      value: data[name],
+      placeholder,
+      className: `${inputClass} font-mono`,
+      onValue: (amount) => setData((prev) => ({ ...prev, [name]: amount })),
+    });
+
   // Above the unit limit the law requires registration, so the exemption disappears.
   const mustRegister = mustRegisterWithRera(data.totalUnits);
   const problems = projectProblems(data);
@@ -83,7 +94,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-8 lg:py-12">
       <header>
-        <h1 className="font-display text-[32px] leading-tight lg:text-[38px]">
+        <h1 className="font-display text-[26px] leading-tight sm:text-[32px] lg:text-[38px]">
           {editing ? "Edit project" : "Add a project"}
         </h1>
         <p className="mt-1 max-w-prose text-[15px] leading-relaxed text-muted">
@@ -100,7 +111,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
             <input id="name" name="name" maxLength={120} value={data.name} onChange={handleChange} className={inputClass} />
           </Field>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field id="status" label="Stage">
               <Select id="status" value={data.status} options={PROJECT_STATUS} onChange={handleChange} />
             </Field>
@@ -126,7 +137,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
         <section className="space-y-5">
           <h2 className={sectionTitle}>Size and timeline</h2>
 
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
             <Field id="totalUnits" label="Total units" optional>
               <input
                 id="totalUnits"
@@ -139,30 +150,14 @@ const ProjectForm = ({ projectId, initial }: Props) => {
               />
             </Field>
             <Field id="minPrice" label="Price from" optional hint="₹">
-              <input
-                id="minPrice"
-                name="minPrice"
-                type="number"
-                min={0}
-                value={data.minPrice}
-                onChange={handleChange}
-                className={`${inputClass} font-mono`}
-              />
+              <input {...moneyInput("minPrice", "45,00,000")} />
             </Field>
             <Field id="maxPrice" label="Price up to" optional hint="₹">
-              <input
-                id="maxPrice"
-                name="maxPrice"
-                type="number"
-                min={0}
-                value={data.maxPrice}
-                onChange={handleChange}
-                className={`${inputClass} font-mono`}
-              />
+              <input {...moneyInput("maxPrice", "1,20,00,000")} />
             </Field>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field id="startedAt" label="Started" optional>
               <input id="startedAt" name="startedAt" type="date" value={data.startedAt} onChange={handleChange} className={inputClass} />
             </Field>
@@ -176,7 +171,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
         <section className="space-y-5">
           <h2 className={sectionTitle}>Where it is</h2>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field id="locality" label="Locality or street">
               <input id="locality" name="locality" value={data.locality} onChange={handleChange} className={inputClass} />
             </Field>
@@ -221,7 +216,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
           )}
 
           {mustRegister || !data.isReraExempt ? (
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field id="reraNumber" label="Registration number">
                 <input
                   id="reraNumber"

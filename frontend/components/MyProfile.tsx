@@ -159,7 +159,7 @@ const MyProfile = () => {
                   <div className="min-w-0">
                     <Link
                       href={`/list/my/projects/${project.id}`}
-                      className="truncate text-[16px] font-semibold hover:text-accent hover:underline"
+                      className="block truncate text-[16px] font-semibold hover:text-accent hover:underline"
                     >
                       {project.name}
                     </Link>
@@ -171,7 +171,7 @@ const MyProfile = () => {
                     </p>
                   </div>
                   {project.reraNumber && (
-                    <span className="shrink-0 rounded-full bg-ground px-3 py-1 font-mono text-[12px] text-muted">
+                    <span className="min-w-0 rounded-full bg-ground px-3 py-1 font-mono text-[12px] text-muted">
                       {project.reraNumber}
                     </span>
                   )}
@@ -201,7 +201,7 @@ const MyProfile = () => {
         </div>
 
         {listings === null ? (
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
             {Array.from({ length: 3 }, (_, index) => (
               <li key={index} className="overflow-hidden rounded-xl">
                 <div className="aspect-[16/10] animate-pulse bg-line/50" />
@@ -223,7 +223,7 @@ const MyProfile = () => {
             </Link>
           </div>
         ) : (
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {listings.map((listing, index) => (
               <li key={listing.slug ?? `listing-${index}`}>
                 <PublicListingCard listing={listing} />

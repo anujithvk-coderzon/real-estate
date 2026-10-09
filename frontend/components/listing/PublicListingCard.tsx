@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatNumber, formatRupeesShort } from "@/lib/format";
+import { formatDate, formatNumber, formatRupeesShort } from "@/lib/format";
 import { isRental, labelOf } from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 
@@ -93,6 +93,14 @@ const PublicListingCard = ({ listing, showMode = true, highlighted = false, onHo
               <span className="sr-only"> from the searched place</span>
             </span>
           )}
+        </p>
+
+        {/* Who listed it and when: buyers use both to judge how fresh it is. */}
+        <p className="mt-2 flex items-center justify-between gap-2 border-t border-line pt-2 text-[12px] text-muted">
+          <span className="truncate">Listed by {labelOf(listing.postedBy).toLowerCase()}</span>
+          <time dateTime={listing.createdAt} className="shrink-0 tabular-nums">
+            {formatDate(listing.createdAt)}
+          </time>
         </p>
       </div>
     </article>

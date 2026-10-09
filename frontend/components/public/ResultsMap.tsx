@@ -35,8 +35,10 @@ const PIN_SVG = `<svg viewBox="0 0 24 32" width="28" height="36" aria-hidden="tr
   <circle cx="12" cy="12" r="4.5" fill="white"/>
 </svg>`;
 
+// On a phone the map fills the screen, so a fixed 240px preview would hang over
+// the edge for any pin near the sides.
 const cardClass =
-  "block w-60 overflow-hidden rounded-xl bg-panel font-sans text-ink no-underline shadow-[0_12px_32px_-12px_rgba(13,42,36,0.45)] ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+  "block w-[min(15rem,calc(100vw-2rem))] overflow-hidden rounded-xl bg-panel font-sans text-ink no-underline shadow-[0_12px_32px_-12px_rgba(13,42,36,0.45)] ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 // "650 m" or "2.4 km"
 const formatDistance = (km: number) => (km < 1 ? `${Math.round(km * 10) * 100} m` : `${km.toFixed(1)} km`);

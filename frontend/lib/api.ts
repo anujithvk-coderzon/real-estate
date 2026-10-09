@@ -1,5 +1,4 @@
 import axios from "axios";
-import { error } from "console";
 
 let accessToken:string|null = null
 
@@ -7,17 +6,13 @@ export const setAccessToken=(token:string|null)=>{
     accessToken=token
 }
 
-// Settles once the first /auth/refresh after a page load has finished, signed in
-// or not. Pages that show more to signed-in users wait for it, so their first
-// request already carries the token.
+
 let markReady:()=>void
 export const authReady=new Promise<void>((resolve)=>{markReady=resolve})
 export const setAuthReady=()=>markReady()
-
-// True when this tab holds an access token, i.e. the user is signed in.
 export const isSignedIn=()=>accessToken!==null
 export const api=axios.create({
-    baseURL:process.env.NEXT_PUBLIC_BACKEND_URL,  
+    baseURL:"/api",  
     timeout:10_000, 
     withCredentials:true
 })
@@ -37,7 +32,7 @@ async(error)=>{
         original._retry=true;
         try {
             const {data}=await axios.post(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/refresh`,
+                "/api/auth/refresh",
                 {},
                 {withCredentials:true}
             );

@@ -227,7 +227,7 @@ const Sidebar = () => {
           onClick={() => setMenuOpen(!menuOpen)}
           aria-expanded={menuOpen}
           aria-controls="sidebar-menu"
-          className={`rounded-lg border border-line px-3 py-1.5 text-[14px] font-medium lg:hidden ${focusRing}`}
+          className={`min-h-11 rounded-lg border border-line px-3.5 py-2.5 text-[14px] font-medium lg:hidden ${focusRing}`}
         >
           {menuOpen ? "Close" : "Menu"}
         </button>

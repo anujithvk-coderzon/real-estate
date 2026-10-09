@@ -127,7 +127,7 @@ const MyListings = () => {
       {/* ---------- heading ---------- */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-[40px] leading-none tracking-tight lg:text-[48px]">My listings</h1>
+          <h1 className="font-display text-[30px] leading-none tracking-tight sm:text-[40px] lg:text-[48px]">My listings</h1>
           <p className="mt-2 text-[15px] text-muted">
             {listings === null
               ? "Loading your properties…"
@@ -142,7 +142,7 @@ const MyListings = () => {
       </header>
 
       {failed ? (
-        <div className="mt-10 rounded-2xl bg-panel p-10 text-center ring-1 ring-line">
+        <div className="mt-10 rounded-2xl bg-panel p-6 text-center ring-1 ring-line sm:p-10">
           <h2 className="text-[18px] font-semibold">Your listings could not be loaded</h2>
           <p className="mt-2 text-[15px] text-muted">Check your connection and try again.</p>
           <button type="button" onClick={() => window.location.reload()} className={`mt-5 ${secondaryButton}`}>
@@ -151,7 +151,7 @@ const MyListings = () => {
         </div>
       ) : listings === null ? (
         /* ---------- first load ---------- */
-        <ul className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+        <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
           {Array.from({ length: 6 }, (_, index) => (
             <li key={index} className="overflow-hidden rounded-2xl bg-panel ring-1 ring-line">
               <div className="aspect-[4/3] animate-pulse bg-line/60" />
@@ -188,7 +188,7 @@ const MyListings = () => {
                     aria-pressed={selected}
                     disabled={reloading}
                     onClick={() => changeView({ ...view, status: option.status })}
-                    className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-[14px] font-medium transition-colors ${
+                    className={`flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-[14px] font-medium transition-colors sm:min-h-0 sm:py-1.5 ${
                       selected ? "bg-rail text-rail-ink" : "text-muted hover:bg-panel hover:text-ink"
                     }`}
                   >
@@ -204,21 +204,21 @@ const MyListings = () => {
               })}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="search"
                 value={search}
                 onChange={(e)=>setSearch(e.target.value)}
                 placeholder="Search title or place"
                 aria-label="Search your listings"
-                className={`${inputClass} lg:w-60`}
+                className={`${inputClass} min-w-0 sm:flex-1 lg:w-60`}
               />
               <select
                 value={view.sort}
                 disabled={reloading}
                 onChange={(event) => changeView({ ...view, sort: event.target.value as SortKey })}
                 aria-label="Sort listings"
-                className={`${inputClass} w-auto`}
+                className={`${inputClass} shrink-0 sm:w-auto`}
               >
                 {Object.entries(SORTS).map(([key, { label }]) => (
                   <option key={key} value={key}>
@@ -264,7 +264,7 @@ const MyListings = () => {
           ) : (
             <ul
               aria-busy={reloading}
-              className={`mt-6 grid gap-5 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${reloading ? "opacity-50" : ""}`}
+              className={`mt-6 grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${reloading ? "opacity-50" : ""}`}
             >
               {loaded.map((listing) => (
                 <li key={listing.id}>

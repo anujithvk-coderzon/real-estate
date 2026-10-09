@@ -61,7 +61,7 @@ const ConfirmDialog = ({
         </h2>
         <div className="mt-2 text-[15px] leading-relaxed text-muted">{message}</div>
 
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex flex-wrap justify-end gap-2">
           {/* Cancel gets focus first, so pressing Enter by habit is safe. */}
           <button type="button" autoFocus onClick={cancel} disabled={busy} className={secondaryButton}>
             Cancel

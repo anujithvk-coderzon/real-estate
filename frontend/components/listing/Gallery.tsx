@@ -8,8 +8,9 @@ type Props = {
   title: string;
 };
 
+// 44px at base: on a phone these arrows are the only way through the photos.
 const arrowButton =
-  "absolute top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-panel/90 text-ink shadow-sm transition-colors hover:bg-panel";
+  "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-panel/90 text-ink shadow-sm transition-colors hover:bg-panel sm:h-9 sm:w-9";
 
 // One large photo with previous / next arrows and a row of thumbnails.
 const Gallery = ({ images, title }: Props) => {

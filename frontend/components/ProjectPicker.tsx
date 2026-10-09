@@ -250,7 +250,7 @@ const ProjectPicker = ({
 
           {/* Shown only on that answer: the builder's details, in the agent's words. */}
           {value === MANUAL && (
-            <div className="ml-7 grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:ml-7 sm:grid-cols-2">
               <Field id="manualName" label="Project name">
                 <input
                   id="manualName"

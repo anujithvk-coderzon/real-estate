@@ -138,7 +138,7 @@ const ProjectDetail = ({ projectId }: { projectId: string }) => {
       )}
 
       {/* ---------- the details ---------- */}
-      <dl className="mt-8 grid gap-x-10 border-t border-line sm:grid-cols-2">
+      <dl className="mt-8 grid grid-cols-1 gap-x-10 border-t border-line sm:grid-cols-2">
         <Row label="Stage" value={stage} />
         {project.propertyType && <Row label="Type" value={labelOf(project.propertyType)} />}
         {typeof project.totalUnits === "number" && <Row label="Total units" value={project.totalUnits} />}

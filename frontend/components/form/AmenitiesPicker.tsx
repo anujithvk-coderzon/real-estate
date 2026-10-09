@@ -27,7 +27,7 @@ const AmenitiesPicker = ({ amenities, categories, selected, onToggle }: Props) =
                   type="button"
                   aria-pressed={on}
                   onClick={() => onToggle(amenity.id)}
-                  className={`rounded-full border px-3 py-1.5 text-[14px] transition-colors ${
+                  className={`rounded-full border px-3.5 py-2.5 text-[14px] transition-colors sm:py-1.5 ${
                     on
                       ? "border-accent bg-accent-soft font-medium text-accent"
                       : "border-line bg-panel text-ink hover:border-accent/50"

@@ -11,10 +11,10 @@ import {
 } from "../../middlewares/jwtTokens.js";
 import redis from "../../lib/redis.js";
 import { checkDisposableEmail } from "../../lib/disposible_email.js";
-import { sendEmail } from "../../lib/email.js";
 import { goolgeClient } from "../../lib/google.js";
 import { avatarImageUpload, avatarPublicUrl, cdnUrl, deleteImage, isOwnAvatar } from "../../lib/bunny.js";
 import { listNameSluggify} from "../../lib/slug.js";
+import { queueEmail } from "../../queues/email.queue.js";
 
 type regValidation = {
   name: string;
@@ -82,7 +82,7 @@ export const registerService = async (validatedData: regValidation) => {
 
   <p>If you didn't create an account, you can safely ignore this email.</p>
 `;
-    await sendEmail(existing_user.email, "Verification Email", html);
+    await queueEmail({to:existing_user.email, subject:"Verification Email", html});
     return {
       status: 200,
       message:
@@ -127,14 +127,14 @@ export const registerService = async (validatedData: regValidation) => {
       font-weight: bold;
     "
   >
-    Reset password
+    Verify Email
   </a>
 
   <p>This verification link will expire in 15 minutes.</p>
 
   <p>If you didn't create an account, you can safely ignore this email.</p>
 `;
-  await sendEmail(user.email, "Verification Email", html);
+  await queueEmail({to:user.email, subject:"Verification Email", html});
   return {
     status: 201,
     message:
@@ -246,11 +246,12 @@ export const forgotPasswordService=async(email:string)=>{
     Reset password
   </a>
 
-  <p>This verification link will expire in 15 minutes.</p>
+  <p>This password reset link will expire in 15 minutes.</p>
 
-  <p>If you didn't create an account, you can safely ignore this email.</p>
+  <p>If you didn't ask to reset your password, you can safely ignore this email.
+  Your password stays as it is.</p>
 `;
- await sendEmail(email,'Forgot Password',html)
+ await queueEmail({to:email,subject:'Forgot Password',html})
  return GENERIC_MESSAGE
 }
 
@@ -352,10 +353,6 @@ await prisma.user.update({where:{id:userId},data:{agentReraState,agentReraNumber
 return "Agent RERA registration updated successfully."
 }
 
-
-
-// A seller's public profile, reached from "Listed by …" on a listing.
-// Email and phone are never public; the RERA number is, because buyers check it.
 export const publicProfileService=async(slug:string)=>{
  const user=await prisma.user.findUnique({
   where:{slug},

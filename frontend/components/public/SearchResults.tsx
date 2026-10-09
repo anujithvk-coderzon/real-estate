@@ -12,10 +12,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PublicListingCard from "@/components/listing/PublicListingCard";
+import ListingFilters from "@/components/public/ListingFilters";
 import ResultsMap from "@/components/public/ResultsMap";
 import SearchBar from "@/components/public/SearchBar";
 import { api } from "@/lib/api";
-import { formatRupeesShort } from "@/lib/format";
+import { RADIUS_OPTIONS, type Option } from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 
@@ -45,17 +46,9 @@ const SINGULAR: Record<string, string> = {
 
 const MODE_PHRASE: Record<string, string> = { SALE: "for sale", RENT: "for rent", PG: "for PG / hostel" };
 
-// Budgets only make sense within one kind of price: a sale price and a monthly rent can't share a scale.
-const BUDGETS: Record<string, number[]> = {
-  SALE: [25_00_000, 50_00_000, 75_00_000, 1_00_00_000, 2_00_00_000, 5_00_00_000],
-  RENT: [10_000, 20_000, 30_000, 50_000, 1_00_000],
-  PG: [5_000, 8_000, 12_000, 20_000],
-};
-
-// Bedrooms mean nothing for these.
-const NO_BEDROOMS = ["PLOT", "COMMERCIAL", "OFFICE"];
-
-const SORTS = [
+// The API returns nearest first, so that is this page's default order. The home
+// page's is newest first, which is why the bar takes its sorts as a prop.
+const SEARCH_SORTS: Option[] = [
   { value: "", label: "Nearest first" },
   { value: "price-asc", label: "Price: low to high" },
   { value: "price-desc", label: "Price: high to low" },
@@ -63,9 +56,6 @@ const SORTS = [
 
 // "kakkanad" → "Kakkanad"
 const titleCase = (text: string) => text.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
-
-const controlClass =
-  "h-9 rounded-lg border border-line bg-panel px-2.5 text-[14px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
 
 /* ---------- icons ---------- */
 
@@ -93,14 +83,22 @@ const SearchResults = () => {
   const location = searchParams.get("location") ?? "";
   const listingType = searchParams.get("listingType") ?? "";
   const propertyType = searchParams.get("propertyType") ?? "";
+  // How far out to look. Empty means the API's default of 10 km.
+  const radius = searchParams.get("radius") ?? "";
   // Refinements, applied in the browser.
   const sort = searchParams.get("sort") ?? "";
+  const postedBy = searchParams.get("postedBy") ?? "";
   const maxPrice = Number(searchParams.get("maxPrice")) || 0;
   const minBeds = Number(searchParams.get("beds")) || 0;
 
-  // Only these three go to the server; changing sort or filters must not refetch.
+  // Only these four go to the server. The rest are applied below, in the browser:
+  // the map needs every pin, so this endpoint returns the whole result set rather
+  // than a page, and once it is all in memory a round trip would only add a spinner.
+  //
+  // Radius cannot be one of those: widening it asks for listings the server never
+  // sent, so it belongs here and a change refetches.
   const serverQuery = new URLSearchParams(
-    Object.entries({ location, listingType, propertyType }).filter(([, value]) => value),
+    Object.entries({ location, listingType, propertyType, radius }).filter(([, value]) => value),
   ).toString();
 
   const [retry, setRetry] = useState(0);
@@ -135,25 +133,22 @@ const SearchResults = () => {
   const shown = useMemo(() => {
     const kept = all.filter(
       (listing) =>
+        (!postedBy || listing.postedBy === postedBy) &&
         (!maxPrice || Number(listing.price) <= maxPrice) &&
         (!minBeds || (typeof listing.bedrooms === "number" && listing.bedrooms >= minBeds)),
     );
     if (sort === "price-asc") return [...kept].sort((a, b) => Number(a.price) - Number(b.price));
     if (sort === "price-desc") return [...kept].sort((a, b) => Number(b.price) - Number(a.price));
     return kept; // the API already returns nearest first
-  }, [all, sort, maxPrice, minBeds]);
+  }, [all, sort, postedBy, maxPrice, minBeds]);
 
-  // Refinements replace the URL (no new history entry per click); a new search pushes.
-  const setParam = (name: string, value: string) => {
-    const next = new URLSearchParams(searchParams.toString());
-    if (value) next.set(name, value);
-    else next.delete(name);
-    router.replace(`${pathname}?${next}`, { scroll: false });
-  };
+  // Only for the "nothing matches" state. Everyday clearing is the bar's own job:
+  // each choice has a chip with an x, and the sheet has Clear all. Replaces the
+  // URL rather than pushing, so Back leaves the page instead of walking through
+  // every control the visitor touched.
   const clearFilters = () => {
     const next = new URLSearchParams(searchParams.toString());
-    next.delete("maxPrice");
-    next.delete("beds");
+    for (const name of ["postedBy", "maxPrice", "beds"]) next.delete(name);
     router.replace(`${pathname}?${next}`, { scroll: false });
   };
 
@@ -164,22 +159,23 @@ const SearchResults = () => {
   };
 
   const place = titleCase(location) || "your search";
+  // "near Kakkanad" at the default, "within 30 km of Kakkanad" once chosen: the
+  // count only makes sense next to the area it was counted over.
+  const area = radius ? `within ${radius} km of ${place}` : `near ${place}`;
   // "3 apartments for sale", "1 property"
   const describe = (count: number) => {
     const noun = count === 1 ? (SINGULAR[propertyType] ?? "property") : (PLURAL[propertyType] ?? "properties");
     return [noun, MODE_PHRASE[listingType]].filter(Boolean).join(" ");
   };
-  const budgets = BUDGETS[listingType];
-  const showBedrooms = !NO_BEDROOMS.includes(propertyType);
-  const filtered = Boolean(maxPrice || minBeds);
+  const filtered = Boolean(postedBy || maxPrice || minBeds);
 
   const heading = loading
-    ? `Searching near ${place}…`
+    ? `Searching ${area}…`
     : failed
-      ? `Results near ${place}`
+      ? `Results ${area}`
       : filtered
-        ? `${shown.length} of ${all.length} ${describe(all.length)} near ${place}`
-        : `${all.length} ${describe(all.length)} near ${place}`;
+        ? `${shown.length} of ${all.length} ${describe(all.length)} ${area}`
+        : `${all.length} ${describe(all.length)} ${area}`;
 
   // Links that loosen an empty search.
   const broaden = (drop: string) => {
@@ -187,14 +183,27 @@ const SearchResults = () => {
     next.delete(drop);
     return `${pathname}?${next}`;
   };
+  // The next distance up, or nothing at 50 km. Offered when a search comes back
+  // empty: the commonest reason is a small town with nothing inside 10 km.
+  const wider = RADIUS_OPTIONS.find((option) => Number(option.value) > (Number(radius) || 10));
+  const widen = (value: string) => {
+    const next = new URLSearchParams(serverQuery);
+    next.set("radius", value);
+    return `${pathname}?${next}`;
+  };
 
   return (
     <div className="flex flex-col">
       {/* ---------- search toolbar: stays at the top while the list scrolls ---------- */}
-      <div className="sticky top-0 z-20 border-b border-line bg-ground/95 backdrop-blur supports-[backdrop-filter]:bg-ground/80">
+      {/* Static on a phone: stacked, this toolbar is ~215px tall, so pinning it
+          would hold 38% of a 568px screen above the results for the whole
+          scroll. It follows the reader only once it fits on one line. */}
+      <div className="relative z-20 border-b border-line bg-ground/95 backdrop-blur supports-[backdrop-filter]:bg-ground/80 lg:sticky lg:top-0">
         <div className="px-4 py-3 lg:px-6">
           {/* key: a new search (or Back) rebuilds the bar, so its fields match the URL. */}
-          <SearchBar key={serverQuery} variant="toolbar" initialValues={{ location, listingType, propertyType }} />
+          {/* radius has no control here — the filter bar below owns it — but it is
+              passed so editing the search keeps the distance already chosen. */}
+          <SearchBar key={serverQuery} variant="toolbar" initialValues={{ location, listingType, propertyType, radius }} />
         </div>
       </div>
 
@@ -206,57 +215,28 @@ const SearchResults = () => {
               {heading}
             </h1>
 
-            {/* Refine: sort and the two filters people use most. */}
             {!failed && (
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="sr-only" htmlFor="sort">Sort</label>
-                <select id="sort" value={sort} onChange={(event) => setParam("sort", event.target.value)} className={controlClass}>
-                  {SORTS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-
-                {budgets && (
-                  <>
-                    <label className="sr-only" htmlFor="budget">Maximum price</label>
-                    <select id="budget" value={maxPrice || ""} onChange={(event) => setParam("maxPrice", event.target.value)} className={controlClass}>
-                      <option value="">Any price</option>
-                      {budgets.map((amount) => (
-                        <option key={amount} value={amount}>Up to {formatRupeesShort(amount)}</option>
-                      ))}
-                    </select>
-                  </>
-                )}
-
-                {showBedrooms && (
-                  <>
-                    <label className="sr-only" htmlFor="beds">Bedrooms</label>
-                    <select id="beds" value={minBeds || ""} onChange={(event) => setParam("beds", event.target.value)} className={controlClass}>
-                      <option value="">Any bedrooms</option>
-                      {[1, 2, 3, 4].map((count) => (
-                        <option key={count} value={count}>{count}+ bedrooms</option>
-                      ))}
-                    </select>
-                  </>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setMapHidden(!mapHidden)}
-                  aria-pressed={!mapHidden}
-                  className="hidden h-9 items-center gap-1.5 rounded-lg px-2.5 text-[14px] font-medium text-muted transition-colors hover:bg-panel hover:text-ink lg:flex"
-                >
-                  <MapIcon />
-                  {mapHidden ? "Show map" : "Hide map"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setMapHidden(!mapHidden)}
+                aria-pressed={!mapHidden}
+                className="hidden h-9 items-center gap-1.5 rounded-lg px-2.5 text-[14px] font-medium text-muted transition-colors hover:bg-panel hover:text-ink lg:flex"
+              >
+                <MapIcon />
+                {mapHidden ? "Show map" : "Hide map"}
+              </button>
             )}
           </div>
 
-          {filtered && !loading && !failed && shown.length > 0 && (
-            <button type="button" onClick={clearFilters} className="mt-2 text-[13px] font-medium text-accent hover:underline">
-              Clear filters
-            </button>
+          {/* The same bar as the home page. Its choices land in the URL, and this
+              page decides what to do with each: listingType and propertyType are
+              in serverQuery, so changing one refetches; postedBy, the budget and
+              bedrooms are not, so they filter the set already loaded. The search
+              toolbar above already asks what and where, hence showTypes={false}. */}
+          {!failed && (
+            <div className="mt-4">
+              <ListingFilters showTypes={false} showRadius sorts={SEARCH_SORTS} />
+            </div>
           )}
 
           {/* ---------- the list, and every state it can be in ---------- */}
@@ -284,11 +264,16 @@ const SearchResults = () => {
               </ul>
             ) : all.length === 0 ? (
               <div className="rounded-xl bg-panel px-6 py-12 text-center ring-1 ring-line">
-                <h2 className="text-[17px] font-semibold">Nothing listed near {place} yet</h2>
+                <h2 className="text-[17px] font-semibold">Nothing listed {area} yet</h2>
                 <p className="mx-auto mt-1.5 max-w-md text-[14px] text-muted">
                   Check the spelling, try a nearby town, or widen the search.
                 </p>
                 <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  {wider && (
+                    <button type="button" onClick={() => router.push(widen(wider.value))} className={primaryButton}>
+                      Look within {wider.label}
+                    </button>
+                  )}
                   {propertyType && (
                     <button type="button" onClick={() => router.push(broaden("propertyType"))} className={secondaryButton}>
                       Any property type
@@ -304,7 +289,7 @@ const SearchResults = () => {
             ) : shown.length === 0 ? (
               <div className="rounded-xl bg-panel px-6 py-12 text-center ring-1 ring-line">
                 <h2 className="text-[17px] font-semibold">None of the {all.length} results match your filters</h2>
-                <p className="mt-1.5 text-[14px] text-muted">Try a higher budget or fewer bedrooms.</p>
+                <p className="mt-1.5 text-[14px] text-muted">Try a higher budget, fewer bedrooms, or any seller.</p>
                 <button type="button" onClick={clearFilters} className={`mt-5 ${primaryButton}`}>
                   Clear filters
                 </button>

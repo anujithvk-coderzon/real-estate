@@ -71,15 +71,15 @@ const ListingCard = ({ listing }: { listing: ListingSummary }) => {
           {[listing.locality, listing.city].filter(Boolean).join(", ")}
         </p>
 
-        <div className="mt-4 flex items-end justify-between gap-3">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
           <p className="font-mono text-[20px] font-medium leading-none tracking-tight">
             {formatRupeesShort(listing.price)}
             {isRental(listing.listingType) && <span className="font-sans text-[13px] font-normal text-muted"> /month</span>}
           </p>
-          <p className="shrink-0 text-[12.5px] text-muted">{facts.join(" · ")}</p>
+          <p className="min-w-0 text-[12.5px] text-muted">{facts.join(" · ")}</p>
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-[13px]">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-line pt-3 text-[13px]">
           <span className="text-muted">Updated {formatTimeAgo(listing.updatedAt)}</span>
           {/* Sits above the card's link overlay so it stays clickable on its own. */}
           <Link

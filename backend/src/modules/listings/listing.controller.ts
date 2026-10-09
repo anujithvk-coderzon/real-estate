@@ -1,10 +1,10 @@
 import {  type Request, type Response } from "express";
-import { registeringValidation, updateValidation } from "./listing.validation.js";
+import { registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
 import { sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
 import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
-import type { ListingType, PropertyType } from "../../generated/prisma/enums.js";
+import type { ListingType, PostedBy, PropertyType } from "../../generated/prisma/enums.js";
 // import { parseSearch} from "../../lib/searchProcessing.js";
 
 
@@ -65,7 +65,15 @@ export const fetchListingVideo=async(req:Request,res:Response)=>{
 
 export const fetchListings=async(req:Request,res:Response)=>{
     const page=Number(req.query?.page)|| 1;
-    const { lists, total } = await listsFetchingService(page);
+    const filters = {
+    listingType: req.query.listingType as ListingType | undefined,
+    propertyType: req.query.propertyType as PropertyType | undefined,
+    postedBy: req.query.postedBy as PostedBy | undefined,
+    maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+    beds: req.query.beds ? Number(req.query.beds) : undefined,
+    sort: req.query.sort as string | undefined,
+  };
+    const { lists, total } = await listsFetchingService(page,filters);
    return res.status(200).json({ message: "Listings fetched successfully", lists, total });
 }
 
@@ -143,9 +151,8 @@ export const geoCode=async(req:Request,res:Response)=>{
     const street=req.query.street as string||undefined
     const city=req.query.city as string
     const state=req.query.state as string
-    const country=req.query.country as string
     const postalcode=req.query.postalcode as string
- const response=await geoCodingService(street,city,state,country,postalcode)
+ const response=await geoCodingService(street,city,state,postalcode)
  return res.status(200).json({message:"geoCoded Successfully",response})
 }
 
@@ -161,8 +168,9 @@ export const userSearch=async(req:Request,res:Response)=>{
     const propertyType=req.query.propertyType as PropertyType;
     const location=req.query.location as string;
     if(!location) throw new BadRequestError("Location required")
-    console.log(listingType,propertyType,location);
-    const result=await searchService(location,listingType,propertyType)
+    const radius=searchRadius.safeParse(req.query.radius)
+    if(!radius.success) throw radius.error
+    const result=await searchService(location,radius.data,listingType,propertyType)
     return res.status(200).json({message:"Search results fetched successfully",lists:result})
 }
 

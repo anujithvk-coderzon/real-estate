@@ -168,6 +168,7 @@ export type ListingSummary = Pick<
   | "status"
   | "listingType"
   | "propertyType"
+  | "postedBy"
   | "price"
   | "locality"
   | "city"

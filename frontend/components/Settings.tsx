@@ -62,7 +62,7 @@ const Row = ({ label, value, action }: { label: string; value: React.ReactNode; 
   <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 first:pt-0 last:pb-0">
     <div className="min-w-0">
       <dt className="text-[13px] text-muted">{label}</dt>
-      <dd className="mt-0.5 truncate text-[15px]">{value}</dd>
+      <dd className="mt-0.5 text-[15px]">{value}</dd>
     </div>
     {action}
   </div>
@@ -279,7 +279,7 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
               />
               <Row
                 label="Email"
-                value={<span className="truncate">{user.email}</span>}
+                value={user.email}
                 action={<span className="shrink-0 text-[13px] text-muted">Used to sign in</span>}
               />
               <Row
@@ -331,7 +331,7 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
           <p className="text-[14px] font-medium text-accent" aria-live="polite">
             New photo selected. It isn&apos;t saved yet.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button type="button" onClick={handleUpload} disabled={uploading} className={primaryButton}>
               {uploading ? "Uploading…" : "Upload photo"}
             </button>

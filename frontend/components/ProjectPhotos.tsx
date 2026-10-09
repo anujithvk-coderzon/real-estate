@@ -117,7 +117,7 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
                   type="button"
                   onClick={() => handleDelete(image.id)}
                   aria-label="Delete this photo"
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-panel/95 text-[13px] text-muted shadow-sm transition-colors hover:text-danger"
+                  className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-panel/95 text-[15px] text-muted shadow-sm transition-colors hover:text-danger"
                 >
                   ✕
                 </button>
@@ -155,7 +155,7 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
                   onClick={() => setPicked((prev) => prev.filter((other) => other.key !== item.key))}
                   disabled={uploading}
                   aria-label="Remove this photo"
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-panel/95 text-[13px] text-muted shadow-sm transition-colors hover:text-danger"
+                  className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-panel/95 text-[15px] text-muted shadow-sm transition-colors hover:text-danger"
                 >
                   ✕
                 </button>

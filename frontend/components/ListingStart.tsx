@@ -76,7 +76,7 @@ console.log(user);
         {/* ---------- who ---------- */}
         <fieldset>
           <legend className="text-[17px] font-semibold tracking-tight">Who&apos;s listing this property?</legend>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {ROLES.map((option) => {
               const selected = role === option.value;
               return (

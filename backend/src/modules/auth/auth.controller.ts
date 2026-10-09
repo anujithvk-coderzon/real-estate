@@ -21,12 +21,15 @@ import { prisma } from "../../lib/prisma.js";
 import { goolgeClient } from "../../lib/google.js";
 import { avatarPublicUrl } from "../../lib/bunny.js";
 
-const isProduction = process.env.NODE_ENV === "production";
 const REFRESH_COOKIE = "refresh_real_estate";
+// The browser reaches this API through the frontend's own origin (/api, proxied
+// in next.config.ts), so the refresh cookie is first-party everywhere: locally,
+// through a tunnel, and in production. Hence constant values — only the hostnames
+// decide whether a cookie is cross-site, and NODE_ENV cannot know them.
 const refreshCookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
+  secure: true,
+  sameSite: "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 } as const;
 
@@ -96,9 +99,6 @@ export const rotateAccessToken = async (
     const accessToken = await rotateService(token);
     return res.status(200).json({ message: "Tokan refreshed successfully", accessToken });
   } catch {
-    // The cookie cannot work (deleted user, rotated token, expired session):
-    // remove it so the browser stops sending it on every page load.
-    res.clearCookie(REFRESH_COOKIE, refreshCookieOptions);
     return res.status(401).json({ message: "Session expired" });
   }
 };
@@ -178,7 +178,6 @@ export const googleCallback=async(req:Request,res:Response)=>{
     res.cookie(REFRESH_COOKIE, response.refreshToken, refreshCookieOptions)
     res.redirect(process.env.FRONTEND_URL as string);
   } catch (error) {
-    // Without this the reason is lost and every failure looks the same.
     console.error("Google callback failed:", error);
     res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=google`);
   }
