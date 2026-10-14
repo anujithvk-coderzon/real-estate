@@ -51,11 +51,17 @@ const initialsOf = (name: string) =>
     .join("");
 
 // Only a checked registration says "verified"; the rest say what they are.
-const RERA_BADGE: Record<VerificationStatus, { text: string; className: string } | null> = {
+const RERA_BADGE: Record<
+  VerificationStatus,
+  { text: string; className: string } | null
+> = {
   NONE: null,
   PENDING: { text: "RERA number provided", className: "bg-ground text-muted" },
   VERIFIED: { text: "RERA verified", className: "bg-accent-soft text-accent" },
-  REVOKED: { text: "Registration removed by the registry", className: "bg-danger/10 text-danger" },
+  REVOKED: {
+    text: "Registration removed by the registry",
+    className: "bg-danger/10 text-danger",
+  },
 };
 
 const SellerProfile = ({ slug }: { slug: string }) => {
@@ -87,7 +93,9 @@ const SellerProfile = ({ slug }: { slug: string }) => {
   const loadMore = async () => {
     setLoadingMore(true);
     try {
-      const response = await api.get(`/list/seller/${slug}`, { params: { page: page + 1 } });
+      const response = await api.get(`/list/seller/${slug}`, {
+        params: { page: page + 1 },
+      });
       setListings((prev) => [...(prev ?? []), ...(response.data.lists ?? [])]);
       setPage(page + 1);
     } catch {
@@ -100,8 +108,12 @@ const SellerProfile = ({ slug }: { slug: string }) => {
   if (notFound) {
     return (
       <main className="mx-auto w-full max-w-md px-5 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight">This profile is not available</h1>
-        <p className="mt-2 text-[15px] text-muted">The link may be wrong, or the account was removed.</p>
+        <h1 className="font-display text-[22px]">
+          This profile is not available
+        </h1>
+        <p className="mt-2 text-[15px] text-muted">
+          The link may be wrong, or the account was removed.
+        </p>
         <Link href="/" className={`mt-6 inline-block ${secondaryButton}`}>
           See all properties
         </Link>
@@ -114,15 +126,21 @@ const SellerProfile = ({ slug }: { slug: string }) => {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-8 lg:py-12">
-      <Link href="/" className="text-[14px] font-medium text-muted transition-colors hover:text-ink">
+      <Link
+        href="/"
+        className="text-[14px] font-medium text-muted transition-colors hover:text-ink"
+      >
         ← All properties
       </Link>
 
       {/* ---------- who they are ---------- */}
-      <section aria-labelledby="seller-heading" className="mt-6 border-b border-line pb-8">
+      <section
+        aria-labelledby="seller-heading"
+        className="mt-6 border-b border-line pb-8"
+      >
         {profile ? (
           <div className="flex flex-col items-center text-center">
-            <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-accent text-[28px] font-semibold text-white">
+            <span className="font-display flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-accent text-[28px] text-white">
               {profile.avatarUrl && !avatarFailed ? (
                 // Google photos refuse requests that send a Referer, hence no-referrer.
                 // eslint-disable-next-line @next/next/no-img-element
@@ -138,13 +156,17 @@ const SellerProfile = ({ slug }: { slug: string }) => {
               )}
             </span>
 
-            <h1 id="seller-heading" className="mt-4 font-display text-[28px] leading-tight sm:text-[32px]">
+            <h1
+              id="seller-heading"
+              className="mt-4 font-display text-[28px] leading-tight sm:text-[32px]"
+            >
               {profile.name}
             </h1>
             <p className="mt-1 text-[15px] text-muted">
-              {labelOf(profile.accountType ?? "") || "Seller"} · {profile.listingCount}{" "}
-              {profile.listingCount === 1 ? "listing" : "listings"} · on the site since{" "}
-              {formatDate(profile.memberSince)}
+              {labelOf(profile.accountType ?? "") || "Seller"} ·{" "}
+              {profile.listingCount}{" "}
+              {profile.listingCount === 1 ? "listing" : "listings"} · on the
+              site since {formatDate(profile.memberSince)}
             </p>
 
             {profile.description && (
@@ -155,9 +177,15 @@ const SellerProfile = ({ slug }: { slug: string }) => {
 
             {(badge || profile.agentReraNumber) && (
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[13px]">
-                {badge && <span className={`rounded-full px-3 py-1 font-medium ${badge.className}`}>{badge.text}</span>}
+                {badge && (
+                  <span
+                    className={`rounded-full px-3 py-1 font-medium ${badge.className}`}
+                  >
+                    {badge.text}
+                  </span>
+                )}
                 {profile.agentReraNumber && (
-                  <span className="rounded-full bg-ground px-3 py-1 font-mono text-muted">
+                  <span className="rounded-full bg-ground px-3 py-1 tabular-nums text-muted">
                     {profile.agentReraNumber}
                   </span>
                 )}
@@ -176,12 +204,15 @@ const SellerProfile = ({ slug }: { slug: string }) => {
       {/* ---------- projects, only when there are any ---------- */}
       {profile && profile.projects.length > 0 && (
         <section aria-labelledby="projects-heading" className="mt-8">
-          <h2 id="projects-heading" className="text-[20px] font-semibold tracking-tight">
+          <h2 id="projects-heading" className="font-display text-[20px]">
             Projects
           </h2>
           <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {profile.projects.map((project) => (
-              <li key={project.id} className="overflow-hidden rounded-xl bg-panel ring-1 ring-line">
+              <li
+                key={project.id}
+                className="overflow-hidden rounded-xl bg-panel ring-1 ring-line"
+              >
                 {project.images[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -196,18 +227,29 @@ const SellerProfile = ({ slug }: { slug: string }) => {
                   </div>
                 )}
                 <div className="p-4">
-                  <p className="truncate text-[16px] font-semibold">{project.name}</p>
+                  <p className="truncate text-[16px] font-semibold">
+                    {project.name}
+                  </p>
                   <p className="mt-1 text-[14px] text-muted">
-                    {PROJECT_STATUS.find((option) => option.value === project.status)?.label ?? project.status}
+                    {PROJECT_STATUS.find(
+                      (option) => option.value === project.status,
+                    )?.label ?? project.status}
                     {" · "}
-                    {[project.locality, project.city].filter(Boolean).join(", ")}
-                    {typeof project.totalUnits === "number" && ` · ${project.totalUnits} units`}
+                    {[project.locality, project.city]
+                      .filter(Boolean)
+                      .join(", ")}
+                    {typeof project.totalUnits === "number" &&
+                      ` · ${project.totalUnits} units`}
                   </p>
                   {project.isReraExempt ? (
-                    <p className="mt-2 text-[12px] text-muted">Stated as exempt from RERA registration</p>
+                    <p className="mt-2 text-[12px] text-muted">
+                      Stated as exempt from RERA registration
+                    </p>
                   ) : (
                     project.reraNumber && (
-                      <p className="mt-2 font-mono text-[12px] text-muted">RERA {project.reraNumber}</p>
+                      <p className="mt-2 tabular-nums text-[12px] text-muted">
+                        RERA {project.reraNumber}
+                      </p>
                     )
                   )}
                 </div>
@@ -219,14 +261,22 @@ const SellerProfile = ({ slug }: { slug: string }) => {
 
       {/* ---------- their listings ---------- */}
       <section aria-labelledby="listings-heading" className="mt-10">
-        <h2 id="listings-heading" className="text-[20px] font-semibold tracking-tight">
-          {total > 0 ? `${total} ${total === 1 ? "property" : "properties"}` : "Properties"}
+        <h2 id="listings-heading" className="font-display text-[20px]">
+          {total > 0
+            ? `${total} ${total === 1 ? "property" : "properties"}`
+            : "Properties"}
         </h2>
 
         {listings === null ? (
-          <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          <ul
+            className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            aria-busy="true"
+          >
             {Array.from({ length: 3 }, (_, index) => (
-              <li key={index} className="overflow-hidden rounded-xl bg-panel ring-1 ring-line">
+              <li
+                key={index}
+                className="overflow-hidden rounded-xl bg-panel ring-1 ring-line"
+              >
                 <div className="aspect-[16/10] animate-pulse bg-line/50" />
                 <div className="space-y-2.5 p-3.5">
                   <div className="h-5 w-24 animate-pulse rounded bg-line/70" />
@@ -236,7 +286,9 @@ const SellerProfile = ({ slug }: { slug: string }) => {
             ))}
           </ul>
         ) : listings.length === 0 ? (
-          <p className="mt-3 text-[15px] text-muted">Nothing listed right now.</p>
+          <p className="mt-3 text-[15px] text-muted">
+            Nothing listed right now.
+          </p>
         ) : (
           <>
             <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -249,8 +301,15 @@ const SellerProfile = ({ slug }: { slug: string }) => {
 
             {hasMore && (
               <div className="mt-8 text-center">
-                <button type="button" onClick={loadMore} disabled={loadingMore} className={secondaryButton}>
-                  {loadingMore ? "Loading…" : `Show more (${total - listings.length} left)`}
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className={secondaryButton}
+                >
+                  {loadingMore
+                    ? "Loading…"
+                    : `Show more (${total - listings.length} left)`}
                 </button>
               </div>
             )}

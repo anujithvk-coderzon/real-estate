@@ -17,10 +17,17 @@ import {
   type ProjectFormData,
 } from "@/lib/project";
 import { errorToast, successToast } from "@/lib/toast";
-import { inputClass, primaryButton, secondaryButton, sectionTitle } from "@/lib/ui";
+import {
+  inputClass,
+  primaryButton,
+  secondaryButton,
+  sectionTitle,
+} from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
-type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+type ChangeEvent = React.ChangeEvent<
+  HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+>;
 
 const MAX_DESCRIPTION = 2000;
 
@@ -40,7 +47,8 @@ const ProjectForm = ({ projectId, initial }: Props) => {
 
   const handleChange = (event: ChangeEvent) => {
     const { name, value, type } = event.target;
-    const next = type === "checkbox" ? (event.target as HTMLInputElement).checked : value;
+    const next =
+      type === "checkbox" ? (event.target as HTMLInputElement).checked : value;
     setData((prev) => {
       const updated = { ...prev, [name]: next };
       // Crossing the unit limit removes the exemption, so a reason typed for a
@@ -58,7 +66,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
       name,
       value: data[name],
       placeholder,
-      className: `${inputClass} font-mono`,
+      className: `${inputClass} tabular-nums`,
       onValue: (amount) => setData((prev) => ({ ...prev, [name]: amount })),
     });
 
@@ -68,7 +76,8 @@ const ProjectForm = ({ projectId, initial }: Props) => {
   const canSave = problems.length === 0 && !saving;
 
   // "Completed in" reads better than "Handover" once a project is finished.
-  const handoverLabel = data.status === "COMPLETED" ? "Completed in" : "Expected handover";
+  const handoverLabel =
+    data.status === "COMPLETED" ? "Completed in" : "Expected handover";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -76,12 +85,18 @@ const ProjectForm = ({ projectId, initial }: Props) => {
     setSaving(true);
     try {
       if (editing) {
-        const response = await api.patch(`/project/update/${projectId}`, buildProjectPayload(data));
+        const response = await api.patch(
+          `/project/update/${projectId}`,
+          buildProjectPayload(data),
+        );
         successToast(response.data.message ?? "Project updated");
         router.push(`/list/my/projects/${projectId}`);
         return;
       }
-      const response = await api.post("/project/create", buildProjectPayload(data));
+      const response = await api.post(
+        "/project/create",
+        buildProjectPayload(data),
+      );
       successToast(response.data.message ?? "Project added");
       // Photos come next, the same way a listing goes to its media step.
       router.push(`/list/my/projects/${response.data.project.id}/photos`);
@@ -98,7 +113,8 @@ const ProjectForm = ({ projectId, initial }: Props) => {
           {editing ? "Edit project" : "Add a project"}
         </h1>
         <p className="mt-1 max-w-prose text-[15px] leading-relaxed text-muted">
-          Buyers see this on your profile, and the flats you list in it carry its registration number.
+          Buyers see this on your profile, and the flats you list in it carry
+          its registration number.
         </p>
       </header>
 
@@ -108,19 +124,41 @@ const ProjectForm = ({ projectId, initial }: Props) => {
           <h2 className={sectionTitle}>The basics</h2>
 
           <Field id="name" label="Project name">
-            <input id="name" name="name" maxLength={120} value={data.name} onChange={handleChange} className={inputClass} />
+            <input
+              id="name"
+              name="name"
+              maxLength={120}
+              value={data.name}
+              onChange={handleChange}
+              className={inputClass}
+            />
           </Field>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field id="status" label="Stage">
-              <Select id="status" value={data.status} options={PROJECT_STATUS} onChange={handleChange} />
+              <Select
+                id="status"
+                value={data.status}
+                options={PROJECT_STATUS}
+                onChange={handleChange}
+              />
             </Field>
             <Field id="propertyType" label="What is it" optional>
-              <Select id="propertyType" value={data.propertyType} options={PROPERTY_TYPES} onChange={handleChange} />
+              <Select
+                id="propertyType"
+                value={data.propertyType}
+                options={PROPERTY_TYPES}
+                onChange={handleChange}
+              />
             </Field>
           </div>
 
-          <Field id="description" label="About the project" optional hint="What makes it worth a visit.">
+          <Field
+            id="description"
+            label="About the project"
+            optional
+            hint="What makes it worth a visit."
+          >
             <textarea
               id="description"
               name="description"
@@ -146,7 +184,7 @@ const ProjectForm = ({ projectId, initial }: Props) => {
                 min={1}
                 value={data.totalUnits}
                 onChange={handleChange}
-                className={`${inputClass} font-mono`}
+                className={`${inputClass} tabular-nums`}
               />
             </Field>
             <Field id="minPrice" label="Price from" optional hint="₹">
@@ -159,10 +197,24 @@ const ProjectForm = ({ projectId, initial }: Props) => {
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field id="startedAt" label="Started" optional>
-              <input id="startedAt" name="startedAt" type="date" value={data.startedAt} onChange={handleChange} className={inputClass} />
+              <input
+                id="startedAt"
+                name="startedAt"
+                type="date"
+                value={data.startedAt}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
             <Field id="handoverAt" label={handoverLabel} optional>
-              <input id="handoverAt" name="handoverAt" type="date" value={data.handoverAt} onChange={handleChange} className={inputClass} />
+              <input
+                id="handoverAt"
+                name="handoverAt"
+                type="date"
+                value={data.handoverAt}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
           </div>
         </section>
@@ -173,16 +225,40 @@ const ProjectForm = ({ projectId, initial }: Props) => {
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field id="locality" label="Locality or street">
-              <input id="locality" name="locality" value={data.locality} onChange={handleChange} className={inputClass} />
+              <input
+                id="locality"
+                name="locality"
+                value={data.locality}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
             <Field id="city" label="City or town">
-              <input id="city" name="city" value={data.city} onChange={handleChange} className={inputClass} />
+              <input
+                id="city"
+                name="city"
+                value={data.city}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
             <Field id="district" label="District">
-              <input id="district" name="district" value={data.district} onChange={handleChange} className={inputClass} />
+              <input
+                id="district"
+                name="district"
+                value={data.district}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
             <Field id="state" label="State">
-              <input id="state" name="state" value={data.state} onChange={handleChange} className={inputClass} />
+              <input
+                id="state"
+                name="state"
+                value={data.state}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
             <Field id="pincode" label="Pincode">
               <input
@@ -192,9 +268,12 @@ const ProjectForm = ({ projectId, initial }: Props) => {
                 maxLength={6}
                 value={data.pincode}
                 onChange={(event) =>
-                  setData((prev) => ({ ...prev, pincode: event.target.value.replace(/\D/g, "") }))
+                  setData((prev) => ({
+                    ...prev,
+                    pincode: event.target.value.replace(/\D/g, ""),
+                  }))
                 }
-                className={`${inputClass} font-mono`}
+                className={`${inputClass} tabular-nums`}
               />
             </Field>
           </div>
@@ -204,14 +283,15 @@ const ProjectForm = ({ projectId, initial }: Props) => {
         <section className="space-y-5">
           <h2 className={sectionTitle}>RERA registration</h2>
           <p className="max-w-prose text-[14px] leading-relaxed text-muted">
-            A project on more than 500 sq m, or with more than 8 units, must be registered before it is
-            advertised. The number is shown on the project page and on every flat listed in it.
+            A project on more than 500 sq m, or with more than 8 units, must be
+            registered before it is advertised. The number is shown on the
+            project page and on every flat listed in it.
           </p>
 
           {mustRegister && (
-            <p className="rounded-md bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
-              With more than {RERA_EXEMPT_MAX_UNITS} units, registration is compulsory, so the registration
-              number is required here.
+            <p className="rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
+              With more than {RERA_EXEMPT_MAX_UNITS} units, registration is
+              compulsory, so the registration number is required here.
             </p>
           )}
 
@@ -222,13 +302,24 @@ const ProjectForm = ({ projectId, initial }: Props) => {
                   id="reraNumber"
                   name="reraNumber"
                   value={data.reraNumber}
-                  onChange={(event) => setData((prev) => ({ ...prev, reraNumber: event.target.value.toUpperCase() }))}
+                  onChange={(event) =>
+                    setData((prev) => ({
+                      ...prev,
+                      reraNumber: event.target.value.toUpperCase(),
+                    }))
+                  }
                   placeholder="K-RERA/PRJ/…"
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} tabular-nums`}
                 />
               </Field>
               <Field id="reraState" label="State of registration">
-                <input id="reraState" name="reraState" value={data.reraState} onChange={handleChange} className={inputClass} />
+                <input
+                  id="reraState"
+                  name="reraState"
+                  value={data.reraState}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
               </Field>
             </div>
           ) : (
@@ -237,7 +328,13 @@ const ProjectForm = ({ projectId, initial }: Props) => {
               label="Why is it exempt?"
               hint="For example: 8 units on 420 sq m, or completed before RERA came into force."
             >
-              <input id="exemptReason" name="exemptReason" value={data.exemptReason} onChange={handleChange} className={inputClass} />
+              <input
+                id="exemptReason"
+                name="exemptReason"
+                value={data.exemptReason}
+                onChange={handleChange}
+                className={inputClass}
+              />
             </Field>
           )}
 
@@ -253,8 +350,8 @@ const ProjectForm = ({ projectId, initial }: Props) => {
               <span>
                 This project is exempt from registration
                 <span className="mt-0.5 block text-[13px] text-muted">
-                  Only for {RERA_EXEMPT_MAX_UNITS} units or fewer on under 500 sq m. Shown to buyers as a
-                  statement by you, in your words.
+                  Only for {RERA_EXEMPT_MAX_UNITS} units or fewer on under 500
+                  sq m. Shown to buyers as a statement by you, in your words.
                 </span>
               </span>
             </label>
@@ -274,7 +371,12 @@ const ProjectForm = ({ projectId, initial }: Props) => {
             <button type="submit" disabled={!canSave} className={primaryButton}>
               {saving ? "Saving…" : editing ? "Save changes" : "Add project"}
             </button>
-            <Link href={editing ? `/list/my/projects/${projectId}` : "/list/my/profile"} className={secondaryButton}>
+            <Link
+              href={
+                editing ? `/list/my/projects/${projectId}` : "/list/my/profile"
+              }
+              className={secondaryButton}
+            >
               Cancel
             </Link>
           </div>

@@ -7,8 +7,19 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import Gallery from "@/components/listing/Gallery";
 import { api } from "@/lib/api";
 import { formatDate, formatRupees, formatRupeesShort } from "@/lib/format";
-import { amenityCategoryLabel, isRental, labelOf, listingLocation } from "@/lib/listing";
-import { detailRows, googleMapsUrl, groupAmenities, keyFacts, withValues } from "@/lib/listingDisplay";
+import {
+  amenityCategoryLabel,
+  isRental,
+  labelOf,
+  listingLocation,
+} from "@/lib/listing";
+import {
+  detailRows,
+  googleMapsUrl,
+  groupAmenities,
+  keyFacts,
+  withValues,
+} from "@/lib/listingDisplay";
 import { errorToast, successToast } from "@/lib/toast";
 import type { Listing, ListingStatus } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
@@ -16,7 +27,10 @@ import { apiMessage } from "@/lib/validation/apiError";
 
 type Props = { id: string };
 
-const STATUS_DISPLAY: Record<ListingStatus, { text: string; badge: string; note: string }> = {
+const STATUS_DISPLAY: Record<
+  ListingStatus,
+  { text: string; badge: string; note: string }
+> = {
   DRAFT: {
     text: "Draft",
     badge: "border-warn/30 bg-warn/10 text-warn",
@@ -27,8 +41,16 @@ const STATUS_DISPLAY: Record<ListingStatus, { text: string; badge: string; note:
     badge: "border-accent/30 bg-accent-soft text-accent",
     note: "This listing is visible to buyers in search.",
   },
-  SOLD: { text: "Sold", badge: "border-line bg-ground text-muted", note: "Marked as sold." },
-  RENTED: { text: "Rented", badge: "border-line bg-ground text-muted", note: "Marked as rented." },
+  SOLD: {
+    text: "Sold",
+    badge: "border-line bg-ground text-muted",
+    note: "Marked as sold.",
+  },
+  RENTED: {
+    text: "Rented",
+    badge: "border-line bg-ground text-muted",
+    note: "Marked as rented.",
+  },
   EXPIRED: {
     text: "Expired",
     badge: "border-line bg-ground text-muted",
@@ -36,7 +58,7 @@ const STATUS_DISPLAY: Record<ListingStatus, { text: string; badge: string; note:
   },
 };
 
-const sectionHeading = "text-[20px] font-semibold tracking-tight";
+const sectionHeading = "font-display text-[20px] leading-tight";
 
 const MySpecificListing = ({ id }: Props) => {
   const router = useRouter();
@@ -46,7 +68,7 @@ const MySpecificListing = ({ id }: Props) => {
   const [deleting, setDeleting] = useState(false);
 
   // Deleting removes the listing and its photos and video for good.
-  const handleDelete = async (id:string) => {
+  const handleDelete = async (id: string) => {
     setDeleting(true);
     try {
       const response = await api.delete(`/list/delete/${id}`);
@@ -73,9 +95,16 @@ const MySpecificListing = ({ id }: Props) => {
   if (failed) {
     return (
       <main className="mx-auto w-full max-w-md px-5 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight">This listing could not be loaded</h1>
-        <p className="mt-2 text-[15px] text-muted">It may have been deleted, or the link is incorrect.</p>
-        <Link href="/list/create" className={`mt-6 inline-block ${secondaryButton}`}>
+        <h1 className="font-display text-[22px]">
+          This listing could not be loaded
+        </h1>
+        <p className="mt-2 text-[15px] text-muted">
+          It may have been deleted, or the link is incorrect.
+        </p>
+        <Link
+          href="/list/create"
+          className={`mt-6 inline-block ${secondaryButton}`}
+        >
           Create a listing
         </Link>
       </main>
@@ -84,7 +113,10 @@ const MySpecificListing = ({ id }: Props) => {
 
   if (!listing) {
     return (
-      <main className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-8" aria-busy="true">
+      <main
+        className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-8"
+        aria-busy="true"
+      >
         <div className="h-14 animate-pulse rounded-lg bg-line" />
         <div className="mt-6 aspect-[4/3] animate-pulse rounded-xl bg-line sm:aspect-[16/9]" />
         <div className="mt-8 h-24 animate-pulse rounded-lg bg-line" />
@@ -117,7 +149,6 @@ const MySpecificListing = ({ id }: Props) => {
       errorToast(apiMessage(error));
     }
   };
-  
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-6 lg:px-8 lg:pt-8">
@@ -127,7 +158,9 @@ const MySpecificListing = ({ id }: Props) => {
           It only follows the reader once it fits on one line. */}
       <div className="relative z-10 flex flex-col gap-3 rounded-lg border border-line bg-panel/95 px-4 py-3 backdrop-blur sm:sticky sm:top-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
-          <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${status.badge}`}>
+          <span
+            className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${status.badge}`}
+          >
             {status.text}
           </span>
           <p className="text-[14px] text-muted">{status.note}</p>
@@ -148,7 +181,7 @@ const MySpecificListing = ({ id }: Props) => {
           </Link>
           {listing.status === "DRAFT" && (
             <button
-               onClick={handlePublish}
+              onClick={handlePublish}
               type="button"
               disabled={!readyToPublish}
               aria-describedby="publish-checklist"
@@ -182,7 +215,7 @@ const MySpecificListing = ({ id }: Props) => {
           <p className="text-[14px] font-medium text-accent">
             {labelOf(listing.listingType)} · {labelOf(listing.propertyType)}
           </p>
-          <h1 className="mt-1.5 text-[28px] font-semibold leading-tight tracking-tight lg:text-[36px]">
+          <h1 className="font-display mt-1.5 text-[28px] leading-tight lg:text-[36px]">
             {listing.title}
           </h1>
           <p className="mt-2 text-[15px] text-muted">
@@ -191,22 +224,31 @@ const MySpecificListing = ({ id }: Props) => {
         </div>
 
         <div className="shrink-0 lg:text-right">
-          <p className="text-[13px] text-muted">{isRental(listing.listingType) ? "Monthly rent" : "Price"}</p>
-          <p className="mt-0.5 font-mono text-[34px] font-medium leading-none tracking-tight lg:text-[40px]">
+          <p className="text-[13px] text-muted">
+            {isRental(listing.listingType) ? "Monthly rent" : "Price"}
+          </p>
+          <p className="mt-0.5 font-display text-[34px] leading-none tabular-nums lg:text-[40px]">
             {formatRupeesShort(listing.price)}
           </p>
           <p className="mt-2 text-[13px] text-muted">
-            <span className="font-mono">{formatRupees(listing.price)}</span>
+            <span className="tabular-nums">{formatRupees(listing.price)}</span>
             {listing.isNegotiable && " · Negotiable"}
           </p>
           {listing.securityDeposit && (
             <p className="mt-1 text-[13px] text-muted">
-              Deposit <span className="font-mono text-ink">{formatRupees(listing.securityDeposit)}</span>
+              Deposit{" "}
+              <span className="tabular-nums text-ink">
+                {formatRupees(listing.securityDeposit)}
+              </span>
             </p>
           )}
           {listing.maintenance && (
             <p className="mt-1 text-[13px] text-muted">
-              Maintenance <span className="font-mono text-ink">{formatRupees(listing.maintenance)}</span> a month
+              Maintenance{" "}
+              <span className="tabular-nums text-ink">
+                {formatRupees(listing.maintenance)}
+              </span>{" "}
+              a month
             </p>
           )}
         </div>
@@ -216,7 +258,7 @@ const MySpecificListing = ({ id }: Props) => {
       <ul className="flex flex-wrap gap-x-6 gap-y-4 border-b border-line py-6 sm:gap-x-10">
         {facts.map(([name, value]) => (
           <li key={name}>
-            <p className="text-[20px] font-semibold leading-none">{value}</p>
+            <p className="font-display text-[20px] leading-none">{value}</p>
             <p className="mt-1.5 text-[13px] text-muted">{name}</p>
           </li>
         ))}
@@ -250,18 +292,25 @@ const MySpecificListing = ({ id }: Props) => {
             <section>
               <h2 className={sectionHeading}>Amenities</h2>
               <div className="mt-5 space-y-5">
-                {Object.entries(amenitiesByCategory).map(([category, amenities]) => (
-                  <div key={category}>
-                    <h3 className="text-[13px] font-medium text-muted">{amenityCategoryLabel(category)}</h3>
-                    <ul className="mt-2 flex flex-wrap gap-2">
-                      {amenities.map((amenity) => (
-                        <li key={amenity.id} className="rounded-full bg-accent-soft px-3 py-1 text-[14px]">
-                          {amenity.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                {Object.entries(amenitiesByCategory).map(
+                  ([category, amenities]) => (
+                    <div key={category}>
+                      <h3 className="text-[13px] font-medium text-muted">
+                        {amenityCategoryLabel(category)}
+                      </h3>
+                      <ul className="mt-2 flex flex-wrap gap-2">
+                        {amenities.map((amenity) => (
+                          <li
+                            key={amenity.id}
+                            className="rounded-full bg-accent-soft px-3 py-1 text-[14px]"
+                          >
+                            {amenity.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ),
+                )}
               </div>
             </section>
           )}
@@ -284,11 +333,14 @@ const MySpecificListing = ({ id }: Props) => {
             <h2 className={sectionHeading}>Location</h2>
             <address className="mt-4 text-[15px] not-italic leading-relaxed">
               {listing.addressLine}
-              {listing.landmark && <span className="text-muted"> · Near {listing.landmark}</span>}
+              {listing.landmark && (
+                <span className="text-muted"> · Near {listing.landmark}</span>
+              )}
               <br />
               {listing.locality}, {listing.city}
               <br />
-              {listing.district}, {listing.state} <span className="font-mono">{listing.pincode}</span>
+              {listing.district}, {listing.state}{" "}
+              <span className="tabular-nums">{listing.pincode}</span>
             </address>
             {location ? (
               <a
@@ -314,7 +366,10 @@ const MySpecificListing = ({ id }: Props) => {
               <h2 className="text-[15px] font-semibold">Before you publish</h2>
               <ul id="publish-checklist" className="mt-3 space-y-2.5">
                 {checklist.map(([name, done]) => (
-                  <li key={name} className={`flex items-center gap-2.5 text-[14px] ${done ? "" : "text-muted"}`}>
+                  <li
+                    key={name}
+                    className={`flex items-center gap-2.5 text-[14px] ${done ? "" : "text-muted"}`}
+                  >
                     <span
                       aria-hidden="true"
                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
@@ -324,7 +379,9 @@ const MySpecificListing = ({ id }: Props) => {
                       {done && "✓"}
                     </span>
                     {name}
-                    <span className="sr-only">{done ? "— done" : "— not done"}</span>
+                    <span className="sr-only">
+                      {done ? "— done" : "— not done"}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -332,14 +389,22 @@ const MySpecificListing = ({ id }: Props) => {
           )}
 
           <div className="p-5">
-            <h2 className="text-[15px] font-semibold">Contact shown to buyers</h2>
+            <h2 className="text-[15px] font-semibold">
+              Contact shown to buyers
+            </h2>
             {listing.contactName || listing.contactPhone ? (
               <div className="mt-2 text-[15px]">
                 {listing.contactName && <p>{listing.contactName}</p>}
-                {listing.contactPhone && <p className="font-mono text-muted">{listing.contactPhone}</p>}
+                {listing.contactPhone && (
+                  <p className="tabular-nums text-muted">
+                    {listing.contactPhone}
+                  </p>
+                )}
               </div>
             ) : (
-              <p className="mt-2 text-[14px] text-muted">No contact details added.</p>
+              <p className="mt-2 text-[14px] text-muted">
+                No contact details added.
+              </p>
             )}
           </div>
 
@@ -363,8 +428,8 @@ const MySpecificListing = ({ id }: Props) => {
         title="Delete this listing?"
         message={
           <>
-            <span className="font-medium text-ink">“{listing.title}”</span> and all its photos and
-            video will be deleted. This cannot be undone.
+            <span className="font-medium text-ink">“{listing.title}”</span> and
+            all its photos and video will be deleted. This cannot be undone.
           </>
         }
         confirmLabel="Delete"

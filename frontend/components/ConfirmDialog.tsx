@@ -53,20 +53,36 @@ const ConfirmDialog = ({
       onClick={(event) => {
         if (event.target === event.currentTarget) cancel();
       }}
-      className="m-auto w-[min(420px,calc(100vw-32px))] rounded-xl bg-panel p-0 text-ink shadow-xl backdrop:bg-ink/40"
+      className="modal m-auto w-[min(420px,calc(100vw-32px))] rounded-2xl bg-panel p-0 text-ink shadow-[0_24px_60px_-24px_rgba(48,32,68,0.5)] backdrop:bg-ink/40"
     >
       <div className="p-6">
-        <h2 id="confirm-dialog-title" className="text-[18px] font-semibold tracking-tight">
+        <h2
+          id="confirm-dialog-title"
+          className="font-display text-[18px] leading-tight"
+        >
           {title}
         </h2>
-        <div className="mt-2 text-[15px] leading-relaxed text-muted">{message}</div>
+        <div className="mt-2 text-[15px] leading-relaxed text-muted">
+          {message}
+        </div>
 
         <div className="mt-6 flex flex-wrap justify-end gap-2">
           {/* Cancel gets focus first, so pressing Enter by habit is safe. */}
-          <button type="button" autoFocus onClick={cancel} disabled={busy} className={secondaryButton}>
+          <button
+            type="button"
+            autoFocus
+            onClick={cancel}
+            disabled={busy}
+            className={secondaryButton}
+          >
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} disabled={busy} className={dangerButton}>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className={dangerButton}
+          >
             {busy ? busyLabel : confirmLabel}
           </button>
         </div>

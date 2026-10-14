@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import AgentReraForm from "@/components/AgentReraForm";
 import { Field, Select } from "@/components/form/Field";
 import PasswordInput from "@/components/form/PasswordInput";
-import PasswordRules, { meetsPasswordRules } from "@/components/form/PasswordRules";
+import PasswordRules, {
+  meetsPasswordRules,
+} from "@/components/form/PasswordRules";
 import { api, setAccessToken } from "@/lib/api";
 import { PROFILE_UPDATED } from "@/lib/events";
 import { labelOf, POSTED_BY } from "@/lib/listing";
@@ -42,13 +44,18 @@ const Card = ({
 }) => {
   const id = `${title.toLowerCase().replace(/\s+/g, "-")}-heading`;
   return (
-    <section aria-labelledby={id} className="overflow-hidden rounded-xl bg-panel ring-1 ring-line">
+    <section
+      aria-labelledby={id}
+      className="overflow-hidden rounded-xl bg-panel ring-1 ring-line"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
         <div>
-          <h2 id={id} className="text-[17px] font-semibold tracking-tight">
+          <h2 id={id} className="font-display text-[17px]">
             {title}
           </h2>
-          {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+          {description && (
+            <p className="mt-0.5 text-[13px] text-muted">{description}</p>
+          )}
         </div>
         {action}
       </div>
@@ -58,7 +65,15 @@ const Card = ({
 };
 
 // One line of a settings card: what it is, what it says, and what you can do about it.
-const Row = ({ label, value, action }: { label: string; value: React.ReactNode; action?: React.ReactNode }) => (
+const Row = ({
+  label,
+  value,
+  action,
+}: {
+  label: string;
+  value: React.ReactNode;
+  action?: React.ReactNode;
+}) => (
   <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 first:pt-0 last:pb-0">
     <div className="min-w-0">
       <dt className="text-[13px] text-muted">{label}</dt>
@@ -68,11 +83,18 @@ const Row = ({ label, value, action }: { label: string; value: React.ReactNode; 
   </div>
 );
 
-const textAction = "shrink-0 text-[14px] font-medium text-accent transition-colors hover:text-accent-hover";
+const textAction =
+  "shrink-0 text-[14px] font-medium text-accent transition-colors hover:text-accent-hover";
 
 /* ---------- profile: photo and name ---------- */
 
-const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => void }) => {
+const ProfileCard = ({
+  user,
+  onSaved,
+}: {
+  user: User;
+  onSaved: (user: User) => void;
+}) => {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [description, setDescription] = useState(user.description ?? "");
@@ -81,7 +103,9 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
   const [avatarFailed, setAvatarFailed] = useState(false);
 
   // A new photo, picked but not uploaded yet.
-  const [picked, setPicked] = useState<{ file: File; preview: string } | null>(null);
+  const [picked, setPicked] = useState<{ file: File; preview: string } | null>(
+    null,
+  );
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const previewUrl = useRef<string | null>(null); // freed when it is replaced or the page closes
@@ -119,8 +143,11 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
     try {
       const form = new FormData();
       form.append("avatar", picked.file);
-      const response = await api.patch("/auth/change/avatar", form, { timeout: 60_000 });
-      const avatarUrl: string | undefined = response.data.user?.avatarUrl ?? response.data.avatarUrl;
+      const response = await api.patch("/auth/change/avatar", form, {
+        timeout: 60_000,
+      });
+      const avatarUrl: string | undefined =
+        response.data.user?.avatarUrl ?? response.data.avatarUrl;
       if (avatarUrl) onSaved({ ...user, avatarUrl });
       setAvatarFailed(false);
       window.dispatchEvent(new Event(PROFILE_UPDATED)); // the sidebar shows the new photo
@@ -137,7 +164,11 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
     name.trim() !== user.name ||
     description.trim() !== (user.description ?? "") ||
     accountType !== user.accountType;
-  const canSave = name.trim().length >= 2 && description.length <= MAX_DESCRIPTION && changed && !saving;
+  const canSave =
+    name.trim().length >= 2 &&
+    description.length <= MAX_DESCRIPTION &&
+    changed &&
+    !saving;
 
   const cancel = () => {
     setEditing(false);
@@ -168,32 +199,39 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
   };
 
   return (
-    <Card title="Profile" description="How you appear to buyers on your listings.">
+    <Card
+      title="Profile"
+      description="How you appear to buyers on your listings."
+    >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
         {/* ---------- photo ---------- */}
         <div className="shrink-0">
-            <span
-              className={`flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-accent text-[24px] font-semibold text-white ${
-                picked ? "ring-2 ring-accent ring-offset-2" : ""
-              }`}
-            >
-              {picked ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={picked.preview} alt="Preview of your new photo" className="h-full w-full object-cover" />
-              ) : user.avatarUrl && !avatarFailed ? (
-                // Google photos refuse requests that send a Referer, hence no-referrer.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.avatarUrl}
-                  alt=""
-                  referrerPolicy="no-referrer"
-                  onError={() => setAvatarFailed(true)}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                initialsOf(user.name)
-              )}
-            </span>
+          <span
+            className={`flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-accent text-[24px] font-semibold text-white ${
+              picked ? "ring-2 ring-accent ring-offset-2" : ""
+            }`}
+          >
+            {picked ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={picked.preview}
+                alt="Preview of your new photo"
+                className="h-full w-full object-cover"
+              />
+            ) : user.avatarUrl && !avatarFailed ? (
+              // Google photos refuse requests that send a Referer, hence no-referrer.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarFailed(true)}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              initialsOf(user.name)
+            )}
+          </span>
 
           {/* The real input stays hidden; the camera button opens it. */}
           <input
@@ -205,7 +243,6 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
             tabIndex={-1}
             aria-hidden="true"
           />
-
         </div>
 
         {/* ---------- name, email, role ---------- */}
@@ -239,7 +276,10 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
                   onChange={(event) => setDescription(event.target.value)}
                   className={`${inputClass} resize-y`}
                 />
-                <p className="mt-1 text-right text-[12px] text-muted" aria-live="polite">
+                <p
+                  className="mt-1 text-right text-[12px] text-muted"
+                  aria-live="polite"
+                >
                   {description.length} / {MAX_DESCRIPTION}
                 </p>
               </Field>
@@ -258,10 +298,19 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
               </Field>
 
               <div className="flex gap-2">
-                <button type="submit" disabled={!canSave} className={primaryButton}>
+                <button
+                  type="submit"
+                  disabled={!canSave}
+                  className={primaryButton}
+                >
                   {saving ? "Saving…" : "Save"}
                 </button>
-                <button type="button" onClick={cancel} disabled={saving} className={secondaryButton}>
+                <button
+                  type="button"
+                  onClick={cancel}
+                  disabled={saving}
+                  className={secondaryButton}
+                >
                   Cancel
                 </button>
               </div>
@@ -272,7 +321,11 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
                 label="Name"
                 value={user.name}
                 action={
-                  <button type="button" onClick={() => setEditing(true)} className={textAction}>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className={textAction}
+                  >
                     Edit
                   </button>
                 }
@@ -280,19 +333,29 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
               <Row
                 label="Email"
                 value={user.email}
-                action={<span className="shrink-0 text-[13px] text-muted">Used to sign in</span>}
+                action={
+                  <span className="shrink-0 text-[13px] text-muted">
+                    Used to sign in
+                  </span>
+                }
               />
               <Row
                 label="About you"
                 value={
                   user.description ? (
-                    <span className="block whitespace-pre-line text-[14px] leading-relaxed">{user.description}</span>
+                    <span className="block whitespace-pre-line text-[14px] leading-relaxed">
+                      {user.description}
+                    </span>
                   ) : (
                     <span className="text-muted">Not added yet</span>
                   )
                 }
                 action={
-                  <button type="button" onClick={() => setEditing(true)} className={textAction}>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className={textAction}
+                  >
                     {user.description ? "Edit" : "Add"}
                   </button>
                 }
@@ -301,11 +364,16 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
                 label="Photo"
                 value={
                   <span className="text-muted">
-                    {user.avatarUrl ? "Added" : "Not added"} · JPG, PNG or WebP, up to 10 MB
+                    {user.avatarUrl ? "Added" : "Not added"} · JPG, PNG or WebP,
+                    up to 10 MB
                   </span>
                 }
                 action={
-                  <button type="button" onClick={() => fileInput.current?.click()} className={textAction}>
+                  <button
+                    type="button"
+                    onClick={() => fileInput.current?.click()}
+                    className={textAction}
+                  >
                     {user.avatarUrl ? "Change" : "Upload"}
                   </button>
                 }
@@ -314,7 +382,11 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
                 label="You usually list as"
                 value={labelOf(user.accountType) || "Owner"}
                 action={
-                  <button type="button" onClick={() => setEditing(true)} className={textAction}>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className={textAction}
+                  >
                     Change
                   </button>
                 }
@@ -332,7 +404,12 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
             New photo selected. It isn&apos;t saved yet.
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={handleUpload} disabled={uploading} className={primaryButton}>
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={uploading}
+              className={primaryButton}
+            >
               {uploading ? "Uploading…" : "Upload photo"}
             </button>
             <button
@@ -352,7 +429,10 @@ const ProfileCard = ({ user, onSaved }: { user: User; onSaved: (user: User) => v
 
 /* ---------- RERA registration, for brokers, dealers and builders ---------- */
 
-const STATUS_DISPLAY: Record<VerificationStatus, { text: string; className: string; help: string }> = {
+const STATUS_DISPLAY: Record<
+  VerificationStatus,
+  { text: string; className: string; help: string }
+> = {
   NONE: {
     text: "Not added",
     className: "bg-ground text-muted",
@@ -375,7 +455,13 @@ const STATUS_DISPLAY: Record<VerificationStatus, { text: string; className: stri
   },
 };
 
-const ReraCard = ({ user, onSaved }: { user: User; onSaved: (status: VerificationStatus) => void }) => {
+const ReraCard = ({
+  user,
+  onSaved,
+}: {
+  user: User;
+  onSaved: (status: VerificationStatus) => void;
+}) => {
   const [editing, setEditing] = useState(false);
   const status = STATUS_DISPLAY[user.agentReraStatus] ?? STATUS_DISPLAY.NONE;
   const hasNumber = Boolean(user.agentReraNumber);
@@ -386,8 +472,14 @@ const ReraCard = ({ user, onSaved }: { user: User; onSaved: (status: Verificatio
       description="Shown on your sale listings so buyers can check it."
       action={
         !editing && (
-          <button type="button" onClick={() => setEditing(true)} className={textAction}>
-            {hasNumber || user.agentReraStatus !== "NONE" ? "Update" : "Add number"}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className={textAction}
+          >
+            {hasNumber || user.agentReraStatus !== "NONE"
+              ? "Update"
+              : "Add number"}
           </button>
         )
       }
@@ -408,16 +500,27 @@ const ReraCard = ({ user, onSaved }: { user: User; onSaved: (status: Verificatio
           <Row
             label="Status"
             value={
-              <span className={`inline-block rounded-full px-2.5 py-0.5 text-[13px] font-medium ${status.className}`}>
+              <span
+                className={`inline-block rounded-full px-2.5 py-0.5 text-[13px] font-medium ${status.className}`}
+              >
                 {status.text}
               </span>
             }
           />
           {user.agentReraNumber && (
-            <Row label="Registration number" value={<span className="font-mono">{user.agentReraNumber}</span>} />
+            <Row
+              label="Registration number"
+              value={
+                <span className="tabular-nums">{user.agentReraNumber}</span>
+              }
+            />
           )}
-          {user.agentReraState && <Row label="State" value={user.agentReraState} />}
-          <div className="pt-3 text-[13px] leading-snug text-muted">{status.help}</div>
+          {user.agentReraState && (
+            <Row label="State" value={user.agentReraState} />
+          )}
+          <div className="pt-3 text-[13px] leading-snug text-muted">
+            {status.help}
+          </div>
         </dl>
       )}
     </Card>
@@ -426,7 +529,13 @@ const ReraCard = ({ user, onSaved }: { user: User; onSaved: (status: Verificatio
 
 /* ---------- password: change it, or create one for Google accounts ---------- */
 
-const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }) => {
+const PasswordCard = ({
+  user,
+  onCreated,
+}: {
+  user: User;
+  onCreated: () => void;
+}) => {
   const creating = !user.hasPassword; // Google-only accounts add their first password
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("");
@@ -434,7 +543,11 @@ const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }
   const [saving, setSaving] = useState(false);
 
   const sameAsCurrent = !creating && next !== "" && next === current;
-  const canSave = (creating || current !== "") && meetsPasswordRules(next) && !sameAsCurrent && !saving;
+  const canSave =
+    (creating || current !== "") &&
+    meetsPasswordRules(next) &&
+    !sameAsCurrent &&
+    !saving;
 
   const close = () => {
     setOpen(false);
@@ -449,7 +562,10 @@ const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }
     try {
       const response = creating
         ? await api.post("/auth/password/set", { new_password: next })
-        : await api.patch("/auth/change/password", { current_password: current, new_password: next });
+        : await api.patch("/auth/change/password", {
+            current_password: current,
+            new_password: next,
+          });
       // The backend signs out other devices and gives this tab a fresh token.
       setAccessToken(response.data.accessToken);
       successToast(response.data.message);
@@ -465,10 +581,18 @@ const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }
   return (
     <Card
       title="Password"
-      description={creating ? "You sign in with Google." : "Used when you sign in with your email."}
+      description={
+        creating
+          ? "You sign in with Google."
+          : "Used when you sign in with your email."
+      }
       action={
         !open && (
-          <button type="button" onClick={() => setOpen(true)} className={textAction}>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={textAction}
+          >
             {creating ? "Create a password" : "Change"}
           </button>
         )
@@ -489,7 +613,10 @@ const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }
             </Field>
           )}
 
-          <Field id="new-password" label={creating ? "Password" : "New password"}>
+          <Field
+            id="new-password"
+            label={creating ? "Password" : "New password"}
+          >
             <PasswordInput
               id="new-password"
               name="new-password"
@@ -501,17 +628,30 @@ const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }
             />
             <PasswordRules id="new-password-rules" value={next} />
             {sameAsCurrent && (
-              <p className="mt-2 text-[13px] text-warn">Choose a password different from your current one.</p>
+              <p className="mt-2 text-[13px] text-warn">
+                Choose a password different from your current one.
+              </p>
             )}
           </Field>
 
-          <p className="text-[13px] text-muted">Other devices signed in to this account will be signed out.</p>
+          <p className="text-[13px] text-muted">
+            Other devices signed in to this account will be signed out.
+          </p>
 
           <div className="flex gap-2">
             <button type="submit" disabled={!canSave} className={primaryButton}>
-              {saving ? "Saving…" : creating ? "Create password" : "Save password"}
+              {saving
+                ? "Saving…"
+                : creating
+                  ? "Create password"
+                  : "Save password"}
             </button>
-            <button type="button" onClick={close} disabled={saving} className={secondaryButton}>
+            <button
+              type="button"
+              onClick={close}
+              disabled={saving}
+              className={secondaryButton}
+            >
               Cancel
             </button>
           </div>
@@ -520,7 +660,11 @@ const PasswordCard = ({ user, onCreated }: { user: User; onCreated: () => void }
         <dl className="divide-y divide-line">
           <Row
             label="Password"
-            value={creating ? "Not set — add one to sign in with your email too" : "••••••••"}
+            value={
+              creating
+                ? "Not set — add one to sign in with your email too"
+                : "••••••••"
+            }
           />
         </dl>
       )}
@@ -547,9 +691,17 @@ const Settings = () => {
   if (failed) {
     return (
       <main className="mx-auto w-full max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight">Settings could not be loaded</h1>
-        <p className="mt-2 text-[15px] text-muted">Check your connection and try again.</p>
-        <button type="button" onClick={() => window.location.reload()} className={`mt-6 ${secondaryButton}`}>
+        <h1 className="font-display text-[22px]">
+          Settings could not be loaded
+        </h1>
+        <p className="mt-2 text-[15px] text-muted">
+          Check your connection and try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className={`mt-6 ${secondaryButton}`}
+        >
           Try again
         </button>
       </main>
@@ -562,17 +714,29 @@ const Settings = () => {
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-8 lg:py-12">
       <header>
-        <h1 className="font-display text-[34px] leading-tight lg:text-[40px]">Settings</h1>
-        <p className="mt-1 text-[15px] text-muted">Your account and how you appear to buyers.</p>
+        <h1 className="font-display text-[34px] leading-tight lg:text-[40px]">
+          Settings
+        </h1>
+        <p className="mt-1 text-[15px] text-muted">
+          Your account and how you appear to buyers.
+        </p>
       </header>
 
       {user ? (
         <div className="mt-8 space-y-5">
           <ProfileCard user={user} onSaved={setUser} />
           {showRera && (
-            <ReraCard user={user} onSaved={(agentReraStatus) => setUser({ ...user, agentReraStatus })} />
+            <ReraCard
+              user={user}
+              onSaved={(agentReraStatus) =>
+                setUser({ ...user, agentReraStatus })
+              }
+            />
           )}
-          <PasswordCard user={user} onCreated={() => setUser({ ...user, hasPassword: true })} />
+          <PasswordCard
+            user={user}
+            onCreated={() => setUser({ ...user, hasPassword: true })}
+          />
         </div>
       ) : (
         <div className="mt-8 space-y-5" aria-busy="true">

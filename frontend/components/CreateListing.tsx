@@ -63,7 +63,11 @@ const CreateListing = () => {
   // Selling: which project the unit is in. Either one of our records, or the
   // name and RERA number the lister types in, or an explicit "no project".
   const [projectId, setProjectId] = useState("");
-  const [manual, setManual] = useState({ manualName: "", manualRera: "", manualBuilder: "" });
+  const [manual, setManual] = useState({
+    manualName: "",
+    manualRera: "",
+    manualBuilder: "",
+  });
   const [reraStatus, setReraStatus] = useState<VerificationStatus | null>(null);
 
   useEffect(() => {
@@ -82,13 +86,23 @@ const CreateListing = () => {
 
   // The start screen's answers always win: this component is not remounted when
   // the query changes, so state created on the first render would be stale.
-  const data: ListingFormData = { ...typed, postedBy: role ?? "", listingType: purpose ?? "" };
+  const data: ListingFormData = {
+    ...typed,
+    postedBy: role ?? "",
+    listingType: purpose ?? "",
+  };
 
   // Updates must see the same two values, or rules that depend on them (such as
   // "clear the construction status unless this is a sale") would undo the choice.
-  const setData: React.Dispatch<React.SetStateAction<ListingFormData>> = (update) =>
+  const setData: React.Dispatch<React.SetStateAction<ListingFormData>> = (
+    update,
+  ) =>
     setTyped((previous) => {
-      const base: ListingFormData = { ...previous, postedBy: role ?? "", listingType: purpose ?? "" };
+      const base: ListingFormData = {
+        ...previous,
+        postedBy: role ?? "",
+        listingType: purpose ?? "",
+      };
       return typeof update === "function"
         ? (update as (value: ListingFormData) => ListingFormData)(base)
         : update;
@@ -132,11 +146,14 @@ const CreateListing = () => {
   // Builders and agents selling: the question is always asked, because a unit sold
   // off-plan needs the project's RERA number. "Not part of a project" is a valid
   // answer for a resale or a plot, but not for something under construction.
-  const sellerSale = (role === "BUILDER" || role === "BROKER") && purpose === "SALE";
-  const needsProject = sellerSale && data.propertyStatus === "UNDER_CONSTRUCTION";
+  const sellerSale =
+    (role === "BUILDER" || role === "BROKER") && purpose === "SALE";
+  const needsProject =
+    sellerSale && data.propertyStatus === "UNDER_CONSTRUCTION";
 
   // What will be sent. A record wins; a typed name is sent only on that answer.
-  const chosenProject = projectId && projectId !== NONE && projectId !== MANUAL ? projectId : "";
+  const chosenProject =
+    projectId && projectId !== NONE && projectId !== MANUAL ? projectId : "";
   const typedName = projectId === MANUAL ? manual.manualName.trim() : "";
   const typedRera = projectId === MANUAL ? manual.manualRera.trim() : "";
   const typedBuilder = projectId === MANUAL ? manual.manualBuilder.trim() : "";
@@ -144,12 +161,16 @@ const CreateListing = () => {
   // The question is answered when a project is chosen, a name and its registration
   // number are typed, or the lister says there is no project. Off-plan has no
   // "no project" answer, because such a sale needs a registered project.
-  const projectAnswered = projectId === NONE
-    ? !needsProject
-    : projectId === MANUAL
-      ? Boolean(typedName) && Boolean(typedRera) && Boolean(typedBuilder)
-      : Boolean(chosenProject);
-  const missing = [...getMissingFields(data, location), ...(sellerSale && !projectAnswered ? ["project"] : [])];
+  const projectAnswered =
+    projectId === NONE
+      ? !needsProject
+      : projectId === MANUAL
+        ? Boolean(typedName) && Boolean(typedRera) && Boolean(typedBuilder)
+        : Boolean(chosenProject);
+  const missing = [
+    ...getMissingFields(data, location),
+    ...(sellerSale && !projectAnswered ? ["project"] : []),
+  ];
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -176,12 +197,20 @@ const CreateListing = () => {
   if (!role || !purpose) {
     // key: /auth/me answers a moment after this mounts, and the new default
     // has to reach the radio group.
-    return <ListingStart key={user?.accountType ?? "loading"} defaultRole={user?.accountType} />;
+    return (
+      <ListingStart
+        key={user?.accountType ?? "loading"}
+        defaultRole={user?.accountType}
+      />
+    );
   }
 
   // Agents must be registered with their state RERA to handle a sale.
   // Rentals and PG are exempt, and owners and builders are asked elsewhere.
-  const needsRera = role === "BROKER" && purpose === "SALE" && (reraStatus === "NONE" || reraStatus === "REVOKED");
+  const needsRera =
+    role === "BROKER" &&
+    purpose === "SALE" &&
+    (reraStatus === "NONE" || reraStatus === "REVOKED");
   if (needsRera) {
     return (
       <AgentReraForm
@@ -195,7 +224,7 @@ const CreateListing = () => {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col px-5 py-8 lg:px-8 lg:py-10">
       <header className="max-w-xl">
-        <h1 className="text-[28px] font-semibold leading-tight tracking-tight lg:text-[34px]">
+        <h1 className="font-display text-[28px] leading-tight lg:text-[34px]">
           List a property
         </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
@@ -205,8 +234,12 @@ const CreateListing = () => {
 
       {/* What was chosen on the start screen; the form no longer asks these. */}
       <div className="mt-6 flex flex-wrap items-center gap-2 text-[14px]">
-        <span className="rounded-full bg-accent-soft px-3 py-1 font-medium text-accent">{labelOf(role)}</span>
-        <span className="rounded-full bg-panel px-3 py-1 ring-1 ring-line">{labelOf(purpose)}</span>
+        <span className="rounded-full bg-accent-soft px-3 py-1 font-medium text-accent">
+          {labelOf(role)}
+        </span>
+        <span className="rounded-full bg-panel px-3 py-1 ring-1 ring-line">
+          {labelOf(purpose)}
+        </span>
         <button
           type="button"
           onClick={() => router.push("/list/create")}
@@ -217,9 +250,9 @@ const CreateListing = () => {
       </div>
 
       {role === "BROKER" && purpose === "SALE" && reraStatus === "PENDING" && (
-        <p className="mt-4 rounded-md bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
-          Your RERA number is on file and shown as provided by you. A verified badge appears once someone
-          checks it against the state register.
+        <p className="mt-4 rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
+          Your RERA number is on file and shown as provided by you. A verified
+          badge appears once someone checks it against the state register.
         </p>
       )}
 
@@ -240,7 +273,9 @@ const CreateListing = () => {
               manualName={manual.manualName}
               manualRera={manual.manualRera}
               manualBuilder={manual.manualBuilder}
-              onManualChange={(field, value) => setManual((previous) => ({ ...previous, [field]: value }))}
+              onManualChange={(field, value) =>
+                setManual((previous) => ({ ...previous, [field]: value }))
+              }
               mustHaveProject={needsProject}
             />
           </div>
@@ -249,7 +284,9 @@ const CreateListing = () => {
 
       <section className="mt-6 rounded-lg border border-line bg-panel p-5 lg:p-6">
         <h2 className={sectionTitle}>Property details</h2>
-        <p className="mt-1 text-[14px] text-muted">The questions change with what you are listing.</p>
+        <p className="mt-1 text-[14px] text-muted">
+          The questions change with what you are listing.
+        </p>
         <div className="mt-6">
           <PropertyDetailsForm data={data} setData={setData} hideTypeAndRole />
         </div>
@@ -257,30 +294,49 @@ const CreateListing = () => {
 
       <h2 className={`mt-10 ${sectionTitle}`}>Where is the property?</h2>
       <p className="mt-1 max-w-xl text-[15px] leading-relaxed text-muted">
-        Detect the location or type the address, then drag the pin to the exact spot. Buyers
-        search by this pin.
+        Detect the location or type the address, then drag the pin to the exact
+        spot. Buyers search by this pin.
       </p>
 
       <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <section className="rounded-lg border border-line bg-panel p-5">
           {/* Shown before the choice, so people know the most accurate way first. */}
-          <div className="mb-4 flex gap-3 rounded-md bg-accent-soft px-3.5 py-3">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-accent">
+          <div className="mb-4 flex gap-3 rounded-lg bg-accent-soft px-3.5 py-3">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="mt-0.5 h-5 w-5 shrink-0 text-accent"
+            >
               <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
               <path d="M11 18.5h2" />
             </svg>
             <div>
-              <p className="text-[13px] font-semibold text-accent">Recommended: be at the property</p>
+              <p className="text-[13px] font-semibold text-accent">
+                Recommended: be at the property
+              </p>
               <p className="mt-1 text-[13px] leading-snug text-ink/80">
-                Open this page on your phone while you&apos;re at the property and tap{" "}
-                <span className="font-medium text-ink">Use my current location</span>. Phone GPS is accurate to
-                a few metres, so buyers and renters see exactly where the property is.
+                Open this page on your phone while you&apos;re at the property
+                and tap{" "}
+                <span className="font-medium text-ink">
+                  Use my current location
+                </span>
+                . Phone GPS is accurate to a few metres, so buyers and renters
+                see exactly where the property is.
               </p>
             </div>
           </div>
 
           <div className="space-y-2.5">
-            <button type="button" onClick={detectCurrentLocation} className={`w-full ${primaryButton}`}>
+            <button
+              type="button"
+              onClick={detectCurrentLocation}
+              className={`w-full ${primaryButton}`}
+            >
               Use my current location
             </button>
             <button
@@ -295,19 +351,25 @@ const CreateListing = () => {
 
           {location && note && (
             <div
-              className={`mt-5 rounded-md px-3.5 py-3 ${
-                isFallback ? "border border-warn/25 bg-warn/5" : "bg-accent-soft"
+              className={`mt-5 rounded-lg px-3.5 py-3 ${
+                isFallback
+                  ? "border border-warn/25 bg-warn/5"
+                  : "bg-accent-soft"
               }`}
             >
-              <p className={`text-[13px] font-medium ${isFallback ? "text-warn" : "text-accent"}`}>
+              <p
+                className={`text-[13px] font-medium ${isFallback ? "text-warn" : "text-accent"}`}
+              >
                 {note.heading}
               </p>
               {!isFallback && (
-                <p className="mt-1 font-mono text-[14px] text-ink">
+                <p className="mt-1 tabular-nums text-[14px] text-ink">
                   {location[1].toFixed(5)}, {location[0].toFixed(5)}
                 </p>
               )}
-              <p className="mt-1.5 text-[13px] leading-snug text-muted">{note.help}</p>
+              <p className="mt-1.5 text-[13px] leading-snug text-muted">
+                {note.help}
+              </p>
             </div>
           )}
 
@@ -323,11 +385,15 @@ const CreateListing = () => {
 
         <section className="h-[260px] overflow-hidden rounded-lg border border-line bg-panel sm:h-[420px] lg:h-[560px]">
           {location ? (
-            <MapPicker center={location} setLocation={(next) => placePin(next, "pin")} />
+            <MapPicker
+              center={location}
+              setLocation={(next) => placePin(next, "pin")}
+            />
           ) : (
             <div className="flex h-full items-center justify-center px-6">
               <p className="max-w-xs text-center text-[15px] leading-relaxed text-muted">
-                The map opens once a location is set. Detect it, or enter the address by hand.
+                The map opens once a location is set. Detect it, or enter the
+                address by hand.
               </p>
             </div>
           )}

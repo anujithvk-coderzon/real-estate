@@ -2,7 +2,9 @@ import { BrevoClient } from "@getbrevo/brevo";
 import { InternalServerError } from "../errors/Errors.js";
 
 export const brevo=new BrevoClient({
-    apiKey:process.env.BREVO_API_KEY!
+    apiKey:process.env.BREVO_API_KEY!,
+    timeoutInSeconds:10,
+    maxRetries:0
   })
 
 export async function sendEmail(to:string,subject:string,html:string) {

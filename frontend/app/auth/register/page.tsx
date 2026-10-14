@@ -46,7 +46,9 @@ const RegisterPage = () => {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12">
-      <h1 className="text-[28px] font-semibold leading-tight tracking-tight">Create your account</h1>
+      <h1 className="font-display text-[28px] leading-tight">
+        Create your account
+      </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
         You need an account to post and manage property listings.
       </p>
@@ -90,12 +92,17 @@ const RegisterPage = () => {
               {passwordRules.map((rule) => {
                 const met = rule.test(fields.password);
                 return (
-                  <li key={rule.id} className={`flex items-center gap-2 text-[13px] ${met ? "text-accent" : "text-muted"}`}>
+                  <li
+                    key={rule.id}
+                    className={`flex items-center gap-2 text-[13px] ${met ? "text-accent" : "text-muted"}`}
+                  >
                     <span aria-hidden="true" className="w-3 text-center">
                       {met ? "✓" : "•"}
                     </span>
                     {rule.label}
-                    <span className="sr-only">{met ? "— met" : "— not met"}</span>
+                    <span className="sr-only">
+                      {met ? "— met" : "— not met"}
+                    </span>
                   </li>
                 );
               })}
@@ -103,7 +110,11 @@ const RegisterPage = () => {
           )}
         </Field>
 
-        <button type="submit" disabled={submitting || !allRulesMet} className={`w-full ${primaryButton}`}>
+        <button
+          type="submit"
+          disabled={submitting || !allRulesMet}
+          className={`w-full ${primaryButton}`}
+        >
           {submitting ? "Creating account…" : "Create account"}
         </button>
       </form>

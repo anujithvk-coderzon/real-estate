@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PublicListingCard from "@/components/listing/PublicListingCard";
 import ListingFilters from "@/components/public/ListingFilters";
+import MapLegend from "@/components/public/MapLegend";
 import ResultsMap from "@/components/public/ResultsMap";
 import SearchBar from "@/components/public/SearchBar";
 import { api } from "@/lib/api";
@@ -20,7 +21,11 @@ import { RADIUS_OPTIONS, type Option } from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 
-type Result = { key: string; listings: PublicListingSummary[]; failed: boolean };
+type Result = {
+  key: string;
+  listings: PublicListingSummary[];
+  failed: boolean;
+};
 
 /* ---------- words and choices ---------- */
 
@@ -44,7 +49,11 @@ const SINGULAR: Record<string, string> = {
   ROOM: "room",
 };
 
-const MODE_PHRASE: Record<string, string> = { SALE: "for sale", RENT: "for rent", PG: "for PG / hostel" };
+const MODE_PHRASE: Record<string, string> = {
+  SALE: "for sale",
+  RENT: "for rent",
+  PG: "for PG / hostel",
+};
 
 // The API returns nearest first, so that is this page's default order. The home
 // page's is newest first, which is why the bar takes its sorts as a prop.
@@ -55,19 +64,37 @@ const SEARCH_SORTS: Option[] = [
 ];
 
 // "kakkanad" → "Kakkanad"
-const titleCase = (text: string) => text.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
+const titleCase = (text: string) =>
+  text.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
 
 /* ---------- icons ---------- */
 
 const MapIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-[18px] w-[18px]">
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    className="h-[18px] w-[18px]"
+  >
     <path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z" />
     <path d="M9 4v14M15 6v14" />
   </svg>
 );
 
 const ListIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true" className="h-[18px] w-[18px]">
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    aria-hidden="true"
+    className="h-[18px] w-[18px]"
+  >
     <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
   </svg>
 );
@@ -98,7 +125,9 @@ const SearchResults = () => {
   // Radius cannot be one of those: widening it asks for listings the server never
   // sent, so it belongs here and a change refetches.
   const serverQuery = new URLSearchParams(
-    Object.entries({ location, listingType, propertyType, radius }).filter(([, value]) => value),
+    Object.entries({ location, listingType, propertyType, radius }).filter(
+      ([, value]) => value,
+    ),
   ).toString();
 
   const [retry, setRetry] = useState(0);
@@ -115,7 +144,12 @@ const SearchResults = () => {
     api
       .get(`/list/search?${serverQuery}`)
       .then((response) => {
-        if (!ignore) setResult({ key: fetchKey, listings: response.data.lists ?? [], failed: false });
+        if (!ignore)
+          setResult({
+            key: fetchKey,
+            listings: response.data.lists ?? [],
+            failed: false,
+          });
       })
       .catch(() => {
         if (!ignore) setResult({ key: fetchKey, listings: [], failed: true });
@@ -127,7 +161,10 @@ const SearchResults = () => {
 
   const loading = result?.key !== fetchKey;
   const failed = !loading && result.failed;
-  const all = useMemo(() => (loading || !result ? [] : result.listings), [loading, result]);
+  const all = useMemo(
+    () => (loading || !result ? [] : result.listings),
+    [loading, result],
+  );
 
   // 3. Sort and filter. Memoised, so hovering a card doesn't rebuild the map's pins.
   const shown = useMemo(() => {
@@ -135,10 +172,14 @@ const SearchResults = () => {
       (listing) =>
         (!postedBy || listing.postedBy === postedBy) &&
         (!maxPrice || Number(listing.price) <= maxPrice) &&
-        (!minBeds || (typeof listing.bedrooms === "number" && listing.bedrooms >= minBeds)),
+        (!minBeds ||
+          (typeof listing.bedrooms === "number" &&
+            listing.bedrooms >= minBeds)),
     );
-    if (sort === "price-asc") return [...kept].sort((a, b) => Number(a.price) - Number(b.price));
-    if (sort === "price-desc") return [...kept].sort((a, b) => Number(b.price) - Number(a.price));
+    if (sort === "price-asc")
+      return [...kept].sort((a, b) => Number(a.price) - Number(b.price));
+    if (sort === "price-desc")
+      return [...kept].sort((a, b) => Number(b.price) - Number(a.price));
     return kept; // the API already returns nearest first
   }, [all, sort, postedBy, maxPrice, minBeds]);
 
@@ -154,8 +195,13 @@ const SearchResults = () => {
 
   // Clicking a pin brings its card into view.
   const selectFromMap = (slug: string) => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    cardRefs.current.get(slug)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    cardRefs.current.get(slug)?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "nearest",
+    });
   };
 
   const place = titleCase(location) || "your search";
@@ -164,7 +210,10 @@ const SearchResults = () => {
   const area = radius ? `within ${radius} km of ${place}` : `near ${place}`;
   // "3 apartments for sale", "1 property"
   const describe = (count: number) => {
-    const noun = count === 1 ? (SINGULAR[propertyType] ?? "property") : (PLURAL[propertyType] ?? "properties");
+    const noun =
+      count === 1
+        ? (SINGULAR[propertyType] ?? "property")
+        : (PLURAL[propertyType] ?? "properties");
     return [noun, MODE_PHRASE[listingType]].filter(Boolean).join(" ");
   };
   const filtered = Boolean(postedBy || maxPrice || minBeds);
@@ -185,7 +234,9 @@ const SearchResults = () => {
   };
   // The next distance up, or nothing at 50 km. Offered when a search comes back
   // empty: the commonest reason is a small town with nothing inside 10 km.
-  const wider = RADIUS_OPTIONS.find((option) => Number(option.value) > (Number(radius) || 10));
+  const wider = RADIUS_OPTIONS.find(
+    (option) => Number(option.value) > (Number(radius) || 10),
+  );
   const widen = (value: string) => {
     const next = new URLSearchParams(serverQuery);
     next.set("radius", value);
@@ -198,22 +249,39 @@ const SearchResults = () => {
       {/* Static on a phone: stacked, this toolbar is ~215px tall, so pinning it
           would hold 38% of a 568px screen above the results for the whole
           scroll. It follows the reader only once it fits on one line. */}
-      <div className="relative z-20 border-b border-line bg-ground/95 backdrop-blur supports-[backdrop-filter]:bg-ground/80 lg:sticky lg:top-0">
+      <div className="relative z-20 border-b border-line bg-panel/95 backdrop-blur supports-[backdrop-filter]:bg-panel/80 lg:sticky lg:top-0">
         <div className="px-4 py-3 lg:px-6">
           {/* key: a new search (or Back) rebuilds the bar, so its fields match the URL. */}
           {/* radius has no control here — the filter bar below owns it — but it is
               passed so editing the search keeps the distance already chosen. */}
-          <SearchBar key={serverQuery} variant="toolbar" initialValues={{ location, listingType, propertyType, radius }} />
+          <SearchBar
+            key={serverQuery}
+            variant="toolbar"
+            initialValues={{ location, listingType, propertyType, radius }}
+          />
         </div>
       </div>
 
-      <div className={`lg:grid ${mapHidden ? "" : "lg:grid-cols-[minmax(0,1fr)_40%]"}`}>
+      <div
+        className={`lg:grid ${mapHidden ? "" : "lg:grid-cols-[minmax(0,1fr)_40%]"}`}
+      >
         {/* ---------- results ---------- */}
-        <section aria-labelledby="results-heading" aria-busy={loading} className="@container min-w-0 px-4 pb-24 pt-5 lg:px-6 lg:pb-10">
+        <section
+          aria-labelledby="results-heading"
+          aria-busy={loading}
+          className="@container min-w-0 px-5 pb-24 pt-5 lg:px-6 lg:pb-10"
+        >
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-            <h1 id="results-heading" aria-live="polite" className="text-[20px] font-semibold tracking-tight lg:text-[22px]">
-              {heading}
-            </h1>
+            <div className="min-w-0">
+              <p className="annot">Good finds, close to you</p>
+              <h1
+                id="results-heading"
+                aria-live="polite"
+                className="mt-2 font-display text-[22px] leading-tight lg:text-[26px]"
+              >
+                {heading}
+              </h1>
+            </div>
 
             {!failed && (
               <button
@@ -235,7 +303,11 @@ const SearchResults = () => {
               toolbar above already asks what and where, hence showTypes={false}. */}
           {!failed && (
             <div className="mt-4">
-              <ListingFilters showTypes={false} showRadius sorts={SEARCH_SORTS} />
+              <ListingFilters
+                showTypes={false}
+                showRadius
+                sorts={SEARCH_SORTS}
+              />
             </div>
           )}
 
@@ -243,16 +315,30 @@ const SearchResults = () => {
           <div className="mt-5">
             {failed ? (
               <div className="rounded-xl bg-panel px-6 py-12 text-center ring-1 ring-line">
-                <h2 className="text-[17px] font-semibold">We couldn&apos;t load the results</h2>
-                <p className="mt-1.5 text-[14px] text-muted">Check your connection, then try again.</p>
-                <button type="button" onClick={() => setRetry(retry + 1)} className={`mt-5 ${secondaryButton}`}>
+                <h2 className="font-display text-[17px]">
+                  We couldn&apos;t load the results
+                </h2>
+                <p className="mt-1.5 text-[14px] text-muted">
+                  Check your connection, then try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRetry(retry + 1)}
+                  className={`mt-5 ${secondaryButton}`}
+                >
                   Try again
                 </button>
               </div>
             ) : loading ? (
-              <ul className="grid grid-cols-1 gap-4 @lg:grid-cols-2 @4xl:grid-cols-3" aria-hidden="true">
+              <ul
+                className="grid grid-cols-1 gap-4 @lg:grid-cols-2 @4xl:grid-cols-3"
+                aria-hidden="true"
+              >
                 {Array.from({ length: 6 }, (_, index) => (
-                  <li key={index} className="overflow-hidden rounded-xl bg-panel ring-1 ring-line">
+                  <li
+                    key={index}
+                    className="overflow-hidden rounded-xl bg-panel ring-1 ring-line"
+                  >
                     <div className="aspect-[16/10] animate-pulse bg-line/50" />
                     <div className="space-y-2.5 p-3.5">
                       <div className="h-5 w-24 animate-pulse rounded bg-line/70" />
@@ -264,23 +350,37 @@ const SearchResults = () => {
               </ul>
             ) : all.length === 0 ? (
               <div className="rounded-xl bg-panel px-6 py-12 text-center ring-1 ring-line">
-                <h2 className="text-[17px] font-semibold">Nothing listed {area} yet</h2>
+                <h2 className="font-display text-[17px]">
+                  Nothing listed {area} yet
+                </h2>
                 <p className="mx-auto mt-1.5 max-w-md text-[14px] text-muted">
                   Check the spelling, try a nearby town, or widen the search.
                 </p>
                 <div className="mt-5 flex flex-wrap justify-center gap-2">
                   {wider && (
-                    <button type="button" onClick={() => router.push(widen(wider.value))} className={primaryButton}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(widen(wider.value))}
+                      className={primaryButton}
+                    >
                       Look within {wider.label}
                     </button>
                   )}
                   {propertyType && (
-                    <button type="button" onClick={() => router.push(broaden("propertyType"))} className={secondaryButton}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(broaden("propertyType"))}
+                      className={secondaryButton}
+                    >
                       Any property type
                     </button>
                   )}
                   {listingType && (
-                    <button type="button" onClick={() => router.push(broaden("listingType"))} className={secondaryButton}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(broaden("listingType"))}
+                      className={secondaryButton}
+                    >
                       Buy, rent and PG
                     </button>
                   )}
@@ -288,9 +388,17 @@ const SearchResults = () => {
               </div>
             ) : shown.length === 0 ? (
               <div className="rounded-xl bg-panel px-6 py-12 text-center ring-1 ring-line">
-                <h2 className="text-[17px] font-semibold">None of the {all.length} results match your filters</h2>
-                <p className="mt-1.5 text-[14px] text-muted">Try a higher budget, fewer bedrooms, or any seller.</p>
-                <button type="button" onClick={clearFilters} className={`mt-5 ${primaryButton}`}>
+                <h2 className="font-display text-[17px]">
+                  None of the {all.length} results match your filters
+                </h2>
+                <p className="mt-1.5 text-[14px] text-muted">
+                  Try a higher budget, fewer bedrooms, or any seller.
+                </p>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className={`mt-5 ${primaryButton}`}
+                >
                   Clear filters
                 </button>
               </div>
@@ -310,7 +418,9 @@ const SearchResults = () => {
                       listing={listing}
                       showMode={!listingType}
                       highlighted={listing.slug === activeSlug}
-                      onHoverChange={(hovered) => setActiveSlug(hovered ? listing.slug : null)}
+                      onHoverChange={(hovered) =>
+                        setActiveSlug(hovered ? listing.slug : null)
+                      }
                     />
                   </li>
                 ))}
@@ -321,11 +431,24 @@ const SearchResults = () => {
 
         {/* ---------- map: right column on desktop, full screen on phones when chosen ---------- */}
         <div
-          className={`${view === "map" ? "fixed inset-0 z-30" : "hidden"} bg-ground lg:sticky lg:top-[65px] lg:z-0 lg:h-[calc(100dvh-65px)] lg:border-l lg:border-line ${
+          className={`relative ${view === "map" ? "fixed inset-0 z-30" : "hidden"} bg-ground lg:sticky lg:top-[65px] lg:z-0 lg:h-[calc(100dvh-65px)] lg:border-l lg:border-line ${
             mapHidden ? "lg:hidden" : "lg:block"
           }`}
         >
-          <ResultsMap listings={shown} frame={all} activeSlug={activeSlug} onActiveChange={setActiveSlug} onSelect={selectFromMap} />
+          <ResultsMap
+            listings={shown}
+            frame={all}
+            activeSlug={activeSlug}
+            onActiveChange={setActiveSlug}
+            onSelect={selectFromMap}
+          />
+          {/* What the pin colours mean, over the map's own corner. pointer-events
+              none so it never swallows a drag that starts on top of it. */}
+          {shown.length > 1 && (
+            <div className="pointer-events-none absolute bottom-20 left-3 right-3 z-10 rounded-xl bg-panel/95 px-3 py-2.5 ring-1 ring-line backdrop-blur-sm lg:bottom-3 lg:right-auto lg:max-w-xs">
+              <MapLegend types={shown.map((listing) => listing.propertyType)} />
+            </div>
+          )}
         </div>
       </div>
 

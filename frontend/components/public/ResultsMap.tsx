@@ -5,7 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatNumber, formatRupeesShort } from "@/lib/format";
-import { isRental, labelOf } from "@/lib/listing";
+import { TYPE_COLOUR, isRental, labelOf } from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 
 type Props = {
@@ -26,8 +26,10 @@ const INDIA_CENTER: [number, number] = [79, 22.5];
 // lives on an inner <span>, so the two never fight over `transform`.
 const pinLinkClass =
   "block rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+// No text-accent here: the colour is set per pin from the property type, so a
+// row of pins tells you what KIND of property is where before you click one.
 const pinLabelClass =
-  "block origin-bottom text-accent drop-shadow-md transition-[scale] duration-150 hover:scale-110 motion-reduce:transition-none";
+  "block origin-bottom drop-shadow-md transition-[scale] duration-150 hover:scale-110 motion-reduce:transition-none";
 
 // A map pin: a filled teardrop with a white dot. Its tip is the listing's exact spot.
 const PIN_SVG = `<svg viewBox="0 0 24 32" width="28" height="36" aria-hidden="true">
@@ -38,10 +40,11 @@ const PIN_SVG = `<svg viewBox="0 0 24 32" width="28" height="36" aria-hidden="tr
 // On a phone the map fills the screen, so a fixed 240px preview would hang over
 // the edge for any pin near the sides.
 const cardClass =
-  "block w-[min(15rem,calc(100vw-2rem))] overflow-hidden rounded-xl bg-panel font-sans text-ink no-underline shadow-[0_12px_32px_-12px_rgba(13,42,36,0.45)] ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+  "block w-[min(15rem,calc(100vw-2rem))] overflow-hidden rounded-xl bg-panel font-sans text-ink no-underline shadow-[0_12px_32px_-12px_rgba(48,32,68,0.45)] ring-1 ring-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 // "650 m" or "2.4 km"
-const formatDistance = (km: number) => (km < 1 ? `${Math.round(km * 10) * 100} m` : `${km.toFixed(1)} km`);
+const formatDistance = (km: number) =>
+  km < 1 ? `${Math.round(km * 10) * 100} m` : `${km.toFixed(1)} km`;
 
 // The preview above a pin: a small copy of the result card, in the same order
 // (photo → price → size and rooms → title → place), so nothing has to be re-learned.
@@ -71,18 +74,24 @@ const buildCard = (listing: PublicListingSummary) => {
     labelOf(listing.propertyType),
     typeof listing.bedrooms === "number" ? `${listing.bedrooms} bd` : "",
     typeof listing.bathrooms === "number" ? `${listing.bathrooms} ba` : "",
-    listing.areaValue ? `${formatNumber(listing.areaValue)} ${labelOf(listing.areaUnit)}` : "",
+    listing.areaValue
+      ? `${formatNumber(listing.areaValue)} ${labelOf(listing.areaUnit)}`
+      : "",
   ].filter(Boolean);
 
   const place = [listing.locality, listing.city].filter(Boolean).join(", ");
-  const distance = typeof listing.distanceKm === "number" ? ` · ${formatDistance(listing.distanceKm)}` : "";
+  const distance =
+    typeof listing.distanceKm === "number"
+      ? ` · ${formatDistance(listing.distanceKm)}`
+      : "";
 
   const body = document.createElement("span");
   body.className = "block px-3 pb-3 pt-2.5";
   body.append(
     text(
       "block text-[17px] font-semibold leading-none tracking-tight tabular-nums",
-      formatRupeesShort(listing.price) + (isRental(listing.listingType) ? " /month" : ""),
+      formatRupeesShort(listing.price) +
+        (isRental(listing.listingType) ? " /month" : ""),
     ),
     text("mt-1.5 block truncate text-[13px]", specs.join(" · ")),
     text("mt-1 block truncate text-[13px] text-muted", listing.title),
@@ -98,11 +107,19 @@ const buildCard = (listing: PublicListingSummary) => {
 //   hover a pin   → preview card + card lights up (onActiveChange)
 //   click a pin   → the list scrolls to that card (onSelect)
 //   click preview → opens the listing
-const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSelect }: Props) => {
+const ResultsMap = ({
+  listings,
+  frame,
+  activeSlug = null,
+  onActiveChange,
+  onSelect,
+}: Props) => {
   const router = useRouter();
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const pins = useRef(new Map<string, { marker: maplibregl.Marker; label: HTMLElement }>());
+  const pins = useRef(
+    new Map<string, { marker: maplibregl.Marker; label: HTMLElement }>(),
+  );
 
   // The parent's callbacks change on every render; keep the latest in a ref so the
   // pins (created once per result set) always call the current one.
@@ -122,10 +139,15 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
       zoom: 4,
       attributionControl: { compact: true },
     });
-    created.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    created.addControl(
+      new maplibregl.NavigationControl({ showCompass: false }),
+      "top-right",
+    );
     // Keep the map credits folded into their (i) button, so they never sit under the List button.
     created.on("load", () =>
-      container.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"),
+      container.current
+        ?.querySelector(".maplibregl-ctrl-attrib")
+        ?.classList.remove("maplibregl-compact-show"),
     );
     map.current = created;
 
@@ -146,7 +168,10 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
     if (!current) return;
 
     const pinned = listings.filter(
-      (listing) => listing.slug && typeof listing.latitude === "number" && typeof listing.longitude === "number",
+      (listing) =>
+        listing.slug &&
+        typeof listing.latitude === "number" &&
+        typeof listing.longitude === "number",
     );
 
     // One shared popup: only one preview is open at a time.
@@ -182,7 +207,10 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
       });
       card.addEventListener("mouseenter", keepOpen);
       card.addEventListener("mouseleave", hideSoon);
-      popup.setLngLat([listing.longitude!, listing.latitude!]).setDOMContent(card).addTo(current);
+      popup
+        .setLngLat([listing.longitude!, listing.latitude!])
+        .setDOMContent(card)
+        .addTo(current);
       callbacks.current.onActiveChange?.(listing.slug);
     };
 
@@ -194,9 +222,16 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
       pin.className = pinLinkClass;
       const label = document.createElement("span");
       label.className = pinLabelClass;
+      // PIN_SVG fills with currentColor, so one declaration colours the whole
+      // teardrop and its outline stays white.
+      label.style.color =
+        TYPE_COLOUR[listing.propertyType] ?? "var(--color-accent)";
       label.innerHTML = PIN_SVG; // our own fixed SVG, no user text, so innerHTML is safe here
       pin.append(label);
-      pin.setAttribute("aria-label", `${listing.title}, ${formatRupeesShort(listing.price)}`);
+      pin.setAttribute(
+        "aria-label",
+        `${listing.title}, ${formatRupeesShort(listing.price)}`,
+      );
 
       pin.addEventListener("mouseenter", () => showPreview(listing));
       pin.addEventListener("mouseleave", hideSoon);
@@ -215,7 +250,6 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
       pins.current.set(listing.slug!, { marker, label });
     }
 
-
     // New results: take the old pins and preview off first.
     const placed = pins.current;
     return () => {
@@ -232,11 +266,14 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
   useEffect(() => {
     const current = map.current;
     const located = target.filter(
-      (listing) => typeof listing.latitude === "number" && typeof listing.longitude === "number",
+      (listing) =>
+        typeof listing.latitude === "number" &&
+        typeof listing.longitude === "number",
     );
     if (!current || located.length === 0) return;
     const bounds = new maplibregl.LngLatBounds();
-    for (const listing of located) bounds.extend([listing.longitude!, listing.latitude!]);
+    for (const listing of located)
+      bounds.extend([listing.longitude!, listing.latitude!]);
     current.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 0 });
   }, [target]);
 
@@ -251,7 +288,14 @@ const ResultsMap = ({ listings, frame, activeSlug = null, onActiveChange, onSele
     });
   }, [activeSlug, listings]);
 
-  return <div ref={container} className="h-full w-full" role="region" aria-label="Map of search results" />;
+  return (
+    <div
+      ref={container}
+      className="h-full w-full"
+      role="region"
+      aria-label="Map of search results"
+    />
+  );
 };
 
 export default ResultsMap;

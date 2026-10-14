@@ -6,7 +6,12 @@ import { pinFromAddress } from "@/lib/geocode";
 import { INDIA_CENTER } from "@/lib/listing";
 import { errorToast } from "@/lib/toast";
 import type { ListingFormData, LngLat } from "@/lib/types";
-import { inputClass, primaryButton, secondaryButton, textButton } from "@/lib/ui";
+import {
+  inputClass,
+  primaryButton,
+  secondaryButton,
+  textButton,
+} from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
 type Props = {
@@ -20,7 +25,8 @@ type Props = {
 // Pincodes are digits only; place names never contain digits.
 const clean = (name: string, value: string) => {
   if (name === "pincode") return value.replace(/\D/g, "");
-  if (["city", "district", "state"].includes(name)) return value.replace(/[^a-zA-Z\s.'-]/g, "");
+  if (["city", "district", "state"].includes(name))
+    return value.replace(/[^a-zA-Z\s.'-]/g, "");
   return value;
 };
 
@@ -58,7 +64,10 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
   });
 
   return (
-    <form onSubmit={findOnMap} className="mt-5 space-y-4 border-t border-line pt-5">
+    <form
+      onSubmit={findOnMap}
+      className="mt-5 space-y-4 border-t border-line pt-5"
+    >
       <Field id="addressLine" label="Property name or number">
         <input {...input("addressLine", "Green Valley Apartments")} />
       </Field>
@@ -84,14 +93,19 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
             {...input("pincode", "682036")}
             inputMode="numeric"
             maxLength={6}
-            className={`${inputClass} font-mono tracking-[0.08em]`}
+            className={`${inputClass} tabular-nums tracking-[0.08em]`}
           />
         </Field>
       </div>
 
       {notFound && (
-        <div role="status" className="rounded-md border border-warn/25 bg-warn/5 px-3.5 py-3">
-          <p className="text-[14px] font-medium text-ink">We could not find this address on the map</p>
+        <div
+          role="status"
+          className="rounded-lg border border-warn/25 bg-warn/5 px-3.5 py-3"
+        >
+          <p className="text-[14px] font-medium text-ink">
+            We could not find this address on the map
+          </p>
           <p className="mt-1 text-[13px] leading-snug text-muted">
             For better search reach, pin the property exactly on the map.
           </p>
@@ -101,7 +115,7 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
               setNotFound(false);
               onLocate(INDIA_CENTER, "fallback");
             }}
-            className="mt-3 rounded-md bg-warn px-3.5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-warn/90"
+            className="mt-3 rounded-lg bg-warn px-3.5 py-2 text-[14px] font-medium text-white transition-colors hover:bg-warn/90"
           >
             Open map
           </button>
@@ -109,8 +123,16 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
       )}
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
-        <button type="submit" disabled={searching} className={notFound ? secondaryButton : primaryButton}>
-          {searching ? "Moving pin…" : notFound ? "Search again" : "Move pin to this address"}
+        <button
+          type="submit"
+          disabled={searching}
+          className={notFound ? secondaryButton : primaryButton}
+        >
+          {searching
+            ? "Moving pin…"
+            : notFound
+              ? "Search again"
+              : "Move pin to this address"}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel} className={textButton}>

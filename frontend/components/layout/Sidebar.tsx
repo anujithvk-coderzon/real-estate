@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api, setAccessToken } from "@/lib/api";
@@ -98,7 +99,14 @@ const ContourArt = () => (
     className="pointer-events-none absolute -bottom-16 -right-24 -z-10 hidden h-[420px] w-[400px] text-line lg:block"
   >
     {CONTOURS.map((d, index) => (
-      <path key={index} d={d} fill="none" stroke="currentColor" strokeWidth={1.1} opacity={0.6 - index * 0.06} />
+      <path
+        key={index}
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.1}
+        opacity={0.6 - index * 0.06}
+      />
     ))}
   </svg>
 );
@@ -121,6 +129,7 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false); // desktop
   const [loggingOut, setLoggingOut] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false); // falls back to initials
+  const still = useReducedMotion();
 
   useEffect(() => {
     const loadUser = () =>
@@ -154,7 +163,15 @@ const Sidebar = () => {
   const hideWhenCollapsed = collapsed ? "lg:hidden" : "";
 
   // One sidebar link, highlighted when its page is open. Used by the main list and by Settings.
-  const navLink = ({ href, label, Icon }: { href: string; label: string; Icon: () => React.ReactNode }) => {
+  const navLink = ({
+    href,
+    label,
+    Icon,
+  }: {
+    href: string;
+    label: string;
+    Icon: () => React.ReactNode;
+  }) => {
     // "/" is the start of every path, so Home only matches exactly.
     const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
     return (
@@ -169,7 +186,18 @@ const Sidebar = () => {
             collapsed ? "lg:justify-center" : ""
           } ${active ? "bg-accent-soft text-ink" : "text-muted hover:bg-accent-soft/60 hover:text-ink"}`}
         >
-          {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-accent" />}
+          {active && (
+            <motion.span
+              aria-hidden="true"
+              layoutId="sidebar-active"
+              transition={
+                still
+                  ? { duration: 0 }
+                  : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+              }
+              className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-accent"
+            />
+          )}
           <span className={active ? "text-accent" : ""}>
             <Icon />
           </span>
@@ -188,7 +216,9 @@ const Sidebar = () => {
       <ContourArt />
 
       {/* ---------- user ---------- */}
-      <div className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}>
+      <div
+        className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
+      >
         <span
           title={collapsed ? user?.name : undefined}
           className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent text-[15px] font-semibold tracking-wide text-white"
@@ -211,8 +241,12 @@ const Sidebar = () => {
         <div className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
           {user ? (
             <>
-              <p className="truncate font-display text-[19px] leading-tight">{user.name}</p>
-              <p className="mt-0.5 truncate text-[12.5px] text-muted">{user.email}</p>
+              <p className="truncate font-display text-[19px] leading-tight">
+                {user.name}
+              </p>
+              <p className="mt-0.5 truncate text-[12.5px] text-muted">
+                {user.email}
+              </p>
             </>
           ) : (
             <div className="space-y-2" aria-hidden="true">
@@ -233,7 +267,10 @@ const Sidebar = () => {
         </button>
       </div>
 
-      <div id="sidebar-menu" className={`${menuOpen ? "flex" : "hidden"} flex-1 flex-col px-3 pb-4 lg:flex`}>
+      <div
+        id="sidebar-menu"
+        className={`${menuOpen ? "nav-open flex" : "hidden"} flex-1 flex-col px-3 pb-4 lg:flex`}
+      >
         {/* ---------- navigation ---------- */}
         <nav aria-label="Main">
           <ul className="space-y-1">
@@ -244,7 +281,13 @@ const Sidebar = () => {
         {/* ---------- bottom ---------- */}
         <div className="mt-6 space-y-1 border-t border-line pt-3 lg:mt-auto">
           {/* Account things live at the bottom, apart from the everyday links above. */}
-          <ul>{navLink({ href: "/list/settings", label: "Settings", Icon: SettingsIcon })}</ul>
+          <ul>
+            {navLink({
+              href: "/list/settings",
+              label: "Settings",
+              Icon: SettingsIcon,
+            })}
+          </ul>
 
           <button
             type="button"
@@ -257,7 +300,9 @@ const Sidebar = () => {
             }`}
           >
             <LogoutIcon />
-            <span className={hideWhenCollapsed}>{loggingOut ? "Logging out…" : "Log out"}</span>
+            <span className={hideWhenCollapsed}>
+              {loggingOut ? "Logging out…" : "Log out"}
+            </span>
           </button>
 
           <button

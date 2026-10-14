@@ -1,5 +1,5 @@
 import {  type Request, type Response } from "express";
-import { registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
+import { listTake, registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
 import { sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
@@ -65,6 +65,10 @@ export const fetchListingVideo=async(req:Request,res:Response)=>{
 
 export const fetchListings=async(req:Request,res:Response)=>{
     const page=Number(req.query?.page)|| 1;
+    // Not a cast: this is the one parameter that makes the query bigger rather
+    // than smaller, so an unparsed value is a table scan.
+    const take=listTake.safeParse(req.query.take)
+    if(!take.success) throw take.error
     const filters = {
     listingType: req.query.listingType as ListingType | undefined,
     propertyType: req.query.propertyType as PropertyType | undefined,
@@ -72,6 +76,7 @@ export const fetchListings=async(req:Request,res:Response)=>{
     maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
     beds: req.query.beds ? Number(req.query.beds) : undefined,
     sort: req.query.sort as string | undefined,
+    take: take.data,
   };
     const { lists, total } = await listsFetchingService(page,filters);
    return res.status(200).json({ message: "Listings fetched successfully", lists, total });

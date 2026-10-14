@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { inputClass } from "@/lib/ui";
 
-type Props = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "className">;
+type Props = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "className"
+>;
 
 // A password input with a Show / Hide toggle.
 const PasswordInput = (props: Props) => {
@@ -11,7 +14,11 @@ const PasswordInput = (props: Props) => {
 
   return (
     <div className="relative">
-      <input {...props} type={visible ? "text" : "password"} className={`${inputClass} pr-16`} />
+      <input
+        {...props}
+        type={visible ? "text" : "password"}
+        className={`${inputClass} pr-16`}
+      />
       <button
         type="button"
         onClick={() => setVisible(!visible)}

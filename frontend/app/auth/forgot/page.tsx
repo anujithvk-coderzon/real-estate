@@ -8,7 +8,8 @@ import { errorToast } from "@/lib/toast";
 import { inputClass, primaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
-const linkClass = "font-medium text-accent transition-colors hover:text-accent-hover";
+const linkClass =
+  "font-medium text-accent transition-colors hover:text-accent-hover";
 
 // Step 1 of resetting a password: ask for the email and send the reset link.
 const ForgotPasswordPage = () => {
@@ -37,17 +38,26 @@ const ForgotPasswordPage = () => {
     // this page to find out which emails are registered.
     return (
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12">
-        <h1 className="text-[28px] font-semibold leading-tight tracking-tight">Check your email</h1>
+        <h1 className="font-display text-[28px] leading-tight">
+          Check your email
+        </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-muted">
-          If an account exists for <span className="font-medium text-ink">{sentTo}</span>, we&apos;ve sent a link to reset
-          the password. It expires in 15 minutes.
+          If an account exists for{" "}
+          <span className="font-medium text-ink">{sentTo}</span>, we&apos;ve
+          sent a link to reset the password. It expires in 15 minutes.
         </p>
-        <p className="mt-2 text-[14px] text-muted">Nothing there? Check your spam folder, or try again in a minute.</p>
+        <p className="mt-2 text-[14px] text-muted">
+          Nothing there? Check your spam folder, or try again in a minute.
+        </p>
         <div className="mt-8 flex flex-wrap gap-4 text-[14px]">
           <Link href="/auth/login" className={linkClass}>
             Back to sign in
           </Link>
-          <button type="button" onClick={() => setSentTo("")} className={linkClass}>
+          <button
+            type="button"
+            onClick={() => setSentTo("")}
+            className={linkClass}
+          >
             Use a different email
           </button>
         </div>
@@ -57,9 +67,12 @@ const ForgotPasswordPage = () => {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12">
-      <h1 className="text-[28px] font-semibold leading-tight tracking-tight">Forgot your password?</h1>
+      <h1 className="font-display text-[28px] leading-tight">
+        Forgot your password?
+      </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
-        Enter the email you signed up with, and we&apos;ll send you a link to choose a new one.
+        Enter the email you signed up with, and we&apos;ll send you a link to
+        choose a new one.
       </p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
@@ -76,7 +89,11 @@ const ForgotPasswordPage = () => {
           />
         </Field>
 
-        <button type="submit" disabled={!canSubmit} className={`w-full ${primaryButton}`}>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className={`w-full ${primaryButton}`}
+        >
           {sending ? "Sending…" : "Send reset link"}
         </button>
       </form>

@@ -20,9 +20,26 @@ import {
   SofaIcon,
 } from "@/components/public/icons";
 import { api, authReady } from "@/lib/api";
-import { formatDate, formatNumber, formatRupees, formatRupeesShort, formatTimeAgo } from "@/lib/format";
-import { amenityCategoryLabel, isRental, labelOf, listingLocation } from "@/lib/listing";
-import { availabilityText, googleMapsUrl, groupAmenities, landmarkText, placeName } from "@/lib/listingDisplay";
+import {
+  formatDate,
+  formatNumber,
+  formatRupees,
+  formatRupeesShort,
+  formatTimeAgo,
+} from "@/lib/format";
+import {
+  amenityCategoryLabel,
+  isRental,
+  labelOf,
+  listingLocation,
+} from "@/lib/listing";
+import {
+  availabilityText,
+  googleMapsUrl,
+  groupAmenities,
+  landmarkText,
+  placeName,
+} from "@/lib/listingDisplay";
 import type { PublicListing } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 
@@ -32,12 +49,16 @@ type Props = { slug: string };
 const LONG_DESCRIPTION = 320;
 const AMENITIES_PREVIEW = 8;
 
-const sectionHeading = "text-[20px] font-semibold tracking-tight";
+const sectionHeading = "font-display text-[20px] leading-tight";
 const newTabNote = <span className="sr-only"> (opens in a new tab)</span>;
 
 /* ---------- pieces of the page ---------- */
 
-type Fact = { label: string; value: string; Icon: (props: { className?: string }) => React.ReactNode };
+type Fact = {
+  label: string;
+  value: string;
+  Icon: (props: { className?: string }) => React.ReactNode;
+};
 
 // The tiles under "At a glance". Anything the seller left empty is skipped.
 const glanceFacts = (listing: PublicListing): Fact[] => {
@@ -46,16 +67,47 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
     floorNumber !== null && totalFloors !== null
       ? `${floorNumber} of ${totalFloors}`
       : (floorNumber ?? totalFloors)?.toString();
-  const areaInSqft = listing.areaUnit === "SQFT" ? "" : ` (${formatNumber(listing.areaSqft)} sq ft)`;
+  const areaInSqft =
+    listing.areaUnit === "SQFT"
+      ? ""
+      : ` (${formatNumber(listing.areaSqft)} sq ft)`;
 
   const facts: (Fact | false)[] = [
-    { label: "Area", value: `${formatNumber(listing.areaValue)} ${labelOf(listing.areaUnit)}${areaInSqft}`, Icon: AreaIcon },
-    listing.bedrooms !== null && { label: "Bedrooms", value: String(listing.bedrooms), Icon: BedIcon },
-    listing.bathrooms !== null && { label: "Bathrooms", value: String(listing.bathrooms), Icon: BathIcon },
-    listing.balconies !== null && { label: "Balconies", value: String(listing.balconies), Icon: BalconyIcon },
-    !!listing.furnishing && { label: "Furnishing", value: labelOf(listing.furnishing), Icon: SofaIcon },
-    !!floor && { label: floorNumber === null ? "Total floors" : "Floor", value: floor, Icon: FloorIcon },
-    !!listing.propertyStatus && { label: "Construction", value: labelOf(listing.propertyStatus), Icon: ClockIcon },
+    {
+      label: "Area",
+      value: `${formatNumber(listing.areaValue)} ${labelOf(listing.areaUnit)}${areaInSqft}`,
+      Icon: AreaIcon,
+    },
+    listing.bedrooms !== null && {
+      label: "Bedrooms",
+      value: String(listing.bedrooms),
+      Icon: BedIcon,
+    },
+    listing.bathrooms !== null && {
+      label: "Bathrooms",
+      value: String(listing.bathrooms),
+      Icon: BathIcon,
+    },
+    listing.balconies !== null && {
+      label: "Balconies",
+      value: String(listing.balconies),
+      Icon: BalconyIcon,
+    },
+    !!listing.furnishing && {
+      label: "Furnishing",
+      value: labelOf(listing.furnishing),
+      Icon: SofaIcon,
+    },
+    !!floor && {
+      label: floorNumber === null ? "Total floors" : "Floor",
+      value: floor,
+      Icon: FloorIcon,
+    },
+    !!listing.propertyStatus && {
+      label: "Construction",
+      value: labelOf(listing.propertyStatus),
+      Icon: ClockIcon,
+    },
     !!listing.availableFrom && {
       label: "Available from",
       value: availabilityText(listing.availableFrom) ?? "",
@@ -69,21 +121,27 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
 const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
   const rental = isRental(listing.listingType);
   const pricePerSqft =
-    !rental && Number(listing.areaSqft) > 0 ? Math.round(Number(listing.price) / Number(listing.areaSqft)) : null;
+    !rental && Number(listing.areaSqft) > 0
+      ? Math.round(Number(listing.price) / Number(listing.areaSqft))
+      : null;
 
   // The backend only sends contact fields to signed-in users.
   const signedIn = "contactPhone" in listing;
   // Phone numbers are stored as 10 digits; tel: and WhatsApp need the +91 country code.
   const phone = listing.contactPhone?.replace(/\D/g, "").slice(-10);
-  const whatsappText = encodeURIComponent(`Hi, I saw "${listing.title}" and would like to know more.`);
+  const whatsappText = encodeURIComponent(
+    `Hi, I saw "${listing.title}" and would like to know more.`,
+  );
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-panel ring-1 ring-line">
+    <div className="overflow-hidden rounded-2xl bg-panel shadow-[0_10px_34px_-20px_rgba(48,32,68,0.35)] ring-1 ring-line">
       {/* ---------- price ---------- */}
       <div className="p-5">
-        <p className="text-[13px] text-muted">{rental ? "Monthly rent" : "Price"}</p>
+        <p className="text-[13px] text-muted">
+          {rental ? "Monthly rent" : "Price"}
+        </p>
         <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="font-mono text-[34px] font-medium leading-none tracking-tight">
+          <span className="font-display text-[36px] leading-none tabular-nums">
             {formatRupeesShort(listing.price)}
           </span>
           {rental && <span className="text-[14px] text-muted">/ month</span>}
@@ -94,11 +152,14 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
           )}
         </p>
         <p className="mt-2 text-[13px] text-muted">
-          <span className="font-mono">{formatRupees(listing.price)}</span>
+          <span className="tabular-nums">{formatRupees(listing.price)}</span>
           {pricePerSqft !== null && (
             <>
               {" · "}
-              <span className="font-mono">{formatRupees(pricePerSqft)}</span> per sq ft
+              <span className="tabular-nums">
+                {formatRupees(pricePerSqft)}
+              </span>{" "}
+              per sq ft
             </>
           )}
         </p>
@@ -109,7 +170,9 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               <div className="flex flex-wrap justify-between gap-x-4">
                 <dt className="text-muted">Maintenance</dt>
                 <dd>
-                  <span className="font-mono">{formatRupees(listing.maintenance)}</span>
+                  <span className="tabular-nums">
+                    {formatRupees(listing.maintenance)}
+                  </span>
                   <span className="text-muted"> / month</span>
                 </dd>
               </div>
@@ -118,7 +181,9 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               <div className="flex flex-wrap justify-between gap-x-4">
                 <dt className="text-muted">Security deposit</dt>
                 <dd>
-                  <span className="font-mono">{formatRupees(listing.securityDeposit)}</span>
+                  <span className="tabular-nums">
+                    {formatRupees(listing.securityDeposit)}
+                  </span>
                   <span className="text-muted"> one-time</span>
                 </dd>
               </div>
@@ -128,7 +193,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
       </div>
 
       {/* ---------- contact ---------- */}
-      <div className="border-t border-line bg-ground/60 p-5">
+      <div className="border-t border-line bg-accent-soft/50 p-5">
         <h2 className="text-[15px] font-semibold">Contact the seller</h2>
 
         {!signedIn ? (
@@ -137,17 +202,25 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               <LockIcon className="mt-0.5 h-4 w-4" />
               Sign in to see the phone number and message the seller.
             </p>
-            <Link href="/auth/login" className={`mt-4 block text-center ${primaryButton}`}>
+            <Link
+              href="/auth/login"
+              className={`mt-4 block text-center ${primaryButton}`}
+            >
               Login to contact
             </Link>
           </>
         ) : phone ? (
           <>
-            {listing.contactName && <p className="mt-1.5 text-[15px]">{listing.contactName}</p>}
+            {listing.contactName && (
+              <p className="mt-1.5 text-[15px]">{listing.contactName}</p>
+            )}
             <div className="mt-4 grid grid-cols-1 gap-2">
-              <a href={`tel:+91${phone}`} className={`flex items-center justify-center gap-2 ${primaryButton}`}>
+              <a
+                href={`tel:+91${phone}`}
+                className={`flex items-center justify-center gap-2 ${primaryButton}`}
+              >
                 <PhoneIcon className="h-4 w-4" />
-                Call <span className="font-mono">+91 {phone}</span>
+                Call <span className="tabular-nums">+91 {phone}</span>
               </a>
               <a
                 href={`https://wa.me/91${phone}?text=${whatsappText}`}
@@ -162,7 +235,9 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
             </div>
           </>
         ) : (
-          <p className="mt-1.5 text-[14px] text-muted">The seller has not added a phone number.</p>
+          <p className="mt-1.5 text-[14px] text-muted">
+            The seller has not added a phone number.
+          </p>
         )}
 
         {/* Who is selling, and a way to see everything else they have listed. */}
@@ -170,15 +245,19 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
           <p className="text-[13px] text-muted">
             Listed by{" "}
             {listing.owner.slug ? (
-              <Link href={`/seller/${listing.owner.slug}`} className="font-medium text-ink hover:text-accent hover:underline">
+              <Link
+                href={`/seller/${listing.owner.slug}`}
+                className="font-medium text-ink hover:text-accent hover:underline"
+              >
                 {listing.owner.name}
               </Link>
             ) : (
               <span className="font-medium text-ink">{listing.owner.name}</span>
             )}{" "}
-            ({labelOf(listing.postedBy).toLowerCase()})
-            {" · "}
-            <time dateTime={listing.createdAt}>{formatDate(listing.createdAt)}</time>
+            ({labelOf(listing.postedBy).toLowerCase()}){" · "}
+            <time dateTime={listing.createdAt}>
+              {formatDate(listing.createdAt)}
+            </time>
           </p>
 
           {/* The agent's own licence, not the project's registration, and only on a
@@ -186,7 +265,10 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               owner, and the number would read as if the property were registered. */}
           {listing.postedBy === "BROKER" && listing.owner.agentReraNumber && (
             <p className="mt-1 text-[12px] text-muted">
-              Agent RERA <span className="font-mono">{listing.owner.agentReraNumber}</span>
+              Agent RERA{" "}
+              <span className="tabular-nums">
+                {listing.owner.agentReraNumber}
+              </span>
               {listing.owner.agentReraStatus === "VERIFIED"
                 ? " · checked against the state register"
                 : " · as provided by the agent"}
@@ -215,7 +297,11 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
 // Which project the unit is in. The colour says where the words came from: a
 // project the builder registered here is read from our records, while a name an
 // agent typed in is only their claim, and a buyer must be able to tell apart.
-const ProjectBlock = ({ project }: { project: NonNullable<PublicListing["project"]> }) => {
+const ProjectBlock = ({
+  project,
+}: {
+  project: NonNullable<PublicListing["project"]>;
+}) => {
   const registered = project.inRecords;
   const tone = registered
     ? { box: "bg-accent-soft", heading: "text-accent", rule: "ring-accent/20" }
@@ -227,8 +313,12 @@ const ProjectBlock = ({ project }: { project: NonNullable<PublicListing["project
         Project
       </h2>
 
-      <div className={`mt-5 rounded-xl px-5 py-4 ring-1 ${tone.box} ${tone.rule}`}>
-        <p className={`text-[17px] font-semibold ${tone.heading}`}>{project.name}</p>
+      <div
+        className={`mt-5 rounded-xl px-5 py-4 ring-1 ${tone.box} ${tone.rule}`}
+      >
+        <p className={`font-display text-[17px] ${tone.heading}`}>
+          {project.name}
+        </p>
 
         {/* Who the builder is, and whose word the RERA number is. A name on its own
             would not tell a buyer which of the two they are reading. */}
@@ -255,22 +345,26 @@ const ProjectBlock = ({ project }: { project: NonNullable<PublicListing["project
           <div>
             <dt className="text-[13px] text-muted">RERA registration</dt>
             <dd className="mt-0.5">
-            {project.reraNumber ? (
-              <>
-                <span className="font-mono font-medium">{project.reraNumber}</span>
+              {project.reraNumber ? (
+                <>
+                  <span className="tabular-nums font-medium">
+                    {project.reraNumber}
+                  </span>
+                  <span className="text-muted">
+                    {project.reraStatus === "VERIFIED"
+                      ? " · checked against the state register"
+                      : registered
+                        ? " · as given by the builder"
+                        : ""}
+                  </span>
+                </>
+              ) : project.isReraExempt ? (
                 <span className="text-muted">
-                  {project.reraStatus === "VERIFIED"
-                    ? " · checked against the state register"
-                    : registered
-                      ? " · as given by the builder"
-                      : ""}
+                  Exempt: the builder states the project has 8 units or fewer
                 </span>
-              </>
-            ) : project.isReraExempt ? (
-              <span className="text-muted">Exempt: the builder states the project has 8 units or fewer</span>
-            ) : (
-              <span className="text-muted">Not given</span>
-            )}
+              ) : (
+                <span className="text-muted">Not given</span>
+              )}
             </dd>
           </div>
         </dl>
@@ -278,9 +372,9 @@ const ProjectBlock = ({ project }: { project: NonNullable<PublicListing["project
         {!registered && (
           <p className="mt-4 text-[13px] leading-snug text-muted">
             The project name, the builder and the number above were given by the{" "}
-            {labelOf(project.statedBy).toLowerCase() || "lister"}, not by the builder, who has not
-            registered this project on our site. Check the number on your state RERA website before you pay
-            anything.
+            {labelOf(project.statedBy).toLowerCase() || "lister"}, not by the
+            builder, who has not registered this project on our site. Check the
+            number on your state RERA website before you pay anything.
           </p>
         )}
       </div>
@@ -305,8 +399,12 @@ const ListSpecific = ({ slug }: Props) => {
   if (notFound) {
     return (
       <main className="mx-auto w-full max-w-md px-5 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight">This property is not available</h1>
-        <p className="mt-2 text-[15px] text-muted">It may have been sold, rented or removed.</p>
+        <h1 className="font-display text-[22px] leading-tight">
+          This property is not available
+        </h1>
+        <p className="mt-2 text-[15px] text-muted">
+          It may have been sold, rented or removed.
+        </p>
         <Link href="/" className={`mt-6 inline-block ${secondaryButton}`}>
           See all properties
         </Link>
@@ -316,7 +414,10 @@ const ListSpecific = ({ slug }: Props) => {
 
   if (!listing) {
     return (
-      <main className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-8" aria-busy="true">
+      <main
+        className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-8"
+        aria-busy="true"
+      >
         <p className="sr-only">Loading property…</p>
         <div className="aspect-[4/3] animate-pulse rounded-xl bg-line sm:aspect-[16/9]" />
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
@@ -335,12 +436,17 @@ const ListSpecific = ({ slug }: Props) => {
   const facts = glanceFacts(listing);
 
   const longDescription = listing.description.length > LONG_DESCRIPTION;
-  const shownAmenities = amenitiesOpen ? listing.amenities : listing.amenities.slice(0, AMENITIES_PREVIEW);
+  const shownAmenities = amenitiesOpen
+    ? listing.amenities
+    : listing.amenities.slice(0, AMENITIES_PREVIEW);
   const hiddenAmenities = listing.amenities.length - shownAmenities.length;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-20 pt-6 lg:px-8 lg:pt-8">
-      <Link href="/" className="text-[14px] font-medium text-muted transition-colors hover:text-ink">
+      <Link
+        href="/"
+        className="text-[14px] font-medium text-muted transition-colors hover:text-ink"
+      >
         ← All properties
       </Link>
 
@@ -352,16 +458,25 @@ const ListSpecific = ({ slug }: Props) => {
         {/* ---------- what it is ---------- */}
         <header className="order-2 min-w-0 lg:order-1">
           <ul className="flex flex-wrap gap-2 text-[13px] font-medium">
-            <li className="rounded-full bg-accent-soft px-3 py-1 text-accent">{labelOf(listing.listingType)}</li>
-            <li className="rounded-full bg-panel px-3 py-1 ring-1 ring-line">{labelOf(listing.propertyType)}</li>
+            <li className="rounded-full bg-accent-soft px-3 py-1 text-accent">
+              {labelOf(listing.listingType)}
+            </li>
+            <li className="rounded-full bg-panel px-3 py-1 ring-1 ring-line">
+              {labelOf(listing.propertyType)}
+            </li>
           </ul>
-          <h1 className="mt-3 text-[28px] font-semibold leading-tight tracking-tight lg:text-[36px]">{listing.title}</h1>
+          <h1 className="mt-3 font-display text-[28px] leading-[1.1] lg:text-[36px]">
+            {listing.title}
+          </h1>
           <p className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[15px] text-muted">
             <PinIcon className="h-4 w-4" />
             {placeName(listing.locality, listing.city, listing.district)}
             <span aria-hidden="true">·</span>
             <span className="text-[14px]">
-              Posted <time dateTime={listing.createdAt}>{formatTimeAgo(listing.createdAt)}</time>
+              Posted{" "}
+              <time dateTime={listing.createdAt}>
+                {formatTimeAgo(listing.createdAt)}
+              </time>
             </span>
           </p>
         </header>
@@ -392,18 +507,25 @@ const ListSpecific = ({ slug }: Props) => {
         {/* ---------- the details ---------- */}
         <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
           <section aria-labelledby="glance-heading">
-            <h2 id="glance-heading" className={sectionHeading}>At a glance</h2>
+            <h2 id="glance-heading" className={sectionHeading}>
+              At a glance
+            </h2>
             {/* One column at base: two 134px tiles minus padding and the icon
                 leave 54px for the text, which clips "Bathrooms". */}
             <dl className="mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3">
               {facts.map(({ label, value, Icon }) => (
-                <div key={label} className="flex items-start gap-3 rounded-xl bg-panel p-4 ring-1 ring-line">
+                <div
+                  key={label}
+                  className="flex items-start gap-3 rounded-xl bg-panel p-4 ring-1 ring-line"
+                >
                   <span className="rounded-lg bg-accent-soft p-2 text-accent">
                     <Icon />
                   </span>
                   <div className="min-w-0">
                     <dt className="text-[13px] text-muted">{label}</dt>
-                    <dd className="mt-0.5 text-[15px] font-semibold">{value}</dd>
+                    <dd className="mt-0.5 text-[15px] font-semibold">
+                      {value}
+                    </dd>
                   </div>
                 </div>
               ))}
@@ -413,7 +535,9 @@ const ListSpecific = ({ slug }: Props) => {
           {listing.project && <ProjectBlock project={listing.project} />}
 
           <section aria-labelledby="about-heading">
-            <h2 id="about-heading" className={sectionHeading}>About this property</h2>
+            <h2 id="about-heading" className={sectionHeading}>
+              About this property
+            </h2>
             <p
               id="description"
               className={`mt-4 max-w-prose whitespace-pre-line text-[16px] leading-[1.75] ${
@@ -441,21 +565,26 @@ const ListSpecific = ({ slug }: Props) => {
                 What this place offers
               </h2>
               <div id="amenity-list" className="mt-5 space-y-6">
-                {Object.entries(groupAmenities(shownAmenities)).map(([category, amenities]) => (
-                  <div key={category}>
-                    <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted">
-                      {amenityCategoryLabel(category)}
-                    </h3>
-                    <ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
-                      {amenities.map((amenity) => (
-                        <li key={amenity.name} className="flex items-center gap-2.5 text-[15px]">
-                          <CheckIcon className="h-4 w-4 text-accent" />
-                          {amenity.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                {Object.entries(groupAmenities(shownAmenities)).map(
+                  ([category, amenities]) => (
+                    <div key={category}>
+                      <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted">
+                        {amenityCategoryLabel(category)}
+                      </h3>
+                      <ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                        {amenities.map((amenity) => (
+                          <li
+                            key={amenity.name}
+                            className="flex items-center gap-2.5 text-[15px]"
+                          >
+                            <CheckIcon className="h-4 w-4 text-accent" />
+                            {amenity.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ),
+                )}
               </div>
               {listing.amenities.length > AMENITIES_PREVIEW && (
                 <button
@@ -465,7 +594,9 @@ const ListSpecific = ({ slug }: Props) => {
                   aria-controls="amenity-list"
                   className={`mt-5 ${secondaryButton}`}
                 >
-                  {amenitiesOpen ? "Show fewer" : `Show all ${listing.amenities.length} amenities (${hiddenAmenities} more)`}
+                  {amenitiesOpen
+                    ? "Show fewer"
+                    : `Show all ${listing.amenities.length} amenities (${hiddenAmenities} more)`}
                 </button>
               )}
             </section>
@@ -473,7 +604,9 @@ const ListSpecific = ({ slug }: Props) => {
 
           {listing.listingVideo && (
             <section aria-labelledby="video-heading">
-              <h2 id="video-heading" className={sectionHeading}>Video tour</h2>
+              <h2 id="video-heading" className={sectionHeading}>
+                Video tour
+              </h2>
               <iframe
                 src={listing.listingVideo.url}
                 title={`${listing.title}: video tour`}
@@ -486,7 +619,9 @@ const ListSpecific = ({ slug }: Props) => {
           )}
 
           <section aria-labelledby="location-heading">
-            <h2 id="location-heading" className={sectionHeading}>Location</h2>
+            <h2 id="location-heading" className={sectionHeading}>
+              Location
+            </h2>
             <div className="mt-5 rounded-xl bg-panel p-5 ring-1 ring-line">
               <div className="flex gap-3">
                 <span className="h-fit rounded-lg bg-accent-soft p-2 text-accent">
@@ -495,15 +630,22 @@ const ListSpecific = ({ slug }: Props) => {
                 {/* The house address stays private; buyers get it from the seller. */}
                 <address className="text-[15px] not-italic leading-relaxed">
                   {listing.landmark && (
-                    <span className="block font-medium">Near {landmarkText(listing.landmark)}</span>
+                    <span className="block font-medium">
+                      Near {landmarkText(listing.landmark)}
+                    </span>
                   )}
-                  <span className="block">{placeName(listing.locality, listing.city)}</span>
+                  <span className="block">
+                    {placeName(listing.locality, listing.city)}
+                  </span>
                   <span className="block text-muted">
-                    {placeName(listing.district, listing.state)} <span className="font-mono">{listing.pincode}</span>
+                    {placeName(listing.district, listing.state)}{" "}
+                    <span className="tabular-nums">{listing.pincode}</span>
                   </span>
                 </address>
               </div>
-              <p className="mt-4 text-[13px] text-muted">The exact address is shared by the seller when you get in touch.</p>
+              <p className="mt-4 text-[13px] text-muted">
+                The exact address is shared by the seller when you get in touch.
+              </p>
               {location && (
                 <a
                   href={googleMapsUrl(location[1], location[0])}

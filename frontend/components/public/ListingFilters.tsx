@@ -34,7 +34,13 @@ import {
 // Every filter this bar owns. Clearing all of them means deleting exactly these,
 // so a location or a page number typed in the URL survives. Sort is not one of
 // them: it changes the order, never which listings match.
-const FILTER_PARAMS = ["listingType", "propertyType", "postedBy", "maxPrice", "beds"];
+const FILTER_PARAMS = [
+  "listingType",
+  "propertyType",
+  "postedBy",
+  "maxPrice",
+  "beds",
+];
 
 // The home page's default order is newest first, which the API already does.
 const HOME_SORTS: Option[] = [
@@ -57,8 +63,14 @@ const COMMIT_DELAY = 250;
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-// Inline on a wide screen: compact, sitting in one row.
-const inlineSelect = `h-9 rounded-lg border border-line bg-panel px-2.5 text-[14px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 ${focusRing}`;
+// Inline on a wide screen. Every control in the bar is h-10 with the same
+// radius and the same text size, so the row reads as one instrument rather than
+// as four parts that happen to be adjacent.
+const inlineSelect = `h-10 rounded-lg border border-line bg-panel px-3 text-[14px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 ${focusRing}`;
+
+// A trigger that states its own value, so the bar can be read without opening
+// anything: "Under ₹72 L", not "Budget".
+const inlineTrigger = `flex h-10 items-center gap-2 rounded-lg border border-line bg-panel px-3 text-[14px] font-medium text-ink transition-colors hover:border-accent ${focusRing}`;
 
 // In the sheet, or in the phone's top row: full width and a 44px touch target.
 const sheetSelect = `h-11 w-full rounded-lg border border-line bg-panel px-3 text-[16px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 ${focusRing}`;
@@ -98,7 +110,9 @@ const Pills = ({
   onPick: (value: string) => void;
 }) => (
   <fieldset>
-    <legend className="mb-2 text-[13px] font-medium text-muted">{legend}</legend>
+    <legend className="mb-2 block text-[13px] font-medium text-muted">
+      {legend}
+    </legend>
     <div className="flex flex-wrap gap-2">
       {[{ value: "", label: anyLabel }, ...options].map((option) => {
         const picked = value === option.value;
@@ -140,7 +154,9 @@ const BudgetSlider = ({
 }) => {
   // Both held locally while dragging, so the label keeps up with the thumb and
   // the URL is only told once the user stops moving it.
-  const [position, setPosition] = useState(() => budgetPosition(Number(amount)));
+  const [position, setPosition] = useState(() =>
+    budgetPosition(Number(amount)),
+  );
   // Kept beside the position rather than recomputed from it: rounding to two
   // figures is lossy, so a URL saying ₹23,000 must keep saying ₹23,000.
   const [shown, setShown] = useState(() => Number(amount) || 0);
@@ -158,7 +174,10 @@ const BudgetSlider = ({
     setPosition(next);
     setShown(nextAmount);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => onCommit(nextAmount ? String(nextAmount) : ""), COMMIT_DELAY);
+    timer.current = setTimeout(
+      () => onCommit(nextAmount ? String(nextAmount) : ""),
+      COMMIT_DELAY,
+    );
   };
 
   const label = shown ? `Up to ${formatRupeesShort(shown)}` : "Any budget";
@@ -169,7 +188,9 @@ const BudgetSlider = ({
         <label htmlFor={id} className="text-[13px] font-medium text-muted">
           Budget
         </label>
-        <span className="text-[15px] font-medium tabular-nums text-ink">{label}</span>
+        <span className="text-[15px] font-medium tabular-nums text-ink">
+          {label}
+        </span>
       </div>
       <input
         id={id}
@@ -191,6 +212,68 @@ const BudgetSlider = ({
   );
 };
 
+// The budget, behind a trigger that states its own value. A native <details>
+// gives the open/close state and keyboard support for free, but it only closes
+// when its summary is clicked again — and anything floating over the page is
+// expected to dismiss on a click away or on Escape. Those two are added here.
+const BudgetPopover = ({
+  amount,
+  onCommit,
+}: {
+  amount: string;
+  onCommit: (next: string) => void;
+}) => {
+  const host = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const close = (event: Event) => {
+      const element = host.current;
+      if (!element?.open) return;
+      // A click inside is someone using the slider, not dismissing it.
+      if (event.target instanceof Node && element.contains(event.target))
+        return;
+      element.open = false;
+    };
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && host.current?.open) {
+        host.current.open = false;
+      }
+    };
+
+    // Capture, so the popover closes before a click lands on a card behind it.
+    document.addEventListener("pointerdown", close, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", close, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  return (
+    <details ref={host} className="group relative">
+      <summary className={`${inlineTrigger} cursor-pointer list-none`}>
+        {amount ? `Under ${formatRupeesShort(amount)}` : "Any budget"}
+        <span
+          aria-hidden="true"
+          className="text-[10px] text-muted transition-transform group-open:rotate-180"
+        >
+          ▾
+        </span>
+      </summary>
+      {/* z-20: above the listing cards, which begin immediately below. */}
+      <div className="absolute left-0 top-12 z-20 w-72 rounded-xl border border-line bg-panel p-4 shadow-[0_16px_40px_-20px_rgba(48,32,68,0.45)]">
+        <BudgetSlider
+          key={amount}
+          id="filter-budget-wide"
+          amount={amount}
+          onCommit={onCommit}
+        />
+      </div>
+    </details>
+  );
+};
+
 /* ---------- the bar ---------- */
 
 type Props = {
@@ -203,7 +286,11 @@ type Props = {
   sorts?: Option[];
 };
 
-const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SORTS }: Props) => {
+const ListingFilters = ({
+  showTypes = true,
+  showRadius = false,
+  sorts = HOME_SORTS,
+}: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -222,12 +309,18 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
   // Radius is not in FILTER_PARAMS: that list is shared with the home page, which
   // has no radius. It still counts here, so the phone's badge matches the sheet.
   const activeCount =
-    FILTER_PARAMS.filter((name) => searchParams.get(name)).length + (showRadius && radius ? 1 : 0);
+    FILTER_PARAMS.filter((name) => searchParams.get(name)).length +
+    (showRadius && radius ? 1 : 0);
 
   useEffect(() => {
     const element = sheet.current;
     if (!element) return;
-    if (sheetOpen && !element.open) element.showModal();
+    if (sheetOpen && !element.open) {
+      // showModal needs iOS 15.4. show() still sets [open], so the sheet appears
+      // on an older phone; it just does not dim the page or trap focus.
+      if (typeof element.showModal === "function") element.showModal();
+      else element.show();
+    }
     if (!sheetOpen && element.open) element.close();
   }, [sheetOpen]);
 
@@ -249,7 +342,9 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
     // Each listing type allows different property types, and only some types have
     // bedrooms. A stale value would quietly empty the list, so it goes with it.
     if (name === "listingType") {
-      const allowed = propertyTypeOptions(value).some((option) => option.value === propertyType);
+      const allowed = propertyTypeOptions(value).some(
+        (option) => option.value === propertyType,
+      );
       apply({
         listingType: value,
         ...(allowed ? {} : { propertyType: "" }),
@@ -274,19 +369,39 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
   type Chip = { key: string; text: string; clear: Record<string, string> };
   const chips: Chip[] = [];
   if (showRadius && radius) {
-    chips.push({ key: "radius", text: `Within ${radius} km`, clear: { radius: "" } });
+    chips.push({
+      key: "radius",
+      text: `Within ${radius} km`,
+      clear: { radius: "" },
+    });
   }
   if (showTypes && listingType) {
-    chips.push({ key: "listingType", text: labelOf(listingType), clear: { listingType: "" } });
+    chips.push({
+      key: "listingType",
+      text: labelOf(listingType),
+      clear: { listingType: "" },
+    });
   }
   if (showTypes && propertyType) {
-    chips.push({ key: "propertyType", text: labelOf(propertyType), clear: { propertyType: "" } });
+    chips.push({
+      key: "propertyType",
+      text: labelOf(propertyType),
+      clear: { propertyType: "" },
+    });
   }
   if (postedBy) {
-    chips.push({ key: "postedBy", text: `By ${labelOf(postedBy).toLowerCase()}`, clear: { postedBy: "" } });
+    chips.push({
+      key: "postedBy",
+      text: `By ${labelOf(postedBy).toLowerCase()}`,
+      clear: { postedBy: "" },
+    });
   }
   if (maxPrice) {
-    chips.push({ key: "budget", text: `Under ${formatRupeesShort(maxPrice)}`, clear: { maxPrice: "" } });
+    chips.push({
+      key: "budget",
+      text: `Under ${formatRupeesShort(maxPrice)}`,
+      clear: { maxPrice: "" },
+    });
   }
   if (beds) {
     chips.push({ key: "beds", text: `${beds}+ bedrooms`, clear: { beds: "" } });
@@ -334,7 +449,10 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
         </button>
         {/* min-w-0 lets it shrink past its longest option instead of pushing the
             row wider than a 320px screen. */}
-        {sortSelect("filter-sort-narrow", `${sheetSelect} ml-auto min-w-0 max-w-[11.5rem]`)}
+        {sortSelect(
+          "filter-sort-narrow",
+          `${sheetSelect} ml-auto min-w-0 max-w-[11.5rem]`,
+        )}
       </div>
 
       {/* ---------- 1024px and up ---------- */}
@@ -407,12 +525,7 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
           onChange={(event) => setParam("postedBy", event.target.value)}
           className={inlineSelect}
         >
-          {/* Names the filter rather than its unset value, like the selects
-              beside it. Disabled so it reads as a heading: the chip below is
-              how a visitor goes back to all sellers. */}
-          <option value="" disabled>
-            Listed by
-          </option>
+          <option value="">Any seller</option>
           {POSTED_BY.map((option) => (
             <option key={option.value} value={option.value}>
               Listed by {option.label.toLowerCase()}
@@ -442,16 +555,19 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
         )}
 
         {/* A ceiling only: people shop to a budget, and "price: low to high"
-            covers the other end better than a minimum would. */}
-        <BudgetSlider
-          key={`wide-${maxPrice}`}
-          id="filter-budget-wide"
+            covers the other end better than a minimum would.
+
+            In a popover rather than in the row: a range input needs two lines to
+            show its value, which is what made this bar uneven, and dragging a
+            120px slider is guesswork. The trigger states the value instead. */}
+        <BudgetPopover
           amount={maxPrice}
           onCommit={(next) => setParam("maxPrice", next)}
-          compact
         />
 
-        <div className="ml-auto">{sortSelect("filter-sort-wide", inlineSelect)}</div>
+        <div className="ml-auto">
+          {sortSelect("filter-sort-wide", inlineSelect)}
+        </div>
       </div>
 
       {/* ---------- what is narrowing the list ---------- */}
@@ -499,12 +615,21 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
         onClick={(event) => {
           if (event.target === event.currentTarget) setSheetOpen(false);
         }}
-        // open:flex, not flex: a closed <dialog> relies on display:none, which a
-        // plain flex class would override and leave the sheet on screen.
-        className="sheet m-0 mt-auto max-h-[88dvh] w-full max-w-[36rem] rounded-t-2xl bg-panel p-0 text-ink backdrop:bg-ink/40 open:flex open:flex-col sm:mx-auto sm:mb-0 lg:hidden"
+        // open:grid, not grid: a closed <dialog> relies on display:none, which a
+        // plain display class would override and leave the sheet on screen.
+        //
+        // h-[88dvh], not max-h: a <dialog> is height:fit-content, which is an
+        // indefinite height. Safari resolves the middle row against that before
+        // applying max-height, so the scrolling area collapsed to a thin strip
+        // with its text cut off; Chrome sizes it from the capped height, which is
+        // why Android looked right. A definite height removes the ambiguity.
+        //
+        // Grid rows rather than flex for the same reason: minmax(0,1fr) states
+        // outright that the middle row takes the leftover and may shrink to zero.
+        className="sheet fixed inset-x-0 bottom-0 top-auto m-0 h-[88dvh] w-full max-w-[36rem] grid-rows-[auto_minmax(0,1fr)_auto] rounded-t-2xl bg-panel p-0 text-ink backdrop:bg-ink/40 open:grid sm:mx-auto lg:hidden"
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-5 py-4">
-          <h2 id="filter-sheet-title" className="text-[17px] font-semibold tracking-tight">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+          <h2 id="filter-sheet-title" className="font-display text-[17px]">
             Filters
           </h2>
           <div className="flex items-center gap-1">
@@ -540,7 +665,7 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
 
         {/* Takes whatever height the header and footer leave, so neither is ever
             pushed off a short screen. */}
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
+        <div className="min-h-0 space-y-6 overflow-y-auto overscroll-contain px-5 py-5">
           {showTypes && (
             <>
               <Pills
@@ -552,13 +677,18 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
               />
 
               <div>
-                <label htmlFor="sheet-propertyType" className="mb-2 block text-[13px] font-medium text-muted">
+                <label
+                  htmlFor="sheet-propertyType"
+                  className="mb-2 block text-[13px] font-medium text-muted"
+                >
                   Property type
                 </label>
                 <select
                   id="sheet-propertyType"
                   value={propertyType}
-                  onChange={(event) => setParam("propertyType", event.target.value)}
+                  onChange={(event) =>
+                    setParam("propertyType", event.target.value)
+                  }
                   className={sheetSelect}
                 >
                   <option value="">Any type</option>
@@ -609,7 +739,11 @@ const ListingFilters = ({ showTypes = true, showRadius = false, sorts = HOME_SOR
           />
         </div>
 
-        <div className="shrink-0 border-t border-line px-5 py-4">
+        {/* pb: the sheet is flush with the bottom of the screen, and on a phone
+            with a home indicator or gesture bar the last ~34px of that is not
+            usable area. Without the inset the button sits under it. max() keeps
+            the normal 1rem on a phone that reports no inset. */}
+        <div className="border-t border-line px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {/* Choices already applied behind the sheet, so this only gets out of
               the way. Naming the thing it reveals beats a bare "Done". */}
           <button

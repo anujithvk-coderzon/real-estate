@@ -17,7 +17,12 @@ import {
   type PickedFile,
 } from "@/lib/media";
 import { errorToast, successToast } from "@/lib/toast";
-import { primaryButton, secondaryButton, sectionTitle, textButton } from "@/lib/ui";
+import {
+  primaryButton,
+  secondaryButton,
+  sectionTitle,
+  textButton,
+} from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
 type Props = { id: string };
@@ -165,12 +170,12 @@ const MediaContents = ({ id }: Props) => {
   return (
     <main className="mx-auto w-full max-w-4xl px-5 py-8 lg:px-8 lg:py-10">
       <p className="text-[13px] font-medium text-muted">Step 2 of 2</p>
-      <h1 className="mt-1 text-[28px] font-semibold leading-tight tracking-tight lg:text-[34px]">
+      <h1 className="font-display mt-1 text-[28px] leading-tight lg:text-[34px]">
         Photos and video
       </h1>
       <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">
-        Listings with clear photos get far more enquiries. The first photo is what buyers see in
-        search results.
+        Listings with clear photos get far more enquiries. The first photo is
+        what buyers see in search results.
       </p>
 
       {/* Hidden native inputs, opened by the styled buttons below. */}
@@ -200,12 +205,13 @@ const MediaContents = ({ id }: Props) => {
       <section className="mt-8 rounded-lg border border-line bg-panel p-5 lg:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className={sectionTitle}>Photos</h2>
-          <p className="font-mono text-[13px] text-muted">
+          <p className="tabular-nums text-[13px] text-muted">
             {images.length}/{imageLimit} · {formatFileSize(imageBytes)}
           </p>
         </div>
         <p className="mt-1 text-[13px] text-muted">
-          JPG, PNG or WebP · up to 10 MB each · {MAX_MEDIA_FILES} files in total, including the video
+          JPG, PNG or WebP · up to 10 MB each · {MAX_MEDIA_FILES} files in
+          total, including the video
         </p>
 
         {images.length === 0 ? (
@@ -213,18 +219,26 @@ const MediaContents = ({ id }: Props) => {
             type="button"
             onClick={() => imageInput.current?.click()}
             disabled={imagesLocked}
-            className="mt-4 flex h-44 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-line text-muted transition-colors hover:border-accent hover:text-accent"
+            className="mt-4 flex h-44 w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line text-muted transition-colors hover:border-accent hover:text-accent"
           >
             <span className="text-[15px] font-medium">Choose photos</span>
-            <span className="text-[13px]">At least one, up to {imageLimit}</span>
+            <span className="text-[13px]">
+              At least one, up to {imageLimit}
+            </span>
           </button>
         ) : (
           <>
             <ul className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {images.map((image, index) => (
-                <li key={image.key} className="overflow-hidden rounded-md border border-line">
+                <li
+                  key={image.key}
+                  className="overflow-hidden rounded-lg border border-line"
+                >
                   <div className="relative aspect-[4/3] bg-ground">
-                    <ImagePreview file={image.file} className="h-full w-full object-cover" />
+                    <ImagePreview
+                      file={image.file}
+                      className="h-full w-full object-cover"
+                    />
                     {index === 0 && (
                       <span className="absolute left-2 top-2 rounded bg-accent px-2 py-0.5 text-[11px] font-medium text-white">
                         Cover
@@ -232,7 +246,7 @@ const MediaContents = ({ id }: Props) => {
                     )}
                   </div>
                   <div className="flex items-center justify-between px-2 py-1.5">
-                    <span className="font-mono text-[11px] text-muted">
+                    <span className="tabular-nums text-[11px] text-muted">
                       {formatFileSize(image.file.size)}
                     </span>
                     <div className="flex gap-1">
@@ -256,7 +270,11 @@ const MediaContents = ({ id }: Props) => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => updateImages(images.filter((i) => i.key !== image.key))}
+                        onClick={() =>
+                          updateImages(
+                            images.filter((i) => i.key !== image.key),
+                          )
+                        }
                         disabled={imagesLocked}
                         aria-label={`Remove photo ${index + 1}`}
                         className={`px-1 ${textButton}`}
@@ -285,23 +303,37 @@ const MediaContents = ({ id }: Props) => {
       {/* ---------- video ---------- */}
       <section className="mt-6 rounded-lg border border-line bg-panel p-5 lg:p-6">
         <h2 className={sectionTitle}>
-          Video <span className="text-[14px] font-normal text-muted">(optional)</span>
+          Video{" "}
+          <span className="text-[14px] font-normal text-muted">(optional)</span>
         </h2>
-        <p className="mt-1 text-[13px] text-muted">MP4 or WebM · one video · up to 30 MB</p>
+        <p className="mt-1 text-[13px] text-muted">
+          MP4 or WebM · one video · up to 30 MB
+        </p>
 
         {video ? (
-          <div className="mt-4 overflow-hidden rounded-md border border-line">
-            <VideoPreview file={video.file} className="aspect-video w-full bg-ground" />
+          <div className="mt-4 overflow-hidden rounded-lg border border-line">
+            <VideoPreview
+              file={video.file}
+              className="aspect-video w-full bg-ground"
+            />
             <div className="flex items-center justify-between gap-2 px-3 py-2">
               <span className="truncate text-[13px] text-muted">
                 {video.file.name} · {formatFileSize(video.file.size)}
               </span>
               {!videoLocked && (
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => videoInput.current?.click()} className={textButton}>
+                  <button
+                    type="button"
+                    onClick={() => videoInput.current?.click()}
+                    className={textButton}
+                  >
                     Replace
                   </button>
-                  <button type="button" onClick={removeVideo} className={textButton}>
+                  <button
+                    type="button"
+                    onClick={removeVideo}
+                    className={textButton}
+                  >
                     Remove
                   </button>
                 </div>
@@ -313,7 +345,7 @@ const MediaContents = ({ id }: Props) => {
             type="button"
             onClick={() => videoInput.current?.click()}
             disabled={!canAddVideo || videoLocked}
-            className="mt-4 flex h-28 w-full items-center justify-center rounded-md border border-dashed border-line text-[15px] font-medium text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 flex h-28 w-full items-center justify-center rounded-lg border border-dashed border-line text-[15px] font-medium text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             {canAddVideo ? "Choose a video" : "Remove a photo to add a video"}
           </button>
@@ -321,8 +353,13 @@ const MediaContents = ({ id }: Props) => {
       </section>
 
       {skipped.length > 0 && (
-        <div role="status" className="mt-6 rounded-md border border-warn/25 bg-warn/5 px-3.5 py-3">
-          <p className="text-[14px] font-medium text-ink">These files were skipped</p>
+        <div
+          role="status"
+          className="mt-6 rounded-lg border border-warn/25 bg-warn/5 px-3.5 py-3"
+        >
+          <p className="text-[14px] font-medium text-ink">
+            These files were skipped
+          </p>
           <ul className="mt-1.5 space-y-1">
             {skipped.map((problem) => (
               <li key={problem} className="text-[13px] leading-snug text-muted">
@@ -338,7 +375,9 @@ const MediaContents = ({ id }: Props) => {
           {uploadLines.map(({ name, upload }) => (
             <p key={name}>
               {name}:{" "}
-              <span className={`font-mono ${upload.status === "failed" ? "text-warn" : "text-ink"}`}>
+              <span
+                className={`tabular-nums ${upload.status === "failed" ? "text-warn" : "text-ink"}`}
+              >
                 {statusText(upload)}
               </span>
             </p>

@@ -1,9 +1,10 @@
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../errors/Errors.js";
-import { cdnUrl, deleteImage, uploadProjectImage } from "../../lib/bunny.js";
+import { cdnUrl,uploadProjectImage } from "../../lib/bunny.js";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { prisma } from "../../lib/prisma.js";
 import { userSlug } from "../../lib/slug.js";
 import { RERA_EXEMPT_MAX_UNITS, type CreateProjectInput, type UpdateProjectInput } from "./project.validation.js";
+import { queueMediaCleanup } from "../../queues/media.queue.js";
 
 
 // Only the builder who is building it registers a project. An agent selling in
@@ -193,8 +194,7 @@ export const projectImageDeleteService=async(userId:string,imageId:string)=>{
  const image=await prisma.projectImages.findUnique({where:{id:imageId,project:{builderId:userId}}})
  if(!image) throw new NotFoundError("Photo not found")
  await prisma.projectImages.delete({where:{id:imageId}})
- // The row is gone either way; a failed cleanup only leaves an unused file.
- await deleteImage(image.path).catch((error)=>console.error("Project photo not deleted:",image.path,error))
+ await queueMediaCleanup({kind:"image",path:image.path})
  return 'Photo deleted successfully'
 }
 

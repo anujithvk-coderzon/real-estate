@@ -5,7 +5,9 @@ import { useEffect, useRef } from "react";
 // A picked file has no URL until we create one, and that URL keeps the whole
 // file in memory until it is revoked. Creating it here and revoking it in the
 // cleanup releases it automatically when the preview disappears.
-const useFileSource = <T extends HTMLImageElement | HTMLVideoElement>(file: File) => {
+const useFileSource = <T extends HTMLImageElement | HTMLVideoElement>(
+  file: File,
+) => {
   const element = useRef<T>(null);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import ListingCard from "@/components/listing/ListingCard";
 import { api } from "@/lib/api";
@@ -10,13 +11,33 @@ import { inputClass, primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
 // Each filter is one value of the API's ?status= parameter; All sends none.
-const FILTERS: { label: string; one: string; many: string; status?: ListingStatus }[] = [
+const FILTERS: {
+  label: string;
+  one: string;
+  many: string;
+  status?: ListingStatus;
+}[] = [
   { label: "All", one: "property", many: "properties" },
-  { label: "Live", one: "live listing", many: "live listings", status: "ACTIVE" },
+  {
+    label: "Live",
+    one: "live listing",
+    many: "live listings",
+    status: "ACTIVE",
+  },
   { label: "Drafts", one: "draft", many: "drafts", status: "DRAFT" },
   { label: "Sold", one: "sold listing", many: "sold listings", status: "SOLD" },
-  { label: "Rented", one: "rented listing", many: "rented listings", status: "RENTED" },
-  { label: "Expired", one: "expired listing", many: "expired listings", status: "EXPIRED" },
+  {
+    label: "Rented",
+    one: "rented listing",
+    many: "rented listings",
+    status: "RENTED",
+  },
+  {
+    label: "Expired",
+    one: "expired listing",
+    many: "expired listings",
+    status: "EXPIRED",
+  },
 ];
 
 // Each sort is a value of the API's ?price= parameter; the default sends none.
@@ -33,15 +54,18 @@ type PageResponse = { lists: ListingSummary[]; total: number };
 const fetchPage = async (page: number, { status, sort, search }: View) => {
   // axios leaves out undefined params, so "All" and the default sort send nothing.
   const response = await api.get("/list/owner/all", {
-    params: { page, status, price: SORTS[sort].price, search: search || undefined },
+    params: {
+      page,
+      status,
+      price: SORTS[sort].price,
+      search: search || undefined,
+    },
   });
   return response.data as PageResponse;
 };
 
-
-
-
 const MyListings = () => {
+  const still = useReducedMotion();
   const [view, setView] = useState<View>({ sort: "updated" });
   const [listings, setListings] = useState<ListingSummary[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -72,8 +96,6 @@ const MyListings = () => {
         errorToast(apiMessage(error));
       });
   };
-
-
 
   // Runs once when the page opens; later loads come from changeView and loadMore.
   useEffect(() => {
@@ -117,17 +139,19 @@ const MyListings = () => {
   const filter = FILTERS.find((f) => f.status === view.status) ?? FILTERS[0];
   const nounFor = (count: number) => (count === 1 ? filter.one : filter.many);
 
-
   // Only a broker with no listings at all sees the welcome screen. An empty
   // filter or search keeps the toolbar, so they can change it back.
-  const isFirstVisit = listings !== null && total === 0 && !view.status && !view.search;
+  const isFirstVisit =
+    listings !== null && total === 0 && !view.status && !view.search;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-10 lg:py-10">
       {/* ---------- heading ---------- */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-[30px] leading-none tracking-tight sm:text-[40px] lg:text-[48px]">My listings</h1>
+          <h1 className="font-display text-[30px] leading-none sm:text-[40px] lg:text-[48px]">
+            My listings
+          </h1>
           <p className="mt-2 text-[15px] text-muted">
             {listings === null
               ? "Loading your properties…"
@@ -143,17 +167,31 @@ const MyListings = () => {
 
       {failed ? (
         <div className="mt-10 rounded-2xl bg-panel p-6 text-center ring-1 ring-line sm:p-10">
-          <h2 className="text-[18px] font-semibold">Your listings could not be loaded</h2>
-          <p className="mt-2 text-[15px] text-muted">Check your connection and try again.</p>
-          <button type="button" onClick={() => window.location.reload()} className={`mt-5 ${secondaryButton}`}>
+          <h2 className="font-display text-[18px]">
+            Your listings could not be loaded
+          </h2>
+          <p className="mt-2 text-[15px] text-muted">
+            Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className={`mt-5 ${secondaryButton}`}
+          >
             Try again
           </button>
         </div>
       ) : listings === null ? (
         /* ---------- first load ---------- */
-        <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+        <ul
+          className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          aria-busy="true"
+        >
           {Array.from({ length: 6 }, (_, index) => (
-            <li key={index} className="overflow-hidden rounded-2xl bg-panel ring-1 ring-line">
+            <li
+              key={index}
+              className="overflow-hidden rounded-2xl bg-panel ring-1 ring-line"
+            >
               <div className="aspect-[4/3] animate-pulse bg-line/60" />
               <div className="space-y-3 p-4">
                 <div className="h-3 w-24 animate-pulse rounded bg-line" />
@@ -166,11 +204,17 @@ const MyListings = () => {
       ) : isFirstVisit ? (
         /* ---------- no listings at all ---------- */
         <div className="mt-10 rounded-2xl bg-panel px-6 py-16 text-center ring-1 ring-line">
-          <h2 className="font-display text-[30px] leading-tight">No properties yet</h2>
+          <h2 className="font-display text-[30px] leading-tight">
+            No properties yet
+          </h2>
           <p className="mx-auto mt-2 max-w-sm text-[15px] leading-relaxed text-muted">
-            Add your first property. It stays a draft, visible only to you, until you publish it.
+            Add your first property. It stays a draft, visible only to you,
+            until you publish it.
           </p>
-          <Link href="/list/create" className={`mt-6 inline-block ${primaryButton}`}>
+          <Link
+            href="/list/create"
+            className={`mt-6 inline-block ${primaryButton}`}
+          >
             List your first property
           </Link>
         </div>
@@ -178,7 +222,11 @@ const MyListings = () => {
         <>
           {/* ---------- toolbar ---------- */}
           <div className="mt-8 flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-center lg:justify-between">
-            <div role="group" aria-label="Filter by status" className="flex gap-1 overflow-x-auto">
+            <div
+              role="group"
+              aria-label="Filter by status"
+              className="flex gap-1 overflow-x-auto"
+            >
               {FILTERS.map((option) => {
                 const selected = option.status === view.status;
                 return (
@@ -187,15 +235,19 @@ const MyListings = () => {
                     type="button"
                     aria-pressed={selected}
                     disabled={reloading}
-                    onClick={() => changeView({ ...view, status: option.status })}
+                    onClick={() =>
+                      changeView({ ...view, status: option.status })
+                    }
                     className={`flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-[14px] font-medium transition-colors sm:min-h-0 sm:py-1.5 ${
-                      selected ? "bg-rail text-rail-ink" : "text-muted hover:bg-panel hover:text-ink"
+                      selected
+                        ? "bg-accent text-white"
+                        : "text-muted hover:bg-panel hover:text-ink"
                     }`}
                   >
                     {option.label}
                     {/* The API returns the count for the selected filter. */}
                     {selected && !reloading && (
-                      <span className="rounded-full bg-rail-raised px-1.5 font-mono text-[12px] text-rail-accent">
+                      <span className="rounded-full bg-white/20 px-1.5 text-[12px] tabular-nums text-white">
                         {total}
                       </span>
                     )}
@@ -208,7 +260,7 @@ const MyListings = () => {
               <input
                 type="search"
                 value={search}
-                onChange={(e)=>setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search title or place"
                 aria-label="Search your listings"
                 className={`${inputClass} min-w-0 sm:flex-1 lg:w-60`}
@@ -216,7 +268,9 @@ const MyListings = () => {
               <select
                 value={view.sort}
                 disabled={reloading}
-                onChange={(event) => changeView({ ...view, sort: event.target.value as SortKey })}
+                onChange={(event) =>
+                  changeView({ ...view, sort: event.target.value as SortKey })
+                }
                 aria-label="Sort listings"
                 className={`${inputClass} shrink-0 sm:w-auto`}
               >
@@ -233,7 +287,9 @@ const MyListings = () => {
           {total === 0 ? (
             <div className="mt-12 text-center">
               <p className="text-[15px] text-muted">
-                {view.search ? `No ${filter.many} match “${view.search}”.` : `You have no ${filter.many}.`}
+                {view.search
+                  ? `No ${filter.many} match “${view.search}”.`
+                  : `You have no ${filter.many}.`}
               </p>
               <button
                 type="button"
@@ -257,7 +313,11 @@ const MyListings = () => {
                 No {hasMore ? "loaded " : ""}
                 {filter.many} match “{search}”.
               </p>
-              <button type="button" onClick={() => setSearch("")} className={`mt-4 ${secondaryButton}`}>
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className={`mt-4 ${secondaryButton}`}
+              >
                 Clear search
               </button>
             </div>
@@ -266,11 +326,26 @@ const MyListings = () => {
               aria-busy={reloading}
               className={`mt-6 grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${reloading ? "opacity-50" : ""}`}
             >
-              {loaded.map((listing) => (
-                <li key={listing.id}>
-                  <ListingCard listing={listing} />
-                </li>
-              ))}
+              <AnimatePresence initial={false} mode="popLayout">
+                {loaded.map((listing) => (
+                  <motion.li
+                    key={listing.id}
+                    layout={still ? false : "position"}
+                    exit={
+                      still
+                        ? {}
+                        : {
+                            opacity: 0,
+                            scale: 0.94,
+                            transition: { duration: 0.2 },
+                          }
+                    }
+                    transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <ListingCard listing={listing} />
+                  </motion.li>
+                ))}
+              </AnimatePresence>
             </ul>
           )}
 
@@ -282,7 +357,12 @@ const MyListings = () => {
                   <p className="text-[13px] text-muted">
                     {loaded.length} of {total} loaded
                   </p>
-                  <button type="button" onClick={loadMore} disabled={loadingMore || reloading} className={secondaryButton}>
+                  <button
+                    type="button"
+                    onClick={loadMore}
+                    disabled={loadingMore || reloading}
+                    className={secondaryButton}
+                  >
                     {loadingMore ? "Loading…" : "Load more"}
                   </button>
                 </>

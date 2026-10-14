@@ -33,7 +33,10 @@ type Props = {
   manualName: string;
   manualRera: string;
   manualBuilder: string;
-  onManualChange: (field: "manualName" | "manualRera" | "manualBuilder", value: string) => void;
+  onManualChange: (
+    field: "manualName" | "manualRera" | "manualBuilder",
+    value: string,
+  ) => void;
   // Under construction: the advertisement needs a registration number, so
   // "not part of a project" is not an available answer.
   mustHaveProject: boolean;
@@ -49,7 +52,9 @@ const ProjectPicker = ({
   onManualChange,
   mustHaveProject,
 }: Props) => {
-  const [own, setOwn] = useState<{ id: string; name: string; reraNumber?: string | null }[] | null>(null);
+  const [own, setOwn] = useState<
+    { id: string; name: string; reraNumber?: string | null }[] | null
+  >(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Found[] | null>(null);
   const [more, setMore] = useState(false); // the server had matches it did not send
@@ -114,9 +119,14 @@ const ProjectPicker = ({
             options={[
               ...(own ?? []).map((project) => ({
                 value: project.id,
-                label: project.reraNumber ? `${project.name} — ${project.reraNumber}` : project.name,
+                label: project.reraNumber
+                  ? `${project.name} — ${project.reraNumber}`
+                  : project.name,
               })),
-              { value: NONE, label: "Not part of a project (resale, plot, old building)" },
+              {
+                value: NONE,
+                label: "Not part of a project (resale, plot, old building)",
+              },
             ]}
             onChange={(event) => onChange(event.target.value)}
           />
@@ -124,8 +134,9 @@ const ProjectPicker = ({
 
         {value === NONE && mustHaveProject && (
           <p className="mt-3 text-[14px] leading-snug text-warn">
-            An under-construction unit is sold off-plan, so the advertisement needs the project&apos;s RERA
-            number. Choose the project, or add it first.
+            An under-construction unit is sold off-plan, so the advertisement
+            needs the project&apos;s RERA number. Choose the project, or add it
+            first.
           </p>
         )}
 
@@ -156,7 +167,9 @@ const ProjectPicker = ({
       {picked ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-accent-soft px-4 py-3">
           <div>
-            <p className="text-[15px] font-semibold text-accent">{chosen.name}</p>
+            <p className="text-[15px] font-semibold text-accent">
+              {chosen.name}
+            </p>
             <p className="mt-0.5 text-[13px] text-muted">
               {[chosen.locality, chosen.city].filter(Boolean).join(", ")}
               {chosen.builderName && ` · ${chosen.builderName}`}
@@ -176,7 +189,11 @@ const ProjectPicker = ({
         </div>
       ) : (
         <>
-          <Field id="project-search" label="Search our registered projects" hint="By project name, locality or city.">
+          <Field
+            id="project-search"
+            label="Search our registered projects"
+            hint="By project name, locality or city."
+          >
             <input
               id="project-search"
               type="search"
@@ -188,7 +205,9 @@ const ProjectPicker = ({
             />
           </Field>
 
-          {searching && <p className="mt-2 text-[14px] text-muted">Searching…</p>}
+          {searching && (
+            <p className="mt-2 text-[14px] text-muted">Searching…</p>
+          )}
 
           {results !== null && !searching && results.length > 0 && (
             <ul className="mt-3 divide-y divide-line rounded-lg ring-1 ring-line">
@@ -202,9 +221,13 @@ const ProjectPicker = ({
                     }}
                     className="flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-accent-soft"
                   >
-                    <span className="text-[15px] font-medium">{project.name}</span>
+                    <span className="text-[15px] font-medium">
+                      {project.name}
+                    </span>
                     <span className="mt-0.5 text-[13px] text-muted">
-                      {[project.locality, project.city].filter(Boolean).join(", ")}
+                      {[project.locality, project.city]
+                        .filter(Boolean)
+                        .join(", ")}
                       {project.builderName && ` · ${project.builderName}`}
                       {reraNote(project)}
                     </span>
@@ -216,14 +239,16 @@ const ProjectPicker = ({
 
           {more && !searching && (
             <p className="mt-2 text-[13px] text-muted">
-              More projects match this. Add the locality or city to narrow the list.
+              More projects match this. Add the locality or city to narrow the
+              list.
             </p>
           )}
 
           {results !== null && !searching && results.length === 0 && (
             <p className="mt-3 text-[14px] text-muted">
-              No registered project matches “{query.trim()}”. Check the spelling of the builder&apos;s name,
-              or type the project name below instead.
+              No registered project matches “{query.trim()}”. Check the spelling
+              of the builder&apos;s name, or type the project name below
+              instead.
             </p>
           )}
         </>
@@ -243,7 +268,8 @@ const ProjectPicker = ({
             <span>
               The project is not in the list — I will type its name
               <span className="mt-0.5 block text-[13px] text-muted">
-                You will need the project name, the builder, and the RERA registration number.
+                You will need the project name, the builder, and the RERA
+                registration number.
               </span>
             </span>
           </label>
@@ -256,7 +282,9 @@ const ProjectPicker = ({
                   id="manualName"
                   type="text"
                   value={manualName}
-                  onChange={(event) => onManualChange("manualName", event.target.value)}
+                  onChange={(event) =>
+                    onManualChange("manualName", event.target.value)
+                  }
                   maxLength={120}
                   placeholder="As the builder calls it"
                   className={inputClass}
@@ -265,12 +293,18 @@ const ProjectPicker = ({
 
               {/* A buyer needs to know whose project they are buying into, and we
                   have no builder account to read it from. */}
-              <Field id="manualBuilder" label="Builder" hint="The company building the project.">
+              <Field
+                id="manualBuilder"
+                label="Builder"
+                hint="The company building the project."
+              >
                 <input
                   id="manualBuilder"
                   type="text"
                   value={manualBuilder}
-                  onChange={(event) => onManualChange("manualBuilder", event.target.value)}
+                  onChange={(event) =>
+                    onManualChange("manualBuilder", event.target.value)
+                  }
                   maxLength={120}
                   placeholder="e.g. Skyline Builders"
                   className={inputClass}
@@ -291,14 +325,17 @@ const ProjectPicker = ({
                   id="manualRera"
                   type="text"
                   value={manualRera}
-                  onChange={(event) => onManualChange("manualRera", event.target.value)}
+                  onChange={(event) =>
+                    onManualChange("manualRera", event.target.value)
+                  }
                   maxLength={60}
                   placeholder="e.g. K-RERA/PRJ/ERN/123/2024"
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} tabular-nums`}
                 />
                 <p className="mt-1.5 text-[13px] text-muted">
-                  The builder has not registered this project here, so this number is the only way a buyer
-                  can check it on the state RERA site.
+                  The builder has not registered this project here, so this
+                  number is the only way a buyer can check it on the state RERA
+                  site.
                   {mustHaveProject
                     ? " A unit under construction is sold off-plan, so the advertisement cannot go out without it."
                     : " If the building is old or exempt and has no number, choose \u201cNot part of a project\u201d below."}
@@ -306,8 +343,9 @@ const ProjectPicker = ({
               </div>
 
               <p className="text-[13px] leading-snug text-muted sm:col-span-2">
-                These details are shown to buyers as stated by you, not as confirmed by the builder, until
-                the builder registers the project here.
+                These details are shown to buyers as stated by you, not as
+                confirmed by the builder, until the builder registers the
+                project here.
               </p>
             </div>
           )}
@@ -322,14 +360,17 @@ const ProjectPicker = ({
             />
             <span>
               Not part of a project
-              <span className="mt-0.5 block text-[13px] text-muted">A resale, a plot, or an old building.</span>
+              <span className="mt-0.5 block text-[13px] text-muted">
+                A resale, a plot, or an old building.
+              </span>
             </span>
           </label>
 
           {value === NONE && mustHaveProject && (
             <p className="text-[14px] leading-snug text-warn">
-              An under-construction unit is sold off-plan, so it belongs to a project that must be registered
-              before it is advertised. Choose the project, or type its name and RERA number.
+              An under-construction unit is sold off-plan, so it belongs to a
+              project that must be registered before it is advertised. Choose
+              the project, or type its name and RERA number.
             </p>
           )}
         </div>

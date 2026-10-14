@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ImagePreview } from "@/components/FilePreview";
 import { api } from "@/lib/api";
-import { checkImage, IMAGE_TYPES, MAX_MEDIA_FILES, pickFile, uploadProjectImages, type PickedFile } from "@/lib/media";
+import {
+  checkImage,
+  IMAGE_TYPES,
+  MAX_MEDIA_FILES,
+  pickFile,
+  uploadProjectImages,
+  type PickedFile,
+} from "@/lib/media";
 import { errorToast, successToast } from "@/lib/toast";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
@@ -48,7 +55,9 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
       return;
     }
     if (files.length > remaining) {
-      errorToast(`You can add ${remaining} more ${remaining === 1 ? "photo" : "photos"}.`);
+      errorToast(
+        `You can add ${remaining} more ${remaining === 1 ? "photo" : "photos"}.`,
+      );
       return;
     }
     setPicked((prev) => [...prev, ...files.map(pickFile)]);
@@ -59,7 +68,11 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
     setUploading(true);
     setPercent(0);
     try {
-      const response = await uploadProjectImages(projectId, picked.map((item) => item.file), setPercent);
+      const response = await uploadProjectImages(
+        projectId,
+        picked.map((item) => item.file),
+        setPercent,
+      );
       successToast(response.data.message ?? "Photos uploaded");
       setPicked([]);
       await loadSaved();
@@ -83,21 +96,30 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-8 lg:py-12">
       <header>
-        <h1 className="font-display text-[32px] leading-tight lg:text-[38px]">Project photos</h1>
+        <h1 className="font-display text-[32px] leading-tight lg:text-[38px]">
+          Project photos
+        </h1>
         <p className="mt-1 text-[15px] text-muted">
-          {projectName ? `${projectName} · ` : ""}Up to {MAX_MEDIA_FILES} photos. The first one is the cover.
+          {projectName ? `${projectName} · ` : ""}Up to {MAX_MEDIA_FILES}{" "}
+          photos. The first one is the cover.
         </p>
       </header>
 
       {/* ---------- already saved ---------- */}
       <section aria-labelledby="saved-heading" className="mt-8">
-        <h2 id="saved-heading" className="text-[17px] font-semibold tracking-tight">
+        <h2 id="saved-heading" className="font-display text-[17px]">
           On this project
         </h2>
         {saved === null ? (
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3" aria-busy="true">
+          <div
+            className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3"
+            aria-busy="true"
+          >
             {Array.from({ length: 3 }, (_, index) => (
-              <div key={index} className="aspect-[4/3] animate-pulse rounded-lg bg-line" />
+              <div
+                key={index}
+                className="aspect-[4/3] animate-pulse rounded-lg bg-line"
+              />
             ))}
           </div>
         ) : saved.length === 0 ? (
@@ -105,9 +127,16 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
         ) : (
           <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {saved.map((image, index) => (
-              <li key={image.id} className="relative overflow-hidden rounded-lg bg-ground ring-1 ring-line">
+              <li
+                key={image.id}
+                className="relative overflow-hidden rounded-lg bg-ground ring-1 ring-line"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image.path} alt="" className="aspect-[4/3] w-full object-cover" />
+                <img
+                  src={image.path}
+                  alt=""
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 {index === 0 && (
                   <span className="absolute left-2 top-2 rounded-full bg-panel/95 px-2 py-0.5 text-[11px] font-semibold text-accent">
                     Cover
@@ -128,11 +157,16 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
       </section>
 
       {/* ---------- waiting to upload ---------- */}
-      <section aria-labelledby="add-heading" className="mt-8 border-t border-line pt-8">
-        <h2 id="add-heading" className="text-[17px] font-semibold tracking-tight">
+      <section
+        aria-labelledby="add-heading"
+        className="mt-8 border-t border-line pt-8"
+      >
+        <h2 id="add-heading" className="font-display text-[17px]">
           Add photos
         </h2>
-        <p className="mt-1 text-[14px] text-muted">JPG, PNG or WebP, up to 10 MB each.</p>
+        <p className="mt-1 text-[14px] text-muted">
+          JPG, PNG or WebP, up to 10 MB each.
+        </p>
 
         <input
           ref={fileInput}
@@ -148,11 +182,21 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
         {picked.length > 0 && (
           <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {picked.map((item) => (
-              <li key={item.key} className="relative overflow-hidden rounded-lg bg-ground ring-2 ring-accent">
-                <ImagePreview file={item.file} className="aspect-[4/3] w-full object-cover" />
+              <li
+                key={item.key}
+                className="relative overflow-hidden rounded-lg bg-ground ring-2 ring-accent"
+              >
+                <ImagePreview
+                  file={item.file}
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 <button
                   type="button"
-                  onClick={() => setPicked((prev) => prev.filter((other) => other.key !== item.key))}
+                  onClick={() =>
+                    setPicked((prev) =>
+                      prev.filter((other) => other.key !== item.key),
+                    )
+                  }
                   disabled={uploading}
                   aria-label="Remove this photo"
                   className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-panel/95 text-[15px] text-muted shadow-sm transition-colors hover:text-danger"
@@ -165,8 +209,15 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
         )}
 
         {uploading && (
-          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow={percent}>
-            <div className="h-full bg-accent transition-[width]" style={{ width: `${percent}%` }} />
+          <div
+            className="mt-4 h-1.5 overflow-hidden rounded-full bg-line"
+            role="progressbar"
+            aria-valuenow={percent}
+          >
+            <div
+              className="h-full bg-accent transition-[width]"
+              style={{ width: `${percent}%` }}
+            />
           </div>
         )}
 
@@ -180,7 +231,12 @@ const ProjectPhotos = ({ projectId }: { projectId: string }) => {
             {remaining > 0 ? "Choose photos" : "Limit reached"}
           </button>
           {picked.length > 0 && (
-            <button type="button" onClick={handleUpload} disabled={uploading} className={primaryButton}>
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={uploading}
+              className={primaryButton}
+            >
               {uploading ? `Uploading… ${percent}%` : `Upload ${picked.length}`}
             </button>
           )}

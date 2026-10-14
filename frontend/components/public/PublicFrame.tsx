@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import PublicHeader from "@/components/public/PublicHeader";
+import SiteFooter from "@/components/public/SiteFooter";
 import { authReady, isSignedIn } from "@/lib/api";
 
 // Frame for pages anyone can open. Signed-in users get the same sidebar as the
@@ -19,15 +20,23 @@ const PublicFrame = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex min-h-dvh flex-col lg:flex-row">
         <Sidebar />
-        <div className="min-w-0 flex-1">{children}</div>
+        {/* flex-col so the footer sits under the content rather than beside the
+            rail, and the content keeps the height it needs. */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh">
+    <div className="flex min-h-dvh flex-col">
       {signedIn === false && <PublicHeader />}
-      {children}
+      <div className="flex-1">{children}</div>
+      {/* Only once the sign-in check has settled: a footer that appears, then
+          jumps as the sidebar arrives, is worse than one that waits a tick. */}
+      {signedIn === false && <SiteFooter />}
     </div>
   );
 };

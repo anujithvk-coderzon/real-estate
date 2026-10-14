@@ -10,7 +10,11 @@ import { api } from "@/lib/api";
 import { labelOf } from "@/lib/listing";
 import { PROJECT_STATUS } from "@/lib/project";
 import { errorToast } from "@/lib/toast";
-import type { AuthUser, PublicListingSummary, VerificationStatus } from "@/lib/types";
+import type {
+  AuthUser,
+  PublicListingSummary,
+  VerificationStatus,
+} from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
@@ -35,11 +39,17 @@ const initialsOf = (name: string) =>
     .join("");
 
 // Only a checked registration earns a badge; anything else is stated plainly.
-const RERA_BADGE: Record<VerificationStatus, { text: string; className: string } | null> = {
+const RERA_BADGE: Record<
+  VerificationStatus,
+  { text: string; className: string } | null
+> = {
   NONE: null,
   PENDING: { text: "RERA number on file", className: "bg-warn/10 text-warn" },
   VERIFIED: { text: "RERA verified", className: "bg-accent-soft text-accent" },
-  REVOKED: { text: "Registration removed by the registry", className: "bg-danger/10 text-danger" },
+  REVOKED: {
+    text: "Registration removed by the registry",
+    className: "bg-danger/10 text-danger",
+  },
 };
 
 const MyProfile = () => {
@@ -77,8 +87,12 @@ const MyProfile = () => {
     <main className="mx-auto w-full max-w-5xl px-5 py-8 lg:py-12">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-[34px] leading-tight lg:text-[40px]">My profile</h1>
-          <p className="mt-1 text-[15px] text-muted">How you appear to buyers on your listings.</p>
+          <h1 className="font-display text-[34px] leading-tight lg:text-[40px]">
+            My profile
+          </h1>
+          <p className="mt-1 text-[15px] text-muted">
+            How you appear to buyers on your listings.
+          </p>
         </div>
         <Link href="/list/settings" className={secondaryButton}>
           Edit in settings
@@ -86,14 +100,17 @@ const MyProfile = () => {
       </header>
 
       {/* ---------- who you are ---------- */}
-      <section aria-labelledby="identity-heading" className="mt-8 border-b border-line pb-8">
+      <section
+        aria-labelledby="identity-heading"
+        className="mt-8 border-b border-line pb-8"
+      >
         <h2 id="identity-heading" className="sr-only">
           Your details
         </h2>
 
         {user ? (
           <div className="flex flex-col items-center text-center">
-            <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-accent text-[28px] font-semibold text-white">
+            <span className="font-display flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-accent text-[28px] text-white">
               {user.avatarUrl && !avatarFailed ? (
                 // Google photos refuse requests that send a Referer, hence no-referrer.
                 // eslint-disable-next-line @next/next/no-img-element
@@ -109,23 +126,34 @@ const MyProfile = () => {
               )}
             </span>
 
-            <h3 className="mt-4 font-display text-[28px] leading-tight sm:text-[32px]">{user.name}</h3>
+            <h3 className="mt-4 font-display text-[28px] leading-tight sm:text-[32px]">
+              {user.name}
+            </h3>
 
             <p className="mt-1 text-[15px] text-muted">
-              {labelOf(user.accountType) || "Owner"} · {total} {total === 1 ? "listing" : "listings"} live
+              {labelOf(user.accountType) || "Owner"} · {total}{" "}
+              {total === 1 ? "listing" : "listings"} live
             </p>
 
             {user.description && (
-              <p className="mt-4 max-w-prose whitespace-pre-line text-[15px] leading-relaxed">{user.description}</p>
+              <p className="mt-4 max-w-prose whitespace-pre-line text-[15px] leading-relaxed">
+                {user.description}
+              </p>
             )}
 
             {(badge || user.agentReraNumber) && (
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[13px]">
                 {badge && (
-                  <span className={`rounded-full px-3 py-1 font-medium ${badge.className}`}>{badge.text}</span>
+                  <span
+                    className={`rounded-full px-3 py-1 font-medium ${badge.className}`}
+                  >
+                    {badge.text}
+                  </span>
                 )}
                 {user.agentReraNumber && (
-                  <span className="rounded-full bg-ground px-3 py-1 font-mono text-muted">{user.agentReraNumber}</span>
+                  <span className="rounded-full bg-ground px-3 py-1 tabular-nums text-muted">
+                    {user.agentReraNumber}
+                  </span>
                 )}
               </div>
             )}
@@ -144,7 +172,7 @@ const MyProfile = () => {
       {user?.accountType === "BUILDER" && (
         <section aria-labelledby="projects-heading" className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 id="projects-heading" className="text-[20px] font-semibold tracking-tight">
+            <h2 id="projects-heading" className="font-display text-[20px]">
               Projects
             </h2>
             <Link href="/list/my/projects/new" className={secondaryButton}>
@@ -155,7 +183,10 @@ const MyProfile = () => {
           {projects && projects.length > 0 ? (
             <ul className="mt-5 divide-y divide-line border-y border-line">
               {projects.map((project) => (
-                <li key={project.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
+                <li
+                  key={project.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-4"
+                >
                   <div className="min-w-0">
                     <Link
                       href={`/list/my/projects/${project.id}`}
@@ -164,14 +195,19 @@ const MyProfile = () => {
                       {project.name}
                     </Link>
                     <p className="mt-0.5 text-[14px] text-muted">
-                      {PROJECT_STATUS.find((option) => option.value === project.status)?.label ?? project.status}
+                      {PROJECT_STATUS.find(
+                        (option) => option.value === project.status,
+                      )?.label ?? project.status}
                       {" · "}
-                      {[project.locality, project.city].filter(Boolean).join(", ")}
-                      {typeof project.totalUnits === "number" && ` · ${project.totalUnits} units`}
+                      {[project.locality, project.city]
+                        .filter(Boolean)
+                        .join(", ")}
+                      {typeof project.totalUnits === "number" &&
+                        ` · ${project.totalUnits} units`}
                     </p>
                   </div>
                   {project.reraNumber && (
-                    <span className="min-w-0 rounded-full bg-ground px-3 py-1 font-mono text-[12px] text-muted">
+                    <span className="min-w-0 rounded-full bg-ground px-3 py-1 tabular-nums text-[12px] text-muted">
                       {project.reraNumber}
                     </span>
                   )}
@@ -180,8 +216,9 @@ const MyProfile = () => {
             </ul>
           ) : (
             <p className="mt-4 text-[14px] text-muted">
-              Add the projects you have built or are building. Buyers see them here, and the flats you list
-              in a project carry its registration number.
+              Add the projects you have built or are building. Buyers see them
+              here, and the flats you list in a project carry its registration
+              number.
             </p>
           )}
         </section>
@@ -190,18 +227,24 @@ const MyProfile = () => {
       {/* ---------- what you have listed ---------- */}
       <section aria-labelledby="live-heading" className="mt-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 id="live-heading" className="text-[20px] font-semibold tracking-tight">
+          <h2 id="live-heading" className="font-display text-[20px]">
             Live listings
           </h2>
           {total > 0 && (
-            <Link href="/list/my/listings" className="text-[14px] font-medium text-accent hover:underline">
+            <Link
+              href="/list/my/listings"
+              className="text-[14px] font-medium text-accent hover:underline"
+            >
               Manage all listings
             </Link>
           )}
         </div>
 
         {listings === null ? (
-          <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          <ul
+            className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            aria-busy="true"
+          >
             {Array.from({ length: 3 }, (_, index) => (
               <li key={index} className="overflow-hidden rounded-xl">
                 <div className="aspect-[16/10] animate-pulse bg-line/50" />
@@ -214,11 +257,14 @@ const MyProfile = () => {
           </ul>
         ) : listings.length === 0 ? (
           <div className="mt-5 py-10 text-center">
-            <h3 className="text-[17px] font-semibold">Nothing published yet</h3>
+            <h3 className="font-display text-[17px]">Nothing published yet</h3>
             <p className="mx-auto mt-1.5 max-w-sm text-[14px] text-muted">
               Published listings appear here, exactly as buyers see them.
             </p>
-            <Link href="/list/create" className={`mt-5 inline-block ${primaryButton}`}>
+            <Link
+              href="/list/create"
+              className={`mt-5 inline-block ${primaryButton}`}
+            >
               List a property
             </Link>
           </div>

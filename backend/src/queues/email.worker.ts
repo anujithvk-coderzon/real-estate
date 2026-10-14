@@ -1,6 +1,6 @@
 import { Job, Worker } from "bullmq";
-import { EMAIL_QUEUE, type EmailJob } from "./email.queue.js";
 import { sendEmail } from "../lib/email.js";
+import { EMAIL_QUEUE, type EmailJob } from "./email.contract.js";
 
 
 export const emailWorker= new Worker<EmailJob>(

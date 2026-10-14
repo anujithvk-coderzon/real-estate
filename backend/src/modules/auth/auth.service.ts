@@ -12,9 +12,10 @@ import {
 import redis from "../../lib/redis.js";
 import { checkDisposableEmail } from "../../lib/disposible_email.js";
 import { goolgeClient } from "../../lib/google.js";
-import { avatarImageUpload, avatarPublicUrl, cdnUrl, deleteImage, isOwnAvatar } from "../../lib/bunny.js";
+import { avatarImageUpload, avatarPublicUrl, cdnUrl,  isOwnAvatar } from "../../lib/bunny.js";
 import { listNameSluggify} from "../../lib/slug.js";
 import { queueEmail } from "../../queues/email.queue.js";
+import { queueMediaCleanup } from "../../queues/media.queue.js";
 
 type regValidation = {
   name: string;
@@ -331,8 +332,7 @@ await prisma.user.update({where:{id:userId},data:{avatarUrl:path}})
 // Only photos we uploaded live on Bunny; a Google photo URL is simply replaced.
 const old=existingUser.avatarUrl
 if(isOwnAvatar(old)){
-  // Cleanup only: the new photo is already saved, so this must not fail the request.
-  await deleteImage(old).catch((error)=>console.error("Old avatar not deleted:",old,error))
+  await queueMediaCleanup({kind:"image",path:old})
 }
 return { message: "Avatar updated successfully", avatarUrl: avatarPublicUrl(path) };
 }

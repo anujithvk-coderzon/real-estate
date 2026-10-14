@@ -20,6 +20,41 @@ export const PROPERTY_TYPES: Option[] = [
   { value: "ROOM", label: "Room" },
 ];
 
+// The reference's own photographs and category colours, mapped onto the types
+// this app actually has. Its set has no office, so the commercial photograph
+// stands in for both — the alternative is a seventh picture that does not match
+// the other six.
+//
+// Hotlinked from Unsplash, exactly as the reference does. Worth knowing what
+// that costs: the images are not yours, they are not optimised by Next, and the
+// cards are blank if Unsplash is unreachable. For production these want to be
+// downloaded, compressed and served from your own CDN.
+const CATEGORY_PHOTO: Record<string, string> = {
+  APARTMENT: "photo-1600585154340-be6161a56a0c",
+  INDEPENDENT_HOUSE: "photo-1600596542815-ffad4c1539a9",
+  VILLA: "photo-1613490493576-7fde63acd811",
+  PLOT: "photo-1500382017468-9049fed747ef",
+  COMMERCIAL: "photo-1497366754035-f200968a6e72",
+  OFFICE: "photo-1497366754035-f200968a6e72",
+  ROOM: "photo-1522708323590-d24dbb6b0267",
+};
+
+export const categoryPhoto = (propertyType: string, width = 350) =>
+  `https://images.unsplash.com/${CATEGORY_PHOTO[propertyType] ?? CATEGORY_PHOTO.INDEPENDENT_HOUSE}?auto=format&fit=crop&w=${width}&q=85`;
+
+// A colour per type, from the reference's legend. Used for the dot on a card and
+// — once the search map gets it — to colour its pins, so the same property type
+// is the same colour wherever it appears.
+export const TYPE_COLOUR: Record<string, string> = {
+  APARTMENT: "#648ad0",
+  INDEPENDENT_HOUSE: "#8257bc",
+  VILLA: "#a582b9",
+  PLOT: "#a489ba",
+  COMMERCIAL: "#d18c76",
+  OFFICE: "#d7a352",
+  ROOM: "#68a7ae",
+};
+
 export const POSTED_BY: Option[] = [
   { value: "OWNER", label: "Owner" },
   { value: "BROKER", label: "Broker or dealer" },
@@ -56,7 +91,14 @@ export const AREA_UNITS: Option[] = [
 ];
 
 const LABELS: Record<string, string> = Object.fromEntries(
-  [LISTING_TYPES, PROPERTY_TYPES, POSTED_BY, FURNISHING, PROPERTY_STATUS, AREA_UNITS]
+  [
+    LISTING_TYPES,
+    PROPERTY_TYPES,
+    POSTED_BY,
+    FURNISHING,
+    PROPERTY_STATUS,
+    AREA_UNITS,
+  ]
     .flat()
     .map((option) => [option.value, option.label]),
 );
@@ -80,14 +122,19 @@ export const amenityCategoryLabel = (category: string) =>
 
 // Amenity categories that make sense for a listing, so a plot is not offered
 // a lift and an office is not offered a swimming pool.
-export const amenityCategoriesFor = (listingType: string, propertyType: string) => {
+export const amenityCategoriesFor = (
+  listingType: string,
+  propertyType: string,
+) => {
   if (propertyType === "") return [];
   if (propertyType === "PLOT") return ["PLOT"];
-  if (listingType === "PG") return ["PG", "UNIT", "BUILDING", "SECURITY", "PARKING"];
+  if (listingType === "PG")
+    return ["PG", "UNIT", "BUILDING", "SECURITY", "PARKING"];
   if (propertyType === "COMMERCIAL" || propertyType === "OFFICE") {
     return ["COMMERCIAL", "BUILDING", "SECURITY", "PARKING"];
   }
-  if (propertyType === "ROOM") return ["UNIT", "BUILDING", "SECURITY", "PARKING"];
+  if (propertyType === "ROOM")
+    return ["UNIT", "BUILDING", "SECURITY", "PARKING"];
   return ["UNIT", "BUILDING", "SECURITY", "PARKING", "RECREATION"];
 };
 
@@ -95,7 +142,12 @@ export const amenityCategoriesFor = (listingType: string, propertyType: string) 
 export const INDIA_CENTER: LngLat = [78.9629, 20.5937];
 
 // Same factors as backend/src/lib/area.ts.
-export const SQFT_PER_UNIT = { SQFT: 1, SQM: 10.7639, CENT: 435.6, ACRE: 43560 };
+export const SQFT_PER_UNIT = {
+  SQFT: 1,
+  SQM: 10.7639,
+  CENT: 435.6,
+  ACRE: 43560,
+};
 
 /* ---------- rules (mirror backend/src/modules/listings/listing.validation.ts) ---------- */
 
@@ -112,7 +164,9 @@ export const hasFloorNumber = (propertyType: string) =>
 // Budgets only make sense within one kind of price: a sale price and a monthly
 // rent can't share a scale, so each listing type gets its own ladder.
 export const BUDGETS: Record<string, number[]> = {
-  SALE: [25_00_000, 50_00_000, 75_00_000, 1_00_00_000, 2_00_00_000, 5_00_00_000],
+  SALE: [
+    25_00_000, 50_00_000, 75_00_000, 1_00_00_000, 2_00_00_000, 5_00_00_000,
+  ],
   RENT: [10_000, 20_000, 30_000, 50_000, 1_00_000],
   PG: [5_000, 8_000, 12_000, 20_000],
 };
@@ -140,7 +194,9 @@ const roundToTwoFigures = (value: number) => {
 export const budgetAt = (position: number) =>
   position <= 0
     ? 0
-    : roundToTwoFigures(BUDGET_MIN * (BUDGET_MAX / BUDGET_MIN) ** (position / BUDGET_STEPS));
+    : roundToTwoFigures(
+        BUDGET_MIN * (BUDGET_MAX / BUDGET_MIN) ** (position / BUDGET_STEPS),
+      );
 
 // The inverse, for restoring the thumb from a URL.
 export const budgetPosition = (amount: number) =>
@@ -148,21 +204,29 @@ export const budgetPosition = (amount: number) =>
     ? 0
     : Math.min(
         BUDGET_STEPS,
-        Math.round((BUDGET_STEPS * Math.log(amount / BUDGET_MIN)) / Math.log(BUDGET_MAX / BUDGET_MIN)),
+        Math.round(
+          (BUDGET_STEPS * Math.log(amount / BUDGET_MIN)) /
+            Math.log(BUDGET_MAX / BUDGET_MIN),
+        ),
       );
 
 // Bedrooms mean nothing for these.
 export const NO_BEDROOMS = ["PLOT", "COMMERCIAL", "OFFICE"];
 
 export const listingTypeOptions = (propertyType: string) =>
-  propertyType === "PLOT" ? LISTING_TYPES.filter((o) => o.value === "SALE") : LISTING_TYPES;
+  propertyType === "PLOT"
+    ? LISTING_TYPES.filter((o) => o.value === "SALE")
+    : LISTING_TYPES;
 
 // A PG can only be a room, apartment or house; a plot cannot be rented.
 export const propertyTypeOptions = (listingType: string) => {
   if (listingType === "PG") {
-    return PROPERTY_TYPES.filter((o) => ["ROOM", "APARTMENT", "INDEPENDENT_HOUSE"].includes(o.value));
+    return PROPERTY_TYPES.filter((o) =>
+      ["ROOM", "APARTMENT", "INDEPENDENT_HOUSE"].includes(o.value),
+    );
   }
-  if (listingType === "RENT") return PROPERTY_TYPES.filter((o) => o.value !== "PLOT");
+  if (listingType === "RENT")
+    return PROPERTY_TYPES.filter((o) => o.value !== "PLOT");
   return PROPERTY_TYPES;
 };
 
@@ -173,7 +237,9 @@ export const floorsInconsistent = (data: ListingFormData) =>
 
 // Hiding a field does not empty it. Clear fields that no longer apply, or the
 // payload carries a value the broker cannot see and the backend rejects it.
-export const clearInapplicableFields = (data: ListingFormData): ListingFormData => ({
+export const clearInapplicableFields = (
+  data: ListingFormData,
+): ListingFormData => ({
   ...data,
   ...(data.listingType === "SALE" && { securityDeposit: "", maintenance: "" }),
   ...(data.listingType !== "SALE" && { propertyStatus: "" }),
@@ -188,7 +254,10 @@ export const clearInapplicableFields = (data: ListingFormData): ListingFormData 
 });
 
 // Names of required fields that are still empty or invalid.
-export const getMissingFields = (data: ListingFormData, location: LngLat | null) => {
+export const getMissingFields = (
+  data: ListingFormData,
+  location: LngLat | null,
+) => {
   const residential = isResidential(data.propertyType);
   const rental = isRental(data.listingType);
 
@@ -220,10 +289,14 @@ export const getMissingFields = (data: ListingFormData, location: LngLat | null)
 
 // Empty optional fields are sent as undefined, which JSON drops — the backend's
 // .optional() rejects an empty string.
-const numberOrUndefined = (value: string) => (value === "" ? undefined : Number(value));
+const numberOrUndefined = (value: string) =>
+  value === "" ? undefined : Number(value);
 const textOrUndefined = (value: string) => value.trim() || undefined;
 
-export const buildListingPayload = (data: ListingFormData, location: LngLat | null) => ({
+export const buildListingPayload = (
+  data: ListingFormData,
+  location: LngLat | null,
+) => ({
   title: data.title.trim(),
   description: data.description.trim(),
   listingType: data.listingType,
@@ -299,7 +372,9 @@ export const listingToFormData = (listing: Listing): ListingFormData => ({
   amenityIds: listing.amenities.map((amenity) => amenity.id),
 });
 
-export const listingLocation = (listing: Pick<Listing, "latitude" | "longitude">): LngLat | null =>
+export const listingLocation = (
+  listing: Pick<Listing, "latitude" | "longitude">,
+): LngLat | null =>
   listing.latitude !== null && listing.longitude !== null
     ? [listing.longitude, listing.latitude]
     : null;

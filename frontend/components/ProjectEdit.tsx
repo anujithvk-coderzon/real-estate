@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ProjectForm from "@/components/ProjectForm";
 import { api } from "@/lib/api";
-import { projectToFormData, type ProjectDetail, type ProjectFormData } from "@/lib/project";
+import {
+  projectToFormData,
+  type ProjectDetail,
+  type ProjectFormData,
+} from "@/lib/project";
 import { errorToast } from "@/lib/toast";
 import { secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
@@ -17,7 +21,9 @@ const ProjectEdit = ({ projectId }: { projectId: string }) => {
   useEffect(() => {
     api
       .get(`/project/single/${projectId}`)
-      .then((response) => setInitial(projectToFormData(response.data.project as ProjectDetail)))
+      .then((response) =>
+        setInitial(projectToFormData(response.data.project as ProjectDetail)),
+      )
       .catch((error) => {
         setFailed(true);
         errorToast(apiMessage(error));
@@ -27,8 +33,13 @@ const ProjectEdit = ({ projectId }: { projectId: string }) => {
   if (failed) {
     return (
       <main className="mx-auto w-full max-w-md px-5 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight">This project could not be loaded</h1>
-        <Link href="/list/my/profile" className={`mt-6 inline-block ${secondaryButton}`}>
+        <h1 className="font-display text-[22px]">
+          This project could not be loaded
+        </h1>
+        <Link
+          href="/list/my/profile"
+          className={`mt-6 inline-block ${secondaryButton}`}
+        >
           Back to my profile
         </Link>
       </main>
@@ -37,7 +48,10 @@ const ProjectEdit = ({ projectId }: { projectId: string }) => {
 
   if (!initial) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-5 py-8 lg:py-12" aria-busy="true">
+      <main
+        className="mx-auto w-full max-w-3xl px-5 py-8 lg:py-12"
+        aria-busy="true"
+      >
         <div className="h-9 w-56 animate-pulse rounded bg-line" />
         <div className="mt-8 h-72 animate-pulse rounded-xl bg-line" />
       </main>

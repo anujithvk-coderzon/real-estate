@@ -1,35 +1,192 @@
 @import "tailwindcss";
 
 @theme {
-  /* One palette, built from the sidebar's forest green. The content area stays
-     light for readability; every colour on it is a tint or shade of the same hue. */
+  /* Neara's palette. The page itself is white and separation comes from a
+     hairline border rather than a fill, which is why --color-ground is a tint
+     used for hovers and segment backgrounds, not for the page. */
 
   /* content */
-  --color-ground: #edf2ef;       /* page background, a pale wash of the rail green */
-  --color-panel: #ffffff;        /* cards and inputs */
-  --color-ink: #0f241f;          /* text, a near-black version of the rail */
-  --color-muted: #55685f;        /* secondary text */
-  --color-line: #d3ddd7;         /* borders */
+  --color-ground: #f7f4fb; /* subtle fills, hovers, segmented controls */
+  --color-panel: #ffffff; /* cards and inputs */
+  --color-ink: #302044; /* text */
+  --color-muted: #898194; /* secondary text */
+  --color-line: #ece7f2; /* borders — what separates white from white */
+  /* Dropped by accident when the palette changed, which left every .survey-grid
+     referencing an undefined variable and therefore drawing nothing at all. */
+  --color-grid: #ece7f2; /* the faint grid behind a drawing */
 
-  --color-accent: #145c4a;       /* primary buttons and links */
-  --color-accent-hover: #0d2a24; /* hovering deepens to the sidebar colour */
-  --color-accent-soft: #dcefe6;  /* highlights, a light tint of the rail mint */
+  --color-accent: #7947c6; /* primary buttons, links, the emphasised word */
+  --color-accent-hover: #6a3cb0;
+  --color-accent-soft: #f4eefb; /* tinted panels and the trust band */
 
-  --color-warn: #8a5a00;         /* warnings that need attention */
-  --color-danger: #b3452f;       /* destructive actions, darker twin of rail-danger */
+  --color-warn: #8a5a00;
+  /* Their saved-heart red, darkened to 4.6:1 so it is legible as text on white;
+     the original #e47772 measures 2.9:1 and fails for anything but an icon. */
+  --color-danger: #c94f45;
 
-  /* sidebar */
-  --color-rail: #0d2a24;
-  --color-rail-raised: #163a31;
-  --color-rail-line: #24473e;
-  --color-rail-ink: #e9f2ed;
-  --color-rail-muted: #9db5ab;
-  --color-rail-accent: #8fe0bf;
-  --color-rail-danger: #f4a58f;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
 
-  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
-  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+/* ---------- the drawing language ---------- */
+
+/* A survey grid behind the hero. Its 2rem module is the same rhythm the layout
+   uses, so it reads as the paper the page is set on rather than a texture. It
+   fades out downward, because a plan sheet has an edge and a wallpaper does not.
+
+   MUST go on an element of its own, behind the content — never on a wrapper.
+   mask-image masks an element AND every descendant, so on a container it fades
+   out the children too: put it on the hero section and the search box inside it
+   becomes transparent. That is not a subtle bug, and it is easy to reintroduce. */
+@layer components {
+  .survey-grid {
+    background-image:
+      linear-gradient(to right, var(--color-grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px);
+    background-size: 2rem 2rem;
+    background-position: center top;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+  }
+
+  /* Lettering for anything that annotates a measurement: small, tracked, and
+     upper case the way a drawing is lettered. Only ever attached to a number —
+     never used as a heading or an eyebrow. */
+  /* The area on a card is the figure buyers compare hardest, so it gets a
+     readable size. Drawings letter their dimensions small; a product cannot
+     afford to, and legibility wins over fidelity to the reference. */
+  .annot-lg {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /* Display type is Manrope at its heaviest, tracked in. Instrument Serif was
+     400 and needed no weight set; this does, or every heading renders light. */
+  .font-display {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  /* Their eyebrow: a short label above a heading, tracked out, in the accent.
+     Replaces the mono annotation lettering — this design has no mono face. */
+  .annot {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-accent);
+  }
+
+  /* A shallow 3D space, so a drawing can lift off the paper instead of merely
+     scaling. The perspective lives on the card and the transform on the solid,
+     which is what makes the lift read as depth rather than growth. 700px is a
+     long lens: enough parallax to notice, not enough to distort the geometry. */
+  .plinth {
+    perspective: 700px;
+  }
+
+  .plinth-solid {
+    transform-style: preserve-3d;
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .group:hover .plinth-solid,
+  .group:has(:focus-visible) .plinth-solid {
+    /* Up and tipped forward, as if picked up off the sheet. */
+    transform: translateZ(26px) rotateX(-11deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .plinth-solid {
+      transition: none;
+    }
+
+    .group:hover .plinth-solid,
+    .group:has(:focus-visible) .plinth-solid {
+      transform: none;
+    }
+  }
+}
+
+/* A dimension line draws itself from its two witness lines inward, the way it
+   would be struck on paper. Used once per element as it first appears, not on
+   every scroll. */
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@layer components {
+  .rule-draw {
+    animation: rule-draw 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* The phone's navigation panel: its contents drop in once it is shown. The
+   element's own height still changes in one step, because on a wide screen the
+   same element is a flex column the rail depends on — animating its height
+   would mean taking that layout over for the sake of 200ms. */
+@keyframes nav-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@layer components {
+  .nav-open {
+    animation: nav-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-open {
+      animation: none;
+    }
+  }
+}
+
+/* A modal arrives rather than appears: up a few pixels and out from 96%, which
+   is enough to read as placement without looking like a pop-up. The backdrop
+   fades on its own curve so the page dims before the panel lands. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@layer components {
+  .modal[open] {
+    animation: dialog-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .modal[open]::backdrop {
+    animation: backdrop-in 240ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal[open],
+    .modal[open]::backdrop {
+      animation: none;
+    }
+  }
 }
 
 /* The filter sheet rises from the bottom of the screen, so the movement shows
@@ -41,11 +198,21 @@
 }
 
 @layer components {
+  .sheet {
+    /* Fallback for Safari before 15.4, which drops the dvh declaration the
+       utility class sets. The utility wins wherever dvh is understood, because
+       utilities outrank components. height, not just max-height: the dialog needs
+       a definite height or Safari collapses its scrolling row to a thin strip. */
+    height: 88vh;
+    max-height: 88vh;
+  }
+
   .sheet[open] {
     animation: sheet-up 200ms ease-out;
   }
   @media (prefers-reduced-motion: reduce) {
-    .sheet[open] {
+    .sheet[open],
+    .rule-draw {
       animation: none;
     }
   }

@@ -12,11 +12,20 @@ type FieldProps = {
 };
 
 // A label, its input, and an optional hint or error underneath.
-export const Field = ({ id, label, optional, hint, error, children }: FieldProps) => (
+export const Field = ({
+  id,
+  label,
+  optional,
+  hint,
+  error,
+  children,
+}: FieldProps) => (
   <div>
     <label htmlFor={id} className={labelClass}>
       {label}
-      {optional && <span className="font-normal text-muted/70"> (optional)</span>}
+      {optional && (
+        <span className="font-normal text-muted/70"> (optional)</span>
+      )}
     </label>
     {children}
     {error ? (
@@ -38,7 +47,13 @@ type SelectProps = {
 
 // The id doubles as the field name, so one change handler can update any field.
 export const Select = ({ id, value, options, onChange }: SelectProps) => (
-  <select id={id} name={id} value={value} onChange={onChange} className={inputClass}>
+  <select
+    id={id}
+    name={id}
+    value={value}
+    onChange={onChange}
+    className={inputClass}
+  >
     <option value="">Select</option>
     {options.map((option) => (
       <option key={option.value} value={option.value}>

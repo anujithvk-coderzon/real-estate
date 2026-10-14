@@ -16,7 +16,12 @@ const OnboardingGate = () => {
 
   useEffect(() => {
     if (hasType.current) return;
-    if (FREE_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) return;
+    if (
+      FREE_PATHS.some(
+        (path) => pathname === path || pathname.startsWith(`${path}/`),
+      )
+    )
+      return;
 
     authReady.then(() => {
       if (!isSignedIn()) return;

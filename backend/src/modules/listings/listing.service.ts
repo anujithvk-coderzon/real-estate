@@ -2,7 +2,7 @@ import axios from "axios";
 import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
 import { PropertyType, type ListingType, type PostedBy, type Prisma, type VerificationStatus } from "../../generated/prisma/client.js";
 import { toSQFT } from "../../lib/area.js";
-import { avatarPublicUrl, cdnUrl, deleteImage, deleteListingFiles, deleteVideo, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
+import { avatarPublicUrl, cdnUrl, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
 import type { CreateListingInput, UpdateListingInput } from "./listing.validation.js";
 import redis from "../../lib/redis.js";
@@ -10,6 +10,7 @@ import { ListingStatus, type ListingOrderBy } from "./listing.type.js";
 import type { ListingWhereInput } from "../../generated/prisma/models.js";
 import { listNameSluggify } from "../../lib/slug.js";
 import { boxAround, distanceKm } from "../../lib/geo.js";
+import { queueMediaCleanup } from "../../queues/media.queue.js";
 
 export const createListingService=async(userId:string,data:CreateListingInput)=>{
 const user=await prisma.user.findUnique({where:{id:userId}})
@@ -216,11 +217,12 @@ export const videoFetchingService=async(userId:string,listingId:string)=>{
     maxPrice: number | undefined,
     beds: number | undefined,
     sort:  string | undefined,
+    // Already validated and capped by listTake, so the service can trust it.
+    take: number,
   };
 
 export const listsFetchingService = async (page: number,filters:filterType) => {
-  const take = 20;
-  const {listingType, propertyType, postedBy, maxPrice, beds, sort} =filters 
+  const {listingType, propertyType, postedBy, maxPrice, beds, sort, take} =filters 
   const where = { status: "ACTIVE" as const ,
     ...(listingType && { listingType }),
     ...(propertyType && { propertyType }),
@@ -307,9 +309,6 @@ export const OwnerListsFetchingService=async(userId:string,page:number,orderBy:L
 return {response,total}
 }
 
-// Which project a unit is in, and whose word that is. A record in our database was
-// registered by the builder who owns it; a typed name is only what the lister said,
-// so the two are never shown as the same thing.
 const projectClaim=(listing:{
   postedBy:PostedBy
   projectNameText:string|null
@@ -403,7 +402,7 @@ export const listingImageDeleteService=async(userId:string,imageId:string)=>{
   const listingImage=await prisma.listingImages.findUnique({where:{id:imageId,listing:{ownerId:userId}}})
   if(!listingImage) throw new NotFoundError("Image not found")
   await prisma.listingImages.delete({where:{id:imageId}})
-  await deleteImage(listingImage.path)
+  await queueMediaCleanup({kind:"image",path:listingImage.path})
   return 'Image deleted successfully'
 }
 
@@ -413,7 +412,7 @@ export const listingVideoDeleteService=async(userId:string,videoId:string)=>{
   const listingVideo=await prisma.listingVideos.findUnique({where:{id:videoId,listing:{ownerId:userId}}})
   if(!listingVideo) throw new NotFoundError("Video not found")
   await prisma.listingVideos.delete({where:{id:videoId}})
-  await deleteVideo(listingVideo.videoId)
+  await queueMediaCleanup({kind:"video",videoId:listingVideo.listingId})
   return 'Video deleted successfully'
 }
 
@@ -423,28 +422,13 @@ export const deleteListingService=async(userId:string,listingId:string)=>{
    const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId},include:{listingVideo:{select:{videoId:true}}}})
    if(!listing) throw new NotFoundError("Listing not found") 
    await prisma.listing.delete({where:{id:listingId}})
-   await deleteListingFiles(listing.id)
+   await queueMediaCleanup({kind:'listingFolder',listingId:listing.id})
    if(listing.listingVideo?.videoId){
-     await deleteVideo(listing.listingVideo.videoId)
+     await queueMediaCleanup({kind:"video",videoId:listing.listingVideo.videoId})
    }
    return 'Listing deleted successfully'
 }
 
-
-// India-only marketplace, so every Nominatim lookup is pinned to India. Without
-// this a six-digit Indian PIN is ambiguous: Russian postal codes are six digits
-// too, and a listing once landed in Amur Oblast.
-//
-// India-only marketplace, so no lookup may leave India. Without this a six-digit
-// Indian PIN is ambiguous: Russian postal codes are six digits too, and a listing
-// once landed in Amur Oblast.
-//
-// Two names for the same thing, because Nominatim has two query modes and they do
-// not share parameters. The address lookups below are structured (street, city,
-// state, postalcode) and take `country`. The search bar's lookup is free-form
-// (`q`), and Nominatim returns a 400 if a structured parameter is sent with `q`:
-// "Structured query parameters ... cannot be used together with 'q'". That one
-// takes `countrycodes`, an ISO filter that applies to both modes.
 const NOMINATIM_COUNTRY = "india"
 const NOMINATIM_COUNTRY_CODE = "in"
 
@@ -476,7 +460,7 @@ export const geoCodingService=async(street:string|undefined,city:string,state:st
     return JSON.parse(cached)
    }
     response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
     timeout:5000,
     params:{street,city,state,postalcode,country:NOMINATIM_COUNTRY,
     format:"jsonv2"
@@ -489,7 +473,7 @@ export const geoCodingService=async(street:string|undefined,city:string,state:st
   }
   if(response.data.length===0){
     response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
     timeout:5000,
     params:{postalcode,country:NOMINATIM_COUNTRY,
     format:"jsonv2"
@@ -507,7 +491,10 @@ export const reverseGeoCodingService=async(lat:number,lon:number)=>{
     return JSON.parse(cached)
   }
   const response=await axios.get(process.env.NOMINATIM_REVERSE_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    // Accept-Language: Nominatim answers in each place's own language unless asked
+    // otherwise. Without it this address object comes back in Malayalam, or in
+    // Cyrillic for a pin that landed abroad, and those words go into the listing.
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
     params:{
       lat:lat,
       lon:lon,
@@ -521,7 +508,7 @@ export const reverseGeoCodingService=async(lat:number,lon:number)=>{
 
 export const searchService=async(location:string,km:number,type?:ListingType,property?:PropertyType,)=>{
 const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`},
+    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
     timeout:5000,
     params:{q:location,countrycodes:NOMINATIM_COUNTRY_CODE,
     format:"jsonv2"

@@ -9,10 +9,36 @@ import { apiMessage } from "@/lib/validation/apiError";
 
 // Every state runs its own RERA, so the number belongs to one of them.
 const STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa", "Gujarat",
-  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
-  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim",
-  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Delhi",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Puducherry",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
 ];
 
 type Props = {
@@ -28,7 +54,13 @@ type Props = {
 // Shown to a broker or dealer before their first sale listing. Agents must be
 // registered with their state RERA to handle a sale; rentals are exempt, so this
 // never appears for rent or PG.
-const AgentReraForm = ({ revoked = false, onSaved, onBack, variant = "page", current }: Props) => {
+const AgentReraForm = ({
+  revoked = false,
+  onSaved,
+  onBack,
+  variant = "page",
+  current,
+}: Props) => {
   const [state, setState] = useState("Kerala");
   const [number, setNumber] = useState(current ?? "");
   const [saving, setSaving] = useState(false);
@@ -54,53 +86,62 @@ const AgentReraForm = ({ revoked = false, onSaved, onBack, variant = "page", cur
   };
 
   const form = (
-      <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
-        <Field id="rera-state" label="State">
-          <select
-            id="rera-state"
-            value={state}
-            onChange={(event) => setState(event.target.value)}
-            className={inputClass}
-          >
-            {STATES.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field
-          id="rera-number"
-          label="RERA agent registration number"
-          hint="Exactly as it appears on your certificate."
+    <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
+      <Field id="rera-state" label="State">
+        <select
+          id="rera-state"
+          value={state}
+          onChange={(event) => setState(event.target.value)}
+          className={inputClass}
         >
-          <input
-            id="rera-number"
-            name="rera-number"
-            autoFocus
-            maxLength={60}
-            value={number}
-            onChange={(event) => setNumber(event.target.value.toUpperCase())}
-            placeholder="K-RERA/AG/…"
-            className={`${inputClass} font-mono`}
-          />
-        </Field>
+          {STATES.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      </Field>
 
-        <p className="text-[13px] leading-snug text-muted">
-          We show it as provided by you until someone checks it against the state register. Only then does a
-          verified badge appear on your listings.
-        </p>
+      <Field
+        id="rera-number"
+        label="RERA agent registration number"
+        hint="Exactly as it appears on your certificate."
+      >
+        <input
+          id="rera-number"
+          name="rera-number"
+          autoFocus
+          maxLength={60}
+          value={number}
+          onChange={(event) => setNumber(event.target.value.toUpperCase())}
+          placeholder="K-RERA/AG/…"
+          className={`${inputClass} tabular-nums`}
+        />
+      </Field>
 
-        <div className="flex gap-2">
-          <button type="submit" disabled={!canSave} className={primaryButton}>
-            {saving ? "Saving…" : variant === "page" ? "Save and continue" : "Save"}
-          </button>
-          <button type="button" onClick={onBack} disabled={saving} className={secondaryButton}>
-            {variant === "page" ? "Back" : "Cancel"}
-          </button>
-        </div>
-      </form>
+      <p className="text-[13px] leading-snug text-muted">
+        We show it as provided by you until someone checks it against the state
+        register. Only then does a verified badge appear on your listings.
+      </p>
+
+      <div className="flex gap-2">
+        <button type="submit" disabled={!canSave} className={primaryButton}>
+          {saving
+            ? "Saving…"
+            : variant === "page"
+              ? "Save and continue"
+              : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={saving}
+          className={secondaryButton}
+        >
+          {variant === "page" ? "Back" : "Cancel"}
+        </button>
+      </div>
+    </form>
   );
 
   // Inside a settings card: no page heading, the card already has one.
@@ -108,7 +149,7 @@ const AgentReraForm = ({ revoked = false, onSaved, onBack, variant = "page", cur
 
   return (
     <main className="mx-auto w-full max-w-xl px-5 py-10 lg:py-14">
-      <h1 className="text-[26px] font-semibold leading-tight tracking-tight lg:text-[30px]">
+      <h1 className="font-display text-[26px] leading-tight lg:text-[30px]">
         Your RERA registration
       </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
@@ -120,7 +161,8 @@ const AgentReraForm = ({ revoked = false, onSaved, onBack, variant = "page", cur
       {form}
 
       <p className="mt-6 text-[13px] text-muted">
-        Renting or letting a PG instead? Go back and choose Rent, which needs no registration.
+        Renting or letting a PG instead? Go back and choose Rent, which needs no
+        registration.
       </p>
     </main>
   );

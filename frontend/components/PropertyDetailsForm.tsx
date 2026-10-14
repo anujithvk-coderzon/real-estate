@@ -31,19 +31,26 @@ type Props = {
   hideTypeAndRole?: boolean;
 };
 
-type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+type ChangeEvent = React.ChangeEvent<
+  HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+>;
 
 const groupTitle = "text-[15px] font-semibold text-ink";
-const monoInput = `${inputClass} font-mono`;
+const monoInput = `${inputClass} tabular-nums`;
 
 // A mouse wheel over a focused number input silently changes its value.
 // Blurring it first lets the wheel scroll the page instead.
 const blurNumberInputOnWheel = (event: React.WheelEvent) => {
   const target = event.target;
-  if (target instanceof HTMLInputElement && target.type === "number") target.blur();
+  if (target instanceof HTMLInputElement && target.type === "number")
+    target.blur();
 };
 
-const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) => {
+const PropertyDetailsForm = ({
+  data,
+  setData,
+  hideTypeAndRole = false,
+}: Props) => {
   const [amenities, setAmenities] = useState<ListingAmenity[]>([]);
 
   useEffect(() => {
@@ -57,7 +64,8 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
 
   const handleChange = (event: ChangeEvent) => {
     const { name, value, type } = event.target;
-    const nextValue = type === "checkbox" ? (event.target as HTMLInputElement).checked : value;
+    const nextValue =
+      type === "checkbox" ? (event.target as HTMLInputElement).checked : value;
 
     setData((prev) => {
       const next = clearInapplicableFields({ ...prev, [name]: nextValue });
@@ -66,10 +74,14 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
       // Changing the type hides some amenity categories; drop those selections
       // too, so a plot does not keep a "Lift" picked for an apartment.
       const allowed = amenityCategoriesFor(next.listingType, next.propertyType);
-      const categoryOf = new Map(amenities.map((amenity) => [amenity.id, amenity.category]));
+      const categoryOf = new Map(
+        amenities.map((amenity) => [amenity.id, amenity.category]),
+      );
       return {
         ...next,
-        amenityIds: next.amenityIds.filter((id) => allowed.includes(categoryOf.get(id) ?? "")),
+        amenityIds: next.amenityIds.filter((id) =>
+          allowed.includes(categoryOf.get(id) ?? ""),
+        ),
       };
     });
   };
@@ -102,24 +114,31 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
       value: data[name] as string,
       placeholder,
       className: monoInput,
-      onValue: (amount) => setData((prev) => clearInapplicableFields({ ...prev, [name]: amount })),
+      onValue: (amount) =>
+        setData((prev) => clearInapplicableFields({ ...prev, [name]: amount })),
     });
 
   const { listingType, propertyType } = data;
   const rental = isRental(listingType);
   const isPlot = propertyType === "PLOT";
-  const floorError = floorsInconsistent(data) ? "Cannot be higher than the total floors." : undefined;
+  const floorError = floorsInconsistent(data)
+    ? "Cannot be higher than the total floors."
+    : undefined;
 
   const areaInSqft =
     data.areaUnit !== "SQFT" && Number(data.areaValue) > 0
-      ? formatNumber(Math.round(Number(data.areaValue) * SQFT_PER_UNIT[data.areaUnit]))
+      ? formatNumber(
+          Math.round(Number(data.areaValue) * SQFT_PER_UNIT[data.areaUnit]),
+        )
       : "";
 
   return (
     <div className="space-y-7" onWheelCapture={blurNumberInputOnWheel}>
       {/* ---------- what is being listed ---------- */}
       <div className="space-y-4">
-        <div className={`grid grid-cols-1 gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}>
+        <div
+          className={`grid grid-cols-1 gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}
+        >
           {!hideTypeAndRole && (
             <Field id="listingType" label="Listing for">
               <Select
@@ -140,7 +159,12 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
           </Field>
           {!hideTypeAndRole && (
             <Field id="postedBy" label="You are the">
-              <Select id="postedBy" value={data.postedBy} options={POSTED_BY} onChange={handleChange} />
+              <Select
+                id="postedBy"
+                value={data.postedBy}
+                options={POSTED_BY}
+                onChange={handleChange}
+              />
             </Field>
           )}
         </div>
@@ -157,7 +181,11 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
           />
         </Field>
 
-        <Field id="description" label="Description" hint={`${data.description.length}/5000 · at least 30 characters`}>
+        <Field
+          id="description"
+          label="Description"
+          hint={`${data.description.length}/5000 · at least 30 characters`}
+        >
           <textarea
             id="description"
             name="description"
@@ -179,7 +207,10 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
           <Field
             id="price"
             label={rental ? "Monthly rent (₹)" : "Price (₹)"}
-            hint={listingType && (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")}
+            hint={
+              listingType &&
+              (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")
+            }
           >
             <input {...moneyInput("price", rental ? "18,000" : "45,00,000")} />
           </Field>
@@ -213,16 +244,27 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
         <h3 className={groupTitle}>Area</h3>
 
         <div className="max-w-sm">
-          <Field id="areaValue" label="Total area" hint={areaInSqft && `About ${areaInSqft} sq ft`}>
-            <div className="flex rounded-md border border-line bg-panel focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+          <Field
+            id="areaValue"
+            label="Total area"
+            hint={areaInSqft && `About ${areaInSqft} sq ft`}
+          >
+            <div className="flex rounded-lg border border-line bg-panel focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
               <input
-                {...numberInput("areaValue", data.areaUnit === "ACRE" ? "0.5" : data.areaUnit === "CENT" ? "10" : "1200")}
+                {...numberInput(
+                  "areaValue",
+                  data.areaUnit === "ACRE"
+                    ? "0.5"
+                    : data.areaUnit === "CENT"
+                      ? "10"
+                      : "1200",
+                )}
                 step="any"
                 inputMode="decimal"
                 // min-w-0: without it the input refuses to shrink below its
                 // intrinsic 20-character width, and the row plus its unit select
                 // needs ~260px inside a 240px card — a sideways-scrolling page.
-                className="w-full min-w-0 rounded-l-md bg-transparent px-3 py-2 font-mono text-[16px] text-ink placeholder:text-muted/60 focus:outline-none sm:text-[15px]"
+                className="w-full min-w-0 rounded-l-md bg-transparent px-3 py-2 tabular-nums text-[16px] text-ink placeholder:text-muted/60 focus:outline-none sm:text-[15px]"
               />
               <select
                 name="areaUnit"
@@ -258,7 +300,11 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
                   <input {...numberInput("bedrooms", "2")} />
                 </Field>
               )}
-              <Field id="bathrooms" label="Bathrooms" optional={!isResidential(propertyType)}>
+              <Field
+                id="bathrooms"
+                label="Bathrooms"
+                optional={!isResidential(propertyType)}
+              >
                 <input {...numberInput("bathrooms", "2")} />
               </Field>
               {isResidential(propertyType) && (
@@ -270,15 +316,27 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Field id="furnishing" label="Furnishing" optional>
-                <Select id="furnishing" value={data.furnishing} options={FURNISHING} onChange={handleChange} />
+                <Select
+                  id="furnishing"
+                  value={data.furnishing}
+                  options={FURNISHING}
+                  onChange={handleChange}
+                />
               </Field>
               {hasFloorNumber(propertyType) && (
-                <Field id="floorNumber" label="Floor number" optional error={floorError}>
+                <Field
+                  id="floorNumber"
+                  label="Floor number"
+                  optional
+                  error={floorError}
+                >
                   <input
                     {...numberInput("floorNumber", "3")}
                     aria-invalid={Boolean(floorError)}
                     aria-describedby={floorError && "floorNumber-error"}
-                    className={floorError ? `${monoInput} border-warn` : monoInput}
+                    className={
+                      floorError ? `${monoInput} border-warn` : monoInput
+                    }
                   />
                 </Field>
               )}
@@ -295,10 +353,13 @@ const PropertyDetailsForm = ({ data, setData, hideTypeAndRole = false }: Props) 
         <div className="space-y-4 border-t border-line pt-6">
           <div className="flex items-baseline justify-between gap-2">
             <h3 className={groupTitle}>
-              Amenities <span className="font-normal text-muted">(optional)</span>
+              Amenities{" "}
+              <span className="font-normal text-muted">(optional)</span>
             </h3>
             {data.amenityIds.length > 0 && (
-              <p className="text-[13px] text-muted">{data.amenityIds.length} selected</p>
+              <p className="text-[13px] text-muted">
+                {data.amenityIds.length} selected
+              </p>
             )}
           </div>
           <AmenitiesPicker

@@ -41,22 +41,22 @@ type Props = {
 // Asked before the create form opens, because these two answers decide what the
 // form (and later, the RERA rules) need to ask.
 const ListingStart = ({ defaultRole = "OWNER" }: Props) => {
-  const [user,setUser]=useState()
+  const [user, setUser] = useState();
   const router = useRouter();
   const [role, setRole] = useState(defaultRole);
   const [purpose, setPurpose] = useState("");
-useEffect(()=>{
- const fetchUser=async()=>{
-  try {
-    const response=await api.get("/auth/me")
-    setUser(response.data.user)
-  } catch (error) {
-    errorToast(apiMessage(error))
-  }
- }
- fetchUser()
-},[])
-console.log(user);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get("/auth/me");
+        setUser(response.data.user);
+      } catch (error) {
+        errorToast(apiMessage(error));
+      }
+    };
+    fetchUser();
+  }, []);
+  console.log(user);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -67,15 +67,20 @@ console.log(user);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-10 lg:py-14">
-      <h1 className="text-[28px] font-semibold leading-tight tracking-tight lg:text-[34px]">List a property</h1>
+      <h1 className="font-display text-[28px] leading-tight lg:text-[34px]">
+        List a property
+      </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
-        Two quick questions first: they decide what we need to ask you about the property.
+        Two quick questions first: they decide what we need to ask you about the
+        property.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8">
         {/* ---------- who ---------- */}
         <fieldset>
-          <legend className="text-[17px] font-semibold tracking-tight">Who&apos;s listing this property?</legend>
+          <legend className="font-display text-[17px]">
+            Who&apos;s listing this property?
+          </legend>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {ROLES.map((option) => {
               const selected = role === option.value;
@@ -83,7 +88,9 @@ console.log(user);
                 <label
                   key={option.value}
                   className={`flex cursor-pointer gap-3 rounded-xl p-4 ring-1 transition-colors ${
-                    selected ? "bg-accent-soft ring-2 ring-accent" : "bg-panel ring-line hover:ring-accent/40"
+                    selected
+                      ? "bg-accent-soft ring-2 ring-accent"
+                      : "bg-panel ring-line hover:ring-accent/40"
                   } has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-accent`}
                 >
                   <input
@@ -95,8 +102,12 @@ console.log(user);
                     className="mt-1 h-4 w-4 shrink-0 accent-accent"
                   />
                   <span>
-                    <span className="block text-[15px] font-semibold">{option.label}</span>
-                    <span className="mt-1 block text-[13px] leading-snug text-muted">{option.help}</span>
+                    <span className="block text-[15px] font-semibold">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-[13px] leading-snug text-muted">
+                      {option.help}
+                    </span>
                   </span>
                 </label>
               );
@@ -106,7 +117,7 @@ console.log(user);
 
         {/* ---------- what for ---------- */}
         <fieldset className="mt-8">
-          <legend className="text-[17px] font-semibold tracking-tight">What is it for?</legend>
+          <legend className="font-display text-[17px]">What is it for?</legend>
           <div className="mt-4 flex flex-wrap gap-2">
             {PURPOSES.map((option) => {
               const selected = purpose === option.value;
@@ -114,7 +125,9 @@ console.log(user);
                 <label
                   key={option.value}
                   className={`cursor-pointer rounded-lg px-4 py-2.5 text-[15px] font-medium ring-1 transition-colors ${
-                    selected ? "bg-accent text-white ring-accent" : "bg-panel text-muted ring-line hover:text-ink"
+                    selected
+                      ? "bg-accent text-white ring-accent"
+                      : "bg-panel text-muted ring-line hover:text-ink"
                   } has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-offset-2`}
                 >
                   <input

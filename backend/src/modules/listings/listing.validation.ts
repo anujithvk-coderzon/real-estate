@@ -189,5 +189,18 @@ export const searchRadius = z.coerce
   .refine((km) => [10, 20, 30, 40, 50].includes(km), "Choose 10, 20, 30, 40 or 50 km")
   .default(10)
 
+// How many listings one page returns. The home page wants eight; the catalogue
+// wants a full page.
+//
+// The cap is the point, not the default. Every other filter narrows the result,
+// so a bad value returns fewer rows — this one widens it, and ?take=100000 would
+// be a free table scan handed out to anyone who guesses the parameter name.
+export const listTake = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(20)
+  .default(20)
+
 export type CreateListingInput=z.infer<typeof registeringValidation>
 export type UpdateListingInput=z.infer<typeof updateValidation>

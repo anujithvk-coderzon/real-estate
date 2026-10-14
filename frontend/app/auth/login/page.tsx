@@ -11,7 +11,8 @@ import { errorToast, successToast } from "@/lib/toast";
 import { inputClass, primaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
-const linkClass = "font-medium text-accent transition-colors hover:text-accent-hover";
+const linkClass =
+  "font-medium text-accent transition-colors hover:text-accent-hover";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -36,11 +37,12 @@ const LoginPage = () => {
     }
   };
 
-  const canSubmit = fields.email.trim() !== "" && fields.password !== "" && !submitting;
+  const canSubmit =
+    fields.email.trim() !== "" && fields.password !== "" && !submitting;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12">
-      <h1 className="text-[28px] font-semibold leading-tight tracking-tight">Sign in</h1>
+      <h1 className="font-display text-[28px] leading-tight">Sign in</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
         Manage your listings and post new properties.
       </p>
@@ -66,12 +68,19 @@ const LoginPage = () => {
             value={fields.password}
             onChange={handleChange}
           />
-          <Link href="/auth/forgot" className={`mt-2 inline-block text-[13px] ${linkClass}`}>
+          <Link
+            href="/auth/forgot"
+            className={`mt-2 inline-block text-[13px] ${linkClass}`}
+          >
             Forgot password?
           </Link>
         </Field>
 
-        <button type="submit" disabled={!canSubmit} className={`w-full ${primaryButton}`}>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className={`w-full ${primaryButton}`}
+        >
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>

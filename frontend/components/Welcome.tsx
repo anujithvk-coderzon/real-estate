@@ -57,9 +57,12 @@ const Welcome = () => {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-5 py-12 lg:py-16">
-      <h1 className="font-display text-[26px] leading-tight sm:text-[32px] lg:text-[40px]">How will you use this site?</h1>
+      <h1 className="font-display text-[26px] leading-tight sm:text-[32px] lg:text-[40px]">
+        How will you use this site?
+      </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
-        It only decides what we show you first. You can change it later in settings.
+        It only decides what we show you first. You can change it later in
+        settings.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8">
@@ -72,7 +75,9 @@ const Welcome = () => {
                 <label
                   key={option.key}
                   className={`flex cursor-pointer gap-3 rounded-xl p-4 ring-1 transition-colors ${
-                    selected ? "bg-accent-soft ring-2 ring-accent" : "bg-panel ring-line hover:ring-accent/40"
+                    selected
+                      ? "bg-accent-soft ring-2 ring-accent"
+                      : "bg-panel ring-line hover:ring-accent/40"
                   } has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-accent`}
                 >
                   <input
@@ -84,8 +89,12 @@ const Welcome = () => {
                     className="mt-1 h-4 w-4 shrink-0 accent-accent"
                   />
                   <span>
-                    <span className="block text-[15px] font-semibold">{option.label}</span>
-                    <span className="mt-1 block text-[13px] leading-snug text-muted">{option.help}</span>
+                    <span className="block text-[15px] font-semibold">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-[13px] leading-snug text-muted">
+                      {option.help}
+                    </span>
                   </span>
                 </label>
               );

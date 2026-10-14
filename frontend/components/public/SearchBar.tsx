@@ -19,7 +19,10 @@ type Props = {
   initialValues?: Partial<SearchValues>;
   // "card": the big search section on the home page.
   // "toolbar": one slim row above search results, collapsed to a summary on phones.
-  variant?: "card" | "toolbar";
+  // "compact": location only, for the centre of the hero circle. The mode and
+  // type choices live in the filter bar there, so asking for them twice on one
+  // screen would be the form competing with itself.
+  variant?: "card" | "toolbar" | "compact";
 };
 
 const MODES = [
@@ -99,6 +102,70 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     setExpanded(false);
   };
 
+  if (variant === "compact") {
+    return (
+      <form
+        role="search"
+        onSubmit={handleSubmit}
+        // Sits on the drawing, so it needs a shadow to lift off it — the one
+        // place on this page where a shadow is doing real work rather than
+        // decorating a card.
+        className="flex items-center gap-1 rounded-xl bg-panel p-1.5 shadow-[0_10px_30px_-10px_rgba(48,32,68,0.35)] ring-1 ring-line"
+        suppressHydrationWarning
+      >
+        <label htmlFor="hero-location" className="sr-only">
+          Location
+        </label>
+        <span className="pointer-events-none pl-2 text-muted">
+          <PinIcon />
+        </span>
+        <input
+          id="hero-location"
+          name="search-location"
+          type="search"
+          value={location}
+          onChange={(event) => setLocation(event.target.value)}
+          maxLength={MAX_LOCATION_LENGTH}
+          placeholder="Kakkanad, Kannur, Mumbai…"
+          required
+          autoComplete="off"
+          enterKeyHint="search"
+          className="min-w-0 flex-1 bg-transparent px-1.5 py-2.5 text-[16px] text-ink placeholder:text-muted/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+          suppressHydrationWarning
+        />
+        {/* How far to look, beside the place to look. Asking for the distance
+            after the search would mean a second round trip for the commonest
+            adjustment there is. */}
+        <span aria-hidden="true" className="h-6 w-px shrink-0 bg-line" />
+        <label htmlFor="hero-radius" className="sr-only">
+          Distance
+        </label>
+        <select
+          id="hero-radius"
+          value={radius}
+          onChange={(event) => setRadius(event.target.value)}
+          className="h-11 shrink-0 rounded-lg bg-transparent pl-1 pr-1 text-[14px] font-medium text-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          <option value="">10 km</option>
+          {RADIUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          disabled={!canSearch}
+          title={canSearch ? undefined : "Enter a location to search"}
+          aria-label="Search this location"
+          className={`h-11 w-11 shrink-0 !px-0 ${primaryButton}`}
+        >
+          <SearchIcon />
+        </button>
+      </form>
+    );
+  }
+
   if (variant === "toolbar") {
     // "Kakkanad · Rent · Apartment". Choices left as "any" are simply not mentioned.
     const summary = [
@@ -172,7 +239,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
                   type="button"
                   onClick={() => toggleMode(mode.value)}
                   aria-pressed={selected}
-                  className={`flex-1 rounded-md px-3.5 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent md:flex-none ${
+                  className={`flex-1 rounded-lg px-3.5 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent md:flex-none ${
                     selected
                       ? "bg-accent text-white"
                       : "text-muted hover:text-ink"
@@ -215,19 +282,21 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   }
 
   return (
+    // Laid on the sheet: a rule for an edge and a flat white, no drop shadow.
+    // Depth on this page comes from the one implied light source in the drawings,
+    // and a glowing card would contradict it.
     <section
       aria-labelledby="search-heading"
-      className="w-full rounded-2xl bg-panel p-5 shadow-sm ring-1 ring-line sm:p-6"
+      className="w-full rounded-xl bg-panel p-5 ring-1 ring-line sm:p-6"
     >
-      <h2
-        id="search-heading"
-        className="text-[18px] font-semibold tracking-tight"
-      >
-        Search what you want
-      </h2>
-      <p className="mt-1 text-[14px] text-muted">
-        Pick what you&apos;re looking for, then tell us where.
-      </p>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="search-heading" className="font-display text-[17px]">
+          Find a property
+        </h2>
+        {/* The sheet's own stamp: says what the form needs without a sentence of
+            instructions underneath it. */}
+        <p className="annot hidden sm:block">Location required</p>
+      </div>
 
       {/* suppressHydrationWarning on the form controls: extensions tag inputs with
           their own attributes before React hydrates. See app/layout.tsx. */}
@@ -243,7 +312,9 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           {/* ---------- mode ---------- */}
           <fieldset>
             <legend className={labelClass}>Looking to</legend>
-            <div className="flex gap-1.5">
+            {/* Butted into one control, like a scale bar: three positions of the
+                same question, not three separate buttons. */}
+            <div className="flex gap-px overflow-hidden rounded-lg ring-1 ring-line">
               {MODES.map((mode) => {
                 const selected = listingType === mode.value;
                 return (
@@ -252,10 +323,10 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
                     type="button"
                     onClick={() => toggleMode(mode.value)}
                     aria-pressed={selected}
-                    className={`h-11 rounded-md px-4 text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                    className={`h-11 flex-1 text-[15px] font-medium transition-colors first:rounded-l-md last:rounded-r-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                       selected
                         ? "bg-accent text-white"
-                        : "bg-ground text-muted hover:text-ink"
+                        : "bg-ground text-muted hover:bg-accent-soft hover:text-ink"
                     }`}
                   >
                     {mode.label}
@@ -334,7 +405,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
                 required
                 autoComplete="off"
                 enterKeyHint="search"
-                className="h-11 w-full rounded-md border border-line bg-panel pl-10 pr-12 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 [&::-webkit-search-cancel-button]:hidden"
+                className="h-11 w-full rounded-lg border border-line bg-panel pl-10 pr-12 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 [&::-webkit-search-cancel-button]:hidden"
                 suppressHydrationWarning
               />
               {location && (

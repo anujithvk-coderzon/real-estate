@@ -1,14 +1,7 @@
 import { Queue } from 'bullmq';
+import { EMAIL_QUEUE, type EmailJob } from './email.contract.js';
 
 
-export const EMAIL_QUEUE="email";
-
-
-export type EmailJob={
-    to:string;
-    subject:string;
-    html:string;
-}
 
 const emailQueue=new Queue<EmailJob>(EMAIL_QUEUE, {
     connection:{

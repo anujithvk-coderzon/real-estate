@@ -4,13 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { Field } from "@/components/form/Field";
 import PasswordInput from "@/components/form/PasswordInput";
-import PasswordRules, { meetsPasswordRules } from "@/components/form/PasswordRules";
+import PasswordRules, {
+  meetsPasswordRules,
+} from "@/components/form/PasswordRules";
 import { api } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
 import { primaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
-const linkClass = "font-medium text-accent transition-colors hover:text-accent-hover";
+const linkClass =
+  "font-medium text-accent transition-colors hover:text-accent-hover";
 
 // Choose a new password from the emailed reset link.
 const ResetPassword = ({ token }: { token: string }) => {
@@ -39,17 +42,25 @@ const ResetPassword = ({ token }: { token: string }) => {
   };
 
   const shell = (children: React.ReactNode) => (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12">{children}</main>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-12">
+      {children}
+    </main>
   );
 
   if (done) {
     return shell(
       <>
-        <h1 className="text-[28px] font-semibold leading-tight tracking-tight">Password changed</h1>
+        <h1 className="font-display text-[28px] leading-tight">
+          Password changed
+        </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-muted">
-          You&apos;ve been signed out on all devices. Sign in with your new password.
+          You&apos;ve been signed out on all devices. Sign in with your new
+          password.
         </p>
-        <Link href="/auth/login" className={`mt-8 inline-block text-center ${primaryButton}`}>
+        <Link
+          href="/auth/login"
+          className={`mt-8 inline-block text-center ${primaryButton}`}
+        >
           Sign in
         </Link>
       </>,
@@ -59,11 +70,17 @@ const ResetPassword = ({ token }: { token: string }) => {
   if (linkBroken) {
     return shell(
       <>
-        <h1 className="text-[28px] font-semibold leading-tight tracking-tight">This link has expired</h1>
+        <h1 className="font-display text-[28px] leading-tight">
+          This link has expired
+        </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-muted">
-          Reset links work once, for 15 minutes. Ask for a new one and use it straight away.
+          Reset links work once, for 15 minutes. Ask for a new one and use it
+          straight away.
         </p>
-        <Link href="/auth/forgot" className={`mt-8 inline-block text-center ${primaryButton}`}>
+        <Link
+          href="/auth/forgot"
+          className={`mt-8 inline-block text-center ${primaryButton}`}
+        >
           Send a new link
         </Link>
       </>,
@@ -72,8 +89,12 @@ const ResetPassword = ({ token }: { token: string }) => {
 
   return shell(
     <>
-      <h1 className="text-[28px] font-semibold leading-tight tracking-tight">Choose a new password</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-muted">You&apos;ll use it the next time you sign in.</p>
+      <h1 className="font-display text-[28px] leading-tight">
+        Choose a new password
+      </h1>
+      <p className="mt-2 text-[15px] leading-relaxed text-muted">
+        You&apos;ll use it the next time you sign in.
+      </p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
         <Field id="new-password" label="New password">
@@ -89,7 +110,11 @@ const ResetPassword = ({ token }: { token: string }) => {
           <PasswordRules id="new-password-rules" value={password} />
         </Field>
 
-        <button type="submit" disabled={!canSubmit} className={`w-full ${primaryButton}`}>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className={`w-full ${primaryButton}`}
+        >
           {saving ? "Saving…" : "Save new password"}
         </button>
       </form>
