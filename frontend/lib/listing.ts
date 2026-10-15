@@ -20,22 +20,34 @@ export const PROPERTY_TYPES: Option[] = [
   { value: "ROOM", label: "Room" },
 ];
 
-// The reference's own photographs and category colours, mapped onto the types
-// this app actually has. Its set has no office, so the commercial photograph
-// stands in for both — the alternative is a seventh picture that does not match
-// the other six.
+// One photograph per type, and each one has to show THAT type — a card is a
+// label with a picture on it, so a picture of the wrong thing is a mislabelled
+// card. The reference's set was close but not ours: it had no office, so one
+// office photograph stood in for both Office and Commercial, and its apartment
+// card was a detached house. Every one of these was looked at before it was
+// chosen, not picked by filename.
 //
-// Hotlinked from Unsplash, exactly as the reference does. Worth knowing what
-// that costs: the images are not yours, they are not optimised by Next, and the
-// cards are blank if Unsplash is unreachable. For production these want to be
-// downloaded, compressed and served from your own CDN.
+// Hotlinked from Unsplash. Worth knowing what that costs: the images are not
+// yours, they are not optimised by Next, and the cards are blank if Unsplash is
+// unreachable. For production these want to be downloaded, compressed and
+// served from your own CDN.
 const CATEGORY_PHOTO: Record<string, string> = {
-  APARTMENT: "photo-1600585154340-be6161a56a0c",
-  INDEPENDENT_HOUSE: "photo-1600596542815-ffad4c1539a9",
+  // A block of flats with balconies, not a house — this is the one the
+  // reference got wrong, and Apartment is the commonest type on the site.
+  APARTMENT: "photo-1545324418-cc1a3fa10c00",
+  // A single modern house on its own plot: one family, its own walls.
+  INDEPENDENT_HOUSE: "photo-1600585154340-be6161a56a0c",
+  // The pool and the scale are what separate a villa from the house above.
   VILLA: "photo-1613490493576-7fde63acd811",
+  // Open land with nothing built on it, which is the whole point of the type.
   PLOT: "photo-1500382017468-9049fed747ef",
-  COMMERCIAL: "photo-1497366754035-f200968a6e72",
+  // A shopfront interior with stock on the shelves — a place that sells to the
+  // public, which is what Commercial means here.
+  COMMERCIAL: "photo-1441986300917-64674bd600d8",
+  // Glazed partitions and a working floor: somewhere staff sit, not somewhere
+  // customers walk in. The distinction Commercial used to blur.
   OFFICE: "photo-1497366754035-f200968a6e72",
+  // A single furnished room, which is what a PG or a let room is.
   ROOM: "photo-1522708323590-d24dbb6b0267",
 };
 

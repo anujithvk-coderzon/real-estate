@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import MapPlate from "@/components/public/MapPlate";
@@ -64,6 +64,35 @@ const TRAVEL = 280;
 // about 707px across, plus a card's half width on each side.
 const MIN_STAGE_WIDTH = 740;
 
+// Each card runs its own window of the scroll, 6% apart, so they arrive in
+// sequence instead of all landing on the same frame. Seven cards moving in
+// perfect unison read as a mechanism resetting, not as things gathering.
+const STAGGER = 0.06;
+const SPAN = 1 - STAGGER * (7 - 1);
+
+// How hard the motion is pulled toward the scroll position, per second.
+// The scroll itself arrives in lumps — a wheel notch is ~100px at once, and a
+// trackpad fires several events in a single frame — so following it exactly
+// makes the cards step. Chasing it with an exponential ease turns those lumps
+// into one continuous line without ever lagging far enough behind to feel
+// disconnected. Higher is tighter: 12 trails by about 80ms.
+const CHASE = 12;
+// Below this the gap is invisible, so the loop stops rather than burning frames
+// asymptotically approaching the target.
+const SETTLED = 0.0004;
+
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+// Fast at the start, slow at the finish, so a card eases into its slot rather
+// than stopping dead on arrival.
+const easeOut = (value: number) => 1 - Math.pow(1 - value, 3);
+
+// useLayoutEffect on the client so the first transform is written in the same
+// commit as the markup — otherwise the cards paint once in the row and jump
+// out to the ring on the frame after. useEffect on the server, where there is
+// no layout and React would warn.
+const useIsoLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 // Where a node sits inside `root`, walking offsetParents.
 //
 // Deliberately NOT getBoundingClientRect(): a rect includes the element's
@@ -112,12 +141,13 @@ const HeroStage = () => {
   const column = useRef<HTMLDivElement>(null);
   const plate = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLLIElement | null)[]>([]);
+  const captions = useRef<(HTMLSpanElement | null)[]>([]);
+  const ring = useRef<HTMLDivElement>(null);
 
   // null until the sign-in check settles, so neither version of the copy
   // flashes before the other. The same pattern PublicFrame uses.
   const [visitor, setVisitor] = useState<boolean | null>(null);
   const [orbits, setOrbits] = useState<Orbit[]>([]);
-  const [progress, setProgress] = useState(1);
   const [ready, setReady] = useState(false);
 
   const href = (name: string, value: string) => {
@@ -205,7 +235,7 @@ const HeroStage = () => {
     setReady(true);
   }, []);
 
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     measure();
 
     // The stage for width, the column for the row wrapping or growing under it.
@@ -226,40 +256,133 @@ const HeroStage = () => {
     };
   }, [measure]);
 
-  useEffect(() => {
+  // ---------- the motion engine ----------
+  // Everything below writes to the DOM directly, in one requestAnimationFrame
+  // per frame. It used to be React state updated from the scroll handler, which
+  // meant a full re-render of the hero — map drawing, search bar, all seven
+  // cards — for every scroll event, and scroll events can arrive several times
+  // in a single frame. That is the whole reason the movement felt steppy.
+  //
+  // Nothing here changes what the cards do, only how smoothly and how cheaply
+  // they do it.
+  useIsoLayoutEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    const onScroll = () => {
+    // Where the scroll says the gather should be. One layout read per frame,
+    // taken before anything is written, so the read never forces a reflow.
+    const targetNow = () => {
       const host = stage.current;
-      if (!host) return;
-      const top = host.getBoundingClientRect().top;
-      const next = Math.max(0, Math.min(1, (16 - top) / TRAVEL));
+      if (!host) return 1;
+      const raw = clamp01((16 - host.getBoundingClientRect().top) / TRAVEL);
       // Their behaviour for reduced motion: snap, do not travel.
-      setProgress(reduced.matches ? (next > 0.45 ? 1 : 0) : next);
+      return reduced.matches ? (raw > 0.45 ? 1 : 0) : raw;
     };
 
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const paint = (value: number) => {
+      for (let index = 0; index < PROPERTY_TYPES.length; index += 1) {
+        const card = cards.current[index];
+        if (!card) continue;
+        const orbit = orbits[index];
+        const caption = captions.current[index];
 
-  const orbiting = orbits.length > 0;
+        if (!orbit) {
+          // No room for an orbit: the cards simply live in their row.
+          card.style.transform = "";
+          card.style.zIndex = "";
+          if (caption) caption.style.opacity = "0";
+          continue;
+        }
 
-  // Each card runs its own window of the scroll, 6% apart, so they arrive in
-  // sequence instead of all landing on the same frame. Seven cards moving in
-  // perfect unison read as a mechanism resetting, not as things gathering.
-  const STAGGER = 0.06;
-  const span = 1 - STAGGER * (PROPERTY_TYPES.length - 1);
-  const cardProgress = (index: number) => {
-    if (!orbiting) return 1;
-    const local = (progress - index * STAGGER) / span;
-    const clamped = Math.max(0, Math.min(1, local));
-    // Eased, so a card slows as it arrives rather than stopping dead.
-    return 1 - Math.pow(1 - clamped, 3);
-  };
+        const t = easeOut(clamp01((value - index * STAGGER) / SPAN));
+        const away = 1 - t;
 
-  // The ring's own opacity still follows the overall scroll, not any one card.
-  const eased = orbiting ? 1 - Math.pow(1 - progress, 3) : 1;
+        // The card travels along an ARC, not a straight line: the angle sweeps
+        // round the ring while the radius shrinks to the slot. A straight lerp
+        // from a ring point is a radial implosion, and the card at the top of
+        // the ring would pass straight through the map on its way down.
+        const angle = orbit.a0 + orbit.sweep * t;
+        const radius = orbit.r0 + (orbit.r1 - orbit.r0) * t;
+        const dx = Math.cos(angle) * radius - orbit.vx;
+        const dy = Math.sin(angle) * radius - orbit.vy;
+
+        // Scattered cards are a little larger and shrink in. scale, not width:
+        // a transform, so it costs no layout.
+        const scale = 1 + (ORBIT_SCALE - 1) * away;
+        // Squared, so the tilt is gone before the card lands rather than
+        // straightening right up to the last pixel.
+        const tilt = (ORBIT_TILT[index] ?? 0) * away * away;
+
+        card.style.transform = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(
+          2,
+        )}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
+        // A card still travelling sits above one that has landed.
+        card.style.zIndex = t < 1 ? "7" : "6";
+        // Also squared: text under a moving card is noise, so it leaves early.
+        if (caption) caption.style.opacity = (away * away).toFixed(3);
+      }
+
+      // The ring's own fade follows the overall scroll, not any one card.
+      if (ring.current) {
+        ring.current.style.opacity = orbits.length
+          ? (1 - easeOut(value) * 0.85).toFixed(3)
+          : "1";
+      }
+    };
+
+    // will-change promotes each card to its own compositor layer. Worth it
+    // while they move, wasteful while they sit: seven permanent layers is
+    // memory a phone would rather spend on the page.
+    const lift = (on: boolean) => {
+      for (const card of cards.current) {
+        if (card) card.style.willChange = on ? "transform" : "";
+      }
+    };
+
+    let value = targetNow();
+    let frame = 0;
+    let last = 0;
+    paint(value);
+
+    const tick = (now: number) => {
+      // Seconds since the previous frame, capped so a backgrounded tab does not
+      // come back and jump the whole distance in one step. Deriving the ease
+      // from real elapsed time is what keeps the motion identical on a 60Hz and
+      // a 120Hz screen — a fixed per-frame fraction runs twice as fast on 120.
+      const dt = last ? Math.min(0.064, (now - last) / 1000) : 1 / 60;
+      last = now;
+
+      const target = targetNow();
+      value += (target - value) * (1 - Math.exp(-CHASE * dt));
+      if (Math.abs(target - value) < SETTLED) value = target;
+      paint(value);
+
+      if (value === target) {
+        frame = 0;
+        last = 0;
+        lift(false);
+        return;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+
+    const wake = () => {
+      if (frame) return;
+      last = 0;
+      lift(true);
+      frame = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("scroll", wake, { passive: true });
+    window.addEventListener("resize", wake, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", wake);
+      window.removeEventListener("resize", wake);
+      if (frame) cancelAnimationFrame(frame);
+      lift(false);
+    };
+    // Re-made whenever the measurements change, so paint always closes over the
+    // current orbits.
+  }, [orbits]);
 
   // ---------- signed in ----------
   // No plate, no ring, no gather. The orbit is a first-impression device: it
@@ -393,8 +516,8 @@ const HeroStage = () => {
                 {/* The dashed orbit, fading back as the cards leave it — their
                     opacity curve, 1 down to 0.15. */}
                 <div
+                  ref={ring}
                   aria-hidden="true"
-                  style={{ opacity: 1 - eased * 0.85 }}
                   className="pointer-events-none absolute left-1/2 top-1/2 h-[116%] w-[132%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border border-dashed border-line"
                 />
                 <div
@@ -450,44 +573,21 @@ const HeroStage = () => {
                 same row, translated. */}
             <ul className="mt-7 flex flex-wrap justify-center gap-2 sm:gap-3.5">
               {PROPERTY_TYPES.map((type, index) => {
-                const orbit = orbits[index];
                 const selected = type.value === propertyType;
-                const t = cardProgress(index);
-                const away = 1 - t;
-
-                // The card travels along an ARC, not a straight line: the angle
-                // sweeps round the ring while the radius shrinks to the slot.
-                // A straight lerp from a ring point is a radial implosion, and
-                // the card at the top of the ring would pass straight through
-                // the map on its way down.
-                let dx = 0;
-                let dy = 0;
-                if (orbit && t < 1) {
-                  const angle = orbit.a0 + orbit.sweep * t;
-                  const r = orbit.r0 + (orbit.r1 - orbit.r0) * t;
-                  dx = Math.cos(angle) * r - orbit.vx;
-                  dy = Math.sin(angle) * r - orbit.vy;
-                }
-                // Scattered cards are a little larger, and shrink in. scale, not
-                // width: a transform, so it costs no layout.
-                const scale = 1 + (ORBIT_SCALE - 1) * away;
                 return (
                   <li
                     key={type.value}
                     ref={(element) => {
                       cards.current[index] = element;
                     }}
+                    // Position, tilt, scale and stacking are written straight
+                    // to this node by the engine above, never as props: a
+                    // transform in JSX is a React render per scroll event.
                     style={{
-                      transform: orbit
-                        ? `translate3d(${dx}px, ${dy}px, 0) rotate(${(ORBIT_TILT[index] ?? 0) * away}deg) scale(${scale})`
-                        : undefined,
                       // Hidden for the first frame only, before measuring: the
                       // row would otherwise flash before the orbit snaps out.
                       opacity: ready ? 1 : 0,
-                      // A card still travelling sits above one that has landed.
-                      zIndex: orbit ? (t < 1 ? 7 : 6) : undefined,
                     }}
-                    className="will-change-transform"
                   >
                     <Link
                       href={href("propertyType", type.value)}
@@ -518,8 +618,13 @@ const HeroStage = () => {
                           forced a layout every frame and made the row's height
                           change while cards were still arriving. */}
                       <span
-                        aria-hidden={away < 0.5}
-                        style={{ opacity: away }}
+                        ref={(element) => {
+                          captions.current[index] = element;
+                        }}
+                        // Decorative: the link it sits inside already says
+                        // where it goes, so it is hidden from a screen reader
+                        // whether it is faded in or out.
+                        aria-hidden="true"
                         className="pointer-events-none absolute left-0 right-0 top-full pt-1 text-center text-[10px] leading-snug text-muted"
                       >
                         Browse {type.label.toLowerCase()} &#8599;
