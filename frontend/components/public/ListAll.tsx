@@ -6,13 +6,18 @@ import { useSearchParams } from "next/navigation";
 import PublicListingCard from "@/components/listing/PublicListingCard";
 import HeroStage from "@/components/public/HeroStage";
 import ListingFilters from "@/components/public/ListingFilters";
-import { api } from "@/lib/api";
+import { api, authReady, isSignedIn } from "@/lib/api";
+import { formatNumber } from "@/lib/format";
 import { errorToast } from "@/lib/toast";
 import type { PublicListingSummary } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
 type PageResponse = { lists: PublicListingSummary[]; total?: number };
+
+// How many a visitor sees before being invited to look properly. Eight is two
+// rows on a laptop and four on a phone.
+const RECENT = 8;
 
 // The filters the API narrows by. Anything else in the URL is not its business.
 const FILTER_PARAMS = [
@@ -41,6 +46,19 @@ const fetchPage = async (page: number, query: string, take?: number) => {
 type GridProps = {
   // Everything the API needs, already a query string.
   query: string;
+  // Show only the first few and stop loading more.
+  //
+  // Deliberately NOT part of the fetch or the key: page one already returns the
+  // API's full 20, so capping is a slice and uncapping needs no new request.
+  // That matters because this flips once the sign-in check settles, and a
+  // refetch there would throw away rows already on screen.
+  // How many to ask for, and the signal to stop loading more. Part of the
+  // request, so the API sends exactly this many rather than its own full page.
+  //
+  // The cost: this flips when the sign-in check settles, so a signed-in visitor
+  // makes one small extra request. Worth it — one request for the few, against
+  // twelve wasted rows on every first visit.
+  limit?: number;
   // Changes the wording when nothing comes back: no listings at all is a different
   // problem from filters that match none of them.
   filtered: boolean;
@@ -51,7 +69,7 @@ type GridProps = {
 
 // Mounted with `key={query}`, so a filter change gives it fresh state and fresh
 // refs. That is why it resets nothing by hand: there is nothing stale to reset.
-const Listings = ({ query, filtered, onCount }: GridProps) => {
+const Listings = ({ query, filtered, onCount, limit }: GridProps) => {
   const [listings, setListings] = useState<PublicListingSummary[] | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -89,6 +107,11 @@ const Listings = ({ query, filtered, onCount }: GridProps) => {
     });
     if (typeof data.total === "number") setTotal(data.total);
     onCount?.(data.total ?? loadedCount.current);
+    // A capped grid never asks for a second page.
+    if (limit) {
+      setHasMore(false);
+      return;
+    }
     // With a total we know exactly; without one, an empty page means the end.
     setHasMore(
       typeof data.total === "number"
@@ -98,7 +121,7 @@ const Listings = ({ query, filtered, onCount }: GridProps) => {
   };
 
   useEffect(() => {
-    fetchPage(1, query)
+    fetchPage(1, query, limit)
       .then((data) => applyPage(1, data))
       .catch((error) => {
         setFailed(true);
@@ -130,7 +153,7 @@ const Listings = ({ query, filtered, onCount }: GridProps) => {
   // so it reads the latest hasMore; loadNext itself reads the page from a ref.
   useEffect(() => {
     const marker = endOfList.current;
-    if (!marker || !hasMore || loadMoreFailed) return;
+    if (!marker || !hasMore || limit || loadMoreFailed) return;
 
     // Start loading a little before the visitor actually reaches the bottom.
     const observer = new IntersectionObserver(
@@ -221,7 +244,10 @@ const Listings = ({ query, filtered, onCount }: GridProps) => {
   return (
     <>
       <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {listings.map((listing, index) => (
+        {/* The slice is belt and braces: the API was asked for exactly `limit`
+            rows, so it normally changes nothing. It covers a frontend deployed
+            ahead of an API that does not understand `take` yet. */}
+        {(limit ? listings.slice(0, limit) : listings).map((listing, index) => (
           // The slug identifies a public listing; old listings without one fall back to their position.
           <li key={listing.slug ?? `listing-${index}`}>
             <PublicListingCard listing={listing} />
@@ -229,35 +255,37 @@ const Listings = ({ query, filtered, onCount }: GridProps) => {
         ))}
       </ul>
 
-      <div
-        ref={endOfList}
-        className="mt-10 flex flex-col items-center gap-3 text-[14px] text-muted"
-      >
-        {loadingMore && <p aria-live="polite">Loading more properties…</p>}
-        {loadMoreFailed && (
-          <>
-            <p>More properties could not be loaded.</p>
+      {limit ? null : (
+        <div
+          ref={endOfList}
+          className="mt-10 flex flex-col items-center gap-3 text-[14px] text-muted"
+        >
+          {loadingMore && <p aria-live="polite">Loading more properties…</p>}
+          {loadMoreFailed && (
+            <>
+              <p>More properties could not be loaded.</p>
+              <button
+                type="button"
+                onClick={loadNext}
+                className={secondaryButton}
+              >
+                Try again
+              </button>
+            </>
+          )}
+          {!hasMore && <p>You&apos;ve seen all {count} properties.</p>}
+          {/* Keyboard and screen reader users can load more without scrolling. */}
+          {hasMore && !loadingMore && !loadMoreFailed && (
             <button
               type="button"
               onClick={loadNext}
-              className={secondaryButton}
+              className="sr-only focus:not-sr-only focus:rounded-lg focus:border focus:border-line focus:px-4 focus:py-2"
             >
-              Try again
+              Load more properties
             </button>
-          </>
-        )}
-        {!hasMore && <p>You&apos;ve seen all {count} properties.</p>}
-        {/* Keyboard and screen reader users can load more without scrolling. */}
-        {hasMore && !loadingMore && !loadMoreFailed && (
-          <button
-            type="button"
-            onClick={loadNext}
-            className="sr-only focus:not-sr-only focus:rounded-lg focus:border focus:border-line focus:px-4 focus:py-2"
-          >
-            Load more properties
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </>
   );
 };
@@ -280,6 +308,26 @@ const ListAll = () => {
 
   const filtered = FILTER_PARAMS.some((name) => searchParams.get(name));
 
+  // null until the sign-in check settles. Treated as a visitor until then, so
+  // nobody is shown a catalogue that turns into a sample a moment later.
+  const [visitor, setVisitor] = useState<boolean | null>(null);
+  // The grid reports the real total — a COUNT over the same filter, so it is
+  // the full figure even when only eight rows were sent.
+  const [total, setTotal] = useState<number | null>(null);
+  useEffect(() => {
+    authReady.then(() => setVisitor(!isSignedIn()));
+  }, []);
+
+  // A signed-in visitor came to browse, so they get everything. Someone seeing
+  // the site for the first time gets eight — enough to judge whether the place
+  // has what they want, and a reason to make an account.
+  //
+  // Filtering is exempt on purpose. Somebody who has narrowed to "3 bedrooms
+  // under 80 lakh" is doing the thing the site is for, and showing them eight
+  // of forty matches behind a sign-in wall is the moment they leave. The cap is
+  // on idle browsing, not on searching.
+  const capped = visitor !== false && !filtered;
+
   return (
     <main className="min-h-dvh">
       {/* The stage: the drawing in its circle, the search at the centre, and
@@ -300,8 +348,47 @@ const ListAll = () => {
             a title would only repeat it. */}
         <div className="mt-8 sm:mt-10">
           {/* key: new filters are a new list, so the grid starts over rather
-              than appending page 1 of the new search to page 3 of the old. */}
-          <Listings key={query} query={query} filtered={filtered} />
+              than appending page 1 of the new search to page 3 of the old. The
+              cap is NOT in the key — it flips when the sign-in check settles,
+              and remounting there would refetch rows already on screen. */}
+          <Listings
+            key={`${query}|${capped ? RECENT : "all"}`}
+            query={query}
+            filtered={filtered}
+            limit={capped ? RECENT : undefined}
+            onCount={setTotal}
+          />
+
+          {capped && (
+            // Not a button that loads more: there is nothing more to load
+            // without an account. It says what you are seeing, what you are
+            // missing, and the one step between the two.
+            <div className="mt-10 border-t border-line pt-8 text-center">
+              <p className="text-[15px] text-ink">
+                You&apos;re seeing the {RECENT} most recent
+                {total !== null && total > RECENT && (
+                  <>
+                    {" of "}
+                    <strong className="font-semibold tabular-nums">
+                      {formatNumber(total)}
+                    </strong>
+                  </>
+                )}{" "}
+                properties.
+              </p>
+              <p className="mx-auto mt-1.5 max-w-sm text-[14px] text-muted">
+                Sign in to browse all of them and contact sellers directly.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+                <Link href="/auth/register" className={primaryButton}>
+                  Create an account
+                </Link>
+                <Link href="/auth/login" className={secondaryButton}>
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>

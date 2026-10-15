@@ -146,7 +146,7 @@ export const change_password=async(req:Request,res:Response,_next:NextFunction)=
 export const me = async (req: Request, res: Response) => {
   const result = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    select: { id: true, name: true, email: true, avatarUrl: true, description: true, password: true,agentReraStatus:true,agentReraNumber:true,agentReraState:true,accountType:true},
+    select: { id: true, name: true, email: true, avatarUrl: true, description: true, password: true,agentReraStatus:true,agentReraNumber:true,agentReraState:true,accountType:true,role:true},
   });
   if (!result) throw new UnauthorizedError("Unauthorized");
   const user={
@@ -157,6 +157,8 @@ export const me = async (req: Request, res: Response) => {
    description:result.description,
    hasPassword:!!result.password,
    accountType:result.accountType,
+   // The admin app reads this to tell an operator from an ordinary user.
+   role:result.role,
    agentReraStatus:result.agentReraStatus,
    agentReraNumber:result.agentReraNumber,
    agentReraState:result.agentReraState

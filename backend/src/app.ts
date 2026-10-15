@@ -7,6 +7,7 @@ import morgan from "morgan";
 import authRoutes from "./modules/auth/auth.routes.js";
 import listRoutes from "./modules/listings/listing.routes.js"
 import projectRoutes from "./modules/projects/project.routes.js"
+import adminRoutes from './modules/admin/admin.route.js'
 const app = express();
 
 app.use(helmet());
@@ -23,6 +24,7 @@ app.get("/health", (_req, res) => {
 app.use("/auth", authRoutes);
 app.use("/list", listRoutes)
 app.use("/project", projectRoutes)
+app.use('/admin',adminRoutes)
 
 
 app.use(errorHandler);

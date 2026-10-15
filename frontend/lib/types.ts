@@ -198,7 +198,13 @@ export type PublicListingSummary = Omit<ListingSummary, "id"> & {
 // internal id: the listing's, the owner's, and those of its photos, video and amenities.
 export type PublicListing = Omit<
   Listing,
-  "id" | "owner" | "amenities" | "listingImages" | "listingVideo" | "contactName" | "contactPhone"
+  | "id"
+  | "owner"
+  | "amenities"
+  | "listingImages"
+  | "listingVideo"
+  | "contactName"
+  | "contactPhone"
 > & {
   // Which project the unit is in, and whose word that is: inRecords means the
   // builder registered it here, otherwise the lister typed it in.
@@ -222,6 +228,13 @@ export type PublicListing = Omit<
     agentReraNumber?: string | null;
     agentReraStatus?: VerificationStatus | null;
   };
+  // True when the person reading the page is the one who posted it. The server
+  // works this out from the token, so the owner's id never reaches the browser.
+  //
+  // Optional because the owner dashboard reuses this page's helpers with its
+  // own Listing shape, which has no such field — and there, absent means the
+  // same as false.
+  isOwner?: boolean;
   // Only sent to signed-in users; missing for visitors.
   contactName?: string | null;
   contactPhone?: string | null;

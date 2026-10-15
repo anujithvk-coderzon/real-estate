@@ -64,6 +64,26 @@ const TRAVEL = 280;
 // about 707px across, plus a card's half width on each side.
 const MIN_STAGE_WIDTH = 740;
 
+// Where a node sits inside `root`, walking offsetParents.
+//
+// Deliberately NOT getBoundingClientRect(): a rect includes the element's
+// transform, and by the time anything re-measures, the cards are usually
+// mid-flight carrying the very transform this file is trying to compute. The
+// orbit position then goes back in as the row slot, dx works out to 0 at every
+// t, and the cards sit in the row for good. offsetLeft/offsetTop are layout
+// only, so they report the slot whatever the card is currently doing.
+const offsetWithin = (node: HTMLElement, root: HTMLElement) => {
+  let x = 0;
+  let y = 0;
+  let step: HTMLElement | null = node;
+  while (step && step !== root) {
+    x += step.offsetLeft;
+    y += step.offsetTop;
+    step = step.offsetParent as HTMLElement | null;
+  }
+  return { x, y };
+};
+
 // Everything needed to put a card anywhere along its arc, stored relative to the
 // ring's centre so it survives the stage being scrolled.
 type Orbit = {
@@ -87,6 +107,9 @@ const HeroStage = () => {
   const radiusKm = Number(searchParams.get("radius")) || 10;
 
   const stage = useRef<HTMLDivElement>(null);
+  // The positioned ancestor of both the plate and the row, so one offsetParent
+  // walk puts them in the same coordinate space.
+  const column = useRef<HTMLDivElement>(null);
   const plate = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLLIElement | null)[]>([]);
 
@@ -113,11 +136,11 @@ const HeroStage = () => {
   // One layout read per resize. Everything after this is transforms.
   const measure = useCallback(() => {
     const ring = plate.current;
-    if (!ring) return;
+    const root = column.current;
+    if (!ring || !root) return;
 
-    const ringBox = ring.getBoundingClientRect();
     const host = stage.current;
-    const stageWidth = host?.clientWidth ?? ringBox.width;
+    const stageWidth = host?.clientWidth ?? ring.offsetWidth;
 
     // The orbit needs room for the plate PLUS a card either side of it.
     if (stageWidth < MIN_STAGE_WIDTH) {
@@ -126,9 +149,10 @@ const HeroStage = () => {
       return;
     }
 
-    const cx = ringBox.left + ringBox.width / 2;
-    const cy = ringBox.top + ringBox.height / 2;
-    const plateRadius = ringBox.width / 2;
+    const centre = offsetWithin(ring, root);
+    const cx = centre.x + ring.offsetWidth / 2;
+    const cy = centre.y + ring.offsetHeight / 2;
+    const plateRadius = ring.offsetWidth / 2;
 
     // A circle, not an ellipse, and the radius carries the card's half-diagonal
     // so its nearest corner lands PLATE_GAP outside the plate at every angle.
@@ -145,33 +169,61 @@ const HeroStage = () => {
       return;
     }
 
-    setOrbits(
-      cards.current.map((card, index) => {
-        if (!card) return { vx: 0, vy: 0, r0: 0, r1: 0, a0: 0, sweep: 0 };
-        const box = card.getBoundingClientRect();
-        // The card's slot in the row, as a vector from the ring's centre. Stored
-        // relative so it stays correct however far the stage has been scrolled.
-        const vx = box.left + box.width / 2 - cx;
-        const vy = box.top + box.height / 2 - cy;
+    // One missing ref would mean one card with a dead orbit sitting in the row
+    // while six fly. No orbit at all is the better failure: ready stays true so
+    // the row is still visible rather than held at opacity 0.
+    if (cards.current.length < PROPERTY_TYPES.length) {
+      setOrbits([]);
+      setReady(true);
+      return;
+    }
 
-        const a0 = ((ORBIT_DEGREES[index] ?? 0) * Math.PI) / 180;
-        const a1 = Math.atan2(vy, vx);
-        // The shorter way round, so no card takes the long path home.
-        let sweep = a1 - a0;
-        while (sweep > Math.PI) sweep -= 2 * Math.PI;
-        while (sweep < -Math.PI) sweep += 2 * Math.PI;
+    const next: Orbit[] = [];
+    for (const [index, card] of cards.current.entries()) {
+      if (!card) {
+        setOrbits([]);
+        setReady(true);
+        return;
+      }
+      const slot = offsetWithin(card, root);
+      // The card's slot in the row, as a vector from the ring's centre. Stored
+      // relative so it stays correct however far the stage has been scrolled.
+      const vx = slot.x + card.offsetWidth / 2 - cx;
+      const vy = slot.y + card.offsetHeight / 2 - cy;
 
-        return { vx, vy, r0: radius, r1: Math.hypot(vx, vy), a0, sweep };
-      }),
-    );
+      const a0 = ((ORBIT_DEGREES[index] ?? 0) * Math.PI) / 180;
+      const a1 = Math.atan2(vy, vx);
+      // The shorter way round, so no card takes the long path home.
+      let sweep = a1 - a0;
+      while (sweep > Math.PI) sweep -= 2 * Math.PI;
+      while (sweep < -Math.PI) sweep += 2 * Math.PI;
+
+      next.push({ vx, vy, r0: radius, r1: Math.hypot(vx, vy), a0, sweep });
+    }
+
+    setOrbits(next);
     setReady(true);
   }, []);
 
   useEffect(() => {
     measure();
+
+    // The stage for width, the column for the row wrapping or growing under it.
     const observer = new ResizeObserver(measure);
     if (stage.current) observer.observe(stage.current);
-    return () => observer.disconnect();
+    if (column.current) observer.observe(column.current);
+
+    // The display face swaps in after first paint and the cards change height
+    // with it, which moves every slot. Cheap to measure again; wrong not to.
+    let live = true;
+    document.fonts?.ready.then(() => {
+      if (live) measure();
+    });
+
+    return () => {
+      live = false;
+      observer.disconnect();
+    };
   }, [measure]);
 
   useEffect(() => {
@@ -332,7 +384,10 @@ const HeroStage = () => {
         className="relative h-[520px] overflow-clip min-[420px]:h-[620px] sm:h-[700px] lg:h-[1080px]"
       >
         <div className="sticky top-4">
-          <div className="relative mx-auto w-full max-w-7xl px-5 pt-3 lg:px-10 lg:pt-[180px]">
+          <div
+            ref={column}
+            className="relative mx-auto w-full max-w-7xl px-5 pt-3 lg:px-10 lg:pt-[180px]"
+          >
             <div className="flex justify-center">
               <div className="relative w-[min(86vw,22rem)]">
                 {/* The dashed orbit, fading back as the cards leave it — their
@@ -351,7 +406,13 @@ const HeroStage = () => {
                       what for. Half a page apart they read as two unrelated
                       controls; together they read as one search. */}
                   <div className="absolute inset-x-5 top-1/2 -translate-y-1/2 space-y-2.5 sm:inset-x-9">
-                    <SearchBar variant="compact" />
+                    {/* The mode and type are not fields in here; they are
+                        the hero's own controls, held in the URL. Passed in so
+                        the form submits the choice instead of dropping it. */}
+                    <SearchBar
+                      variant="compact"
+                      initialValues={{ listingType, propertyType }}
+                    />
                     <div className="flex justify-center">
                       {/* Needs its own surface: a segmented control sitting
                           straight on the map would be unreadable over roads. */}

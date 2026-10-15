@@ -48,9 +48,13 @@ export const listingFields=z.object({
     longitude: z.number().min(68.1, "Location must be inside India").max(97.4, "Location must be inside India").optional(),
 
     contactName: z.string().trim().min(2, "Contact name is too short").optional(),
+    // Indian mobile numbers start 6, 7, 8 or 9. The listing page turns this into
+    // a tel: and a WhatsApp link, so anything else produces a link that dials
+    // nothing — and the owner never finds out why no one called.
     contactPhone: z
       .string()
-      .regex(/^\d{10}$/, "Phone must be 10 digits")
+      .trim()
+      .regex(/^[6-9]\d{9}$/, "Enter a 10-digit Indian mobile number")
       .optional(),
 
     amenityIds: z.array(z.string().uuid("Invalid amenity")).optional(),

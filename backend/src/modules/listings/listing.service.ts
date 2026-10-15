@@ -102,6 +102,13 @@ export const listingPublishingService=async(userId:string,listingId:string)=>{
   const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId}})
   if(!listing) throw new NotFoundError("Listing not found")
   if(listing.status==='ACTIVE') throw new BadRequestError("Already Published")
+  // A published listing without contact details is a dead end: the panel has
+  // nothing to show, and the account email is never given to visitors. Both
+  // fields stay optional on the model so a draft can be half-finished; they
+  // are required here, which is the moment they start to matter.
+  if(!listing.contactPhone || !listing.contactName){
+    throw new BadRequestError("Add a contact name and phone number before publishing \u2014 buyers have no other way to reach you")
+  }
   await prisma.listing.update({where:{id:listingId},data:{status:'ACTIVE'}})
   return 'Published successfully'
 }
@@ -350,7 +357,9 @@ export const SpecificListFetchingService=async(slug:string,userId?:string)=>{
 const signedIn=userId ? Boolean(await prisma.user.findUnique({where:{id:userId},select:{id:true}})) : false
 const listing=await prisma.listing.findUnique({
     where:{slug,status:'ACTIVE'},
-    omit:{id:true,ownerId:true,projectId:true},
+    // ownerId is kept here only long enough to answer "is this yours"; it is
+    // destructured out below so it never reaches the browser.
+    omit:{id:true,projectId:true},
     include:{
         amenities:{select:{name:true,category:true}},
         // The registered project, when the unit is in one of our records.
@@ -365,11 +374,16 @@ const listing=await prisma.listing.findUnique({
 if(!listing) throw new NotFoundError("Listing not found")
 // The raw columns are replaced by one answer, so the page cannot read a typed
 // name and a registered one the same way.
-const {contactName,contactPhone,
+const {contactName,contactPhone,ownerId,
   project:_project,projectNameText:_name,projectReraText:_rera,builderNameText:_builder,
   ...publicFields}=listing
+// Whether the person reading this is the one who posted it. The page needs to
+// know because the contact panel is useless to an owner — it would offer them
+// a button to ring their own phone.
+const isOwner=Boolean(userId) && userId===ownerId
 return {
     ...publicFields,
+    isOwner,
     ...(signedIn && {contactName,contactPhone}),
     project:projectClaim(listing),
     listingImages:listing.listingImages.map((img)=>({

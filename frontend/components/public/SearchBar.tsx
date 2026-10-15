@@ -91,9 +91,18 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSearch) return;
+    // compact renders neither the mode nor the type: the hero owns those
+    // controls and keeps them in the URL. So for that variant the props are the
+    // truth and the local state is a stale copy — it was seeded once at mount
+    // and the hero's links change the URL without ever remounting this form,
+    // which is how Rent was being dropped on the way to the results page.
+    const mode = variant === "compact" ? initialValues?.listingType ?? "" : listingType;
+    const kind =
+      variant === "compact" ? initialValues?.propertyType ?? "" : propertyType;
+
     const params = new URLSearchParams();
-    if (listingType) params.set("listingType", listingType);
-    if (propertyType) params.set("propertyType", propertyType);
+    if (mode) params.set("listingType", mode);
+    if (kind) params.set("propertyType", kind);
     if (location.trim()) params.set("location", location.trim());
     // Carried even where there is no control for it, so editing the search on the
     // results page keeps the distance the visitor chose there.

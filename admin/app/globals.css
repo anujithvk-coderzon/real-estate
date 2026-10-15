@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  /* The same palette as the public site, so the two read as one product. */
+  --color-ground: #f7f4fb; /* the page behind the panel */
+  --color-panel: #ffffff; /* the panel and its inputs */
+  --color-ink: #302044; /* text */
+  --color-muted: #898194; /* secondary text */
+  --color-line: #ece7f2; /* borders */
+
+  --color-accent: #7947c6;
+  --color-accent-hover: #6a3cb0;
+  --color-accent-soft: #f4eefb;
+  --color-danger: #c94f45; /* 4.6:1 on white, so it works as text */
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer components {
+  /* Manrope only comes in heavy here, tracked in — the one typographic move
+     the public site makes, so headings match across both. */
+  .font-display {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  /* A faint plan grid on the dark side of the split. Borrowed from the public
+     site, where it is the paper a property drawing sits on — so the staff door
+     belongs to the same product rather than being a generic login screen.
+     The mask is on this element alone and it wraps no content, which is the
+     mistake that makes a mask invisible-ify everything inside it. */
+  .plan-grid {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.07) 1px, transparent 1px);
+    background-size: 2.5rem 2.5rem;
+    -webkit-mask-image: radial-gradient(70% 60% at 30% 30%, #000, transparent);
+    mask-image: radial-gradient(70% 60% at 30% 30%, #000, transparent);
+  }
+}

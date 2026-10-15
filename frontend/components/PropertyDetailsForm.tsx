@@ -406,8 +406,17 @@ const PropertyDetailsForm = ({
       {/* ---------- contact ---------- */}
       <div className="space-y-4 border-t border-line pt-6">
         <h3 className={groupTitle}>Contact for visits</h3>
+        <p className="-mt-2 text-[13px] text-muted">
+          The phone number is the only way a buyer can reach you &mdash; your
+          account email is never shown. A listing cannot be published without
+          one.
+        </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field id="contactName" label="Name" optional>
+          {/* A buyer about to ring a stranger about a house wants to know who
+              they are asking for. The account name is not always the right
+              answer — it may be a caretaker, a spouse or an agent who shows
+              the property — so it is asked rather than assumed. */}
+          <Field id="contactName" label="Name">
             <input
               id="contactName"
               name="contactName"
@@ -417,12 +426,15 @@ const PropertyDetailsForm = ({
               className={inputClass}
             />
           </Field>
-          <Field id="contactPhone" label="Phone" optional>
+          {/* Not marked optional any more: publishing is refused without it, so
+              calling it optional here would be a promise the API breaks. */}
+          <Field id="contactPhone" label="Phone">
             <input
               id="contactPhone"
               name="contactPhone"
               type="tel"
-              inputMode="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
               maxLength={10}
               value={data.contactPhone}
               onChange={handleChange}

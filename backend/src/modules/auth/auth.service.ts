@@ -318,7 +318,9 @@ export const updateProfileService = async (
       ...(data.description !== undefined && { description: data.description.trim() || null }),
       ...(data.accountType && { accountType: data.accountType }),
     },
-    select: { name: true, email: true, avatarUrl: true, description: true, accountType: true },
+    // role: the admin app needs it to tell an operator from an ordinary user.
+    // Additive, so the public sidebar simply ignores it.
+    select: { name: true, email: true, avatarUrl: true, description: true, accountType: true, role: true },
   });
   return { ...user, avatarUrl: avatarPublicUrl(user.avatarUrl) };
 };

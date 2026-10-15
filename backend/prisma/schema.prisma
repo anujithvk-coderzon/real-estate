@@ -99,7 +99,7 @@ model User {
   agentReraStatus     VerificationStatus @default(NONE)
   agentReraVerifiedAt DateTime?
   projects            Project[]          @relation("BuiltProjects")
-
+  interest            UserInterest[]
   @@map("users")
 }
 
@@ -210,7 +210,7 @@ model Listing {
   listingVideo    ListingVideos?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
+  interest        UserInterest[]
   @@index([city, listingType, status])
   @@index([status, createdAt])
   @@index([price])
@@ -253,4 +253,16 @@ model Amenity {
   createdAt DateTime  @default(now())
 
   @@map("amenities")
+}
+
+model UserInterest{
+  id String @id @default(uuid())
+  userId String 
+  listingId String
+  user User  @relation(references: [id],fields: [userId],onDelete:Cascade)
+  listing Listing @relation(references: [id],fields: [listingId],onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([userId,listingId])
+  @@index([userId])
+  @@map("user_interests")
 }

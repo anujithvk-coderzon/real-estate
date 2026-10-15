@@ -279,6 +279,14 @@ export const getMissingFields = (
     ["state", data.state.trim() !== ""],
     ["pincode", /^\d{6}$/.test(data.pincode)],
     ["a pin on the map", location !== null],
+    // The only route a buyer has to the seller: the account email is never
+    // shown, and the API refuses to publish a listing without this. Checked
+    // here so the form says so up front rather than at the end — and so an
+    // emptied field is caught, because buildListingPayload turns "" into
+    // undefined and Prisma ignores undefined, which would silently keep the
+    // old number on a listing the owner believes they have cleared.
+    ["a contact name", data.contactName.trim().length >= 2],
+    ["a contact phone number", /^[6-9]\d{9}$/.test(data.contactPhone.trim())],
     ["floors to be consistent", !floorsInconsistent(data)],
   ];
 

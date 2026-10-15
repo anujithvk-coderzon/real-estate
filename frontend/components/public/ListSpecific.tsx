@@ -42,6 +42,7 @@ import {
 } from "@/lib/listingDisplay";
 import type { PublicListing } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
+import axios from "axios";
 
 type Props = { slug: string };
 
@@ -194,9 +195,36 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
 
       {/* ---------- contact ---------- */}
       <div className="border-t border-line bg-accent-soft/50 p-5">
-        <h2 className="text-[15px] font-semibold">Contact the seller</h2>
+        <h2 className="font-display text-[15px]">Contact the seller</h2>
 
-        {!signedIn ? (
+        {listing.isOwner ? (
+          // Your own listing. Offering you a button to ring your own phone is
+          // worse than useless — it suggests the page does not know who you
+          // are. Show what a buyer sees, and the way to change it.
+          <>
+            <p className="mt-1.5 text-[14px] text-muted">
+              This is your listing. Buyers see these details here.
+            </p>
+            <dl className="mt-3 space-y-1.5 text-[14px]">
+              <div className="flex gap-2">
+                <dt className="text-muted">Name</dt>
+                <dd>{listing.contactName || listing.owner?.name}</dd>
+              </div>
+              {phone && (
+                <div className="flex gap-2">
+                  <dt className="text-muted">Phone</dt>
+                  <dd className="tabular-nums">+91 {phone}</dd>
+                </div>
+              )}
+            </dl>
+            <Link
+              href="/list/my/listings"
+              className={`mt-4 block text-center bg-panel ${secondaryButton}`}
+            >
+              Manage your listings
+            </Link>
+          </>
+        ) : !signedIn ? (
           <>
             <p className="mt-1.5 flex gap-2 text-[14px] text-muted">
               <LockIcon className="mt-0.5 h-4 w-4" />
@@ -211,11 +239,15 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
           </>
         ) : phone ? (
           <>
-            {listing.contactName && (
-              <p className="mt-1.5 text-[15px]">{listing.contactName}</p>
-            )}
+            {/* The name is required on new listings, so the fallback is only
+                for rows created before that rule. Kept, because a phone number
+                with nobody attached reads like a number scraped from somewhere. */}
+            <p className="mt-1.5 text-[15px]">
+              {listing.contactName || listing.owner?.name}
+            </p>
             <div className="mt-4 grid grid-cols-1 gap-2">
               <a
+              onClick={()=>api.post(`/admin/interest/create/${listing.slug}`)}
                 href={`tel:+91${phone}`}
                 className={`flex items-center justify-center gap-2 ${primaryButton}`}
               >
@@ -223,6 +255,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
                 Call <span className="tabular-nums">+91 {phone}</span>
               </a>
               <a
+               onClick={()=>api.post(`/admin/interest/create/${listing.slug}`)}
                 href={`https://wa.me/91${phone}?text=${whatsappText}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -236,7 +269,8 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
           </>
         ) : (
           <p className="mt-1.5 text-[14px] text-muted">
-            The seller has not added a phone number.
+            No phone number on this listing yet. Published listings always carry
+            one.
           </p>
         )}
 
