@@ -20,7 +20,7 @@ import { formatRupeesShort } from "@/lib/format";
 import {
   BUDGET_MAX,
   BUDGET_STEPS,
-  LISTING_TYPES,
+  SEARCH_LISTING_TYPES,
   NO_BEDROOMS,
   POSTED_BY,
   RADIUS_OPTIONS,
@@ -469,7 +469,7 @@ const ListingFilters = ({
               className={inlineSelect}
             >
               <option value="">Buy or rent</option>
-              {LISTING_TYPES.map((option) => (
+              {SEARCH_LISTING_TYPES.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -670,7 +670,7 @@ const ListingFilters = ({
             <>
               <Pills
                 legend="Looking to"
-                options={LISTING_TYPES}
+                options={SEARCH_LISTING_TYPES}
                 value={listingType}
                 anyLabel="Buy or rent"
                 onPick={(value) => setParam("listingType", value)}

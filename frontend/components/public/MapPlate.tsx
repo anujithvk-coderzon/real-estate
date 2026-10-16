@@ -20,6 +20,9 @@ const MapPlate = ({ radiusKm }: { radiusKm: number }) => {
   return (
     <svg
       viewBox="0 0 450 450"
+      // Covers its box rather than fitting inside it, so the drawing can be a
+      // wide band on a phone. No effect where the box is square.
+      preserveAspectRatio="xMidYMid slice"
       role="img"
       aria-label={`An illustrated map with a ${radiusKm} kilometre search radius marked on it`}
       className="h-full w-full"

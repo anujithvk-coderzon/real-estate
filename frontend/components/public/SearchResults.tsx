@@ -430,8 +430,19 @@ const SearchResults = () => {
         </section>
 
         {/* ---------- map: right column on desktop, full screen on phones when chosen ---------- */}
+        {/* Two bugs lived in this one class list. `relative` and `fixed` were
+            both on it, and Tailwind emits .relative AFTER .fixed, so at equal
+            specificity relative won and the "full screen" map was never fixed
+            at all. With no position and no height below lg — ResultsMap's own
+            root is h-full — it resolved to nothing, which is why the map did
+            not appear on a phone. The phone classes are scoped with max-lg now
+            so they cannot collide with the desktop ones. */}
         <div
-          className={`relative ${view === "map" ? "fixed inset-0 z-30" : "hidden"} bg-ground lg:sticky lg:top-[65px] lg:z-0 lg:h-[calc(100dvh-65px)] lg:border-l lg:border-line ${
+          className={`bg-ground ${
+            view === "map"
+              ? "max-lg:fixed max-lg:inset-0 max-lg:z-30"
+              : "max-lg:hidden"
+          } lg:sticky lg:top-[65px] lg:z-0 lg:h-[calc(100dvh-65px)] lg:border-l lg:border-line ${
             mapHidden ? "lg:hidden" : "lg:block"
           }`}
         >

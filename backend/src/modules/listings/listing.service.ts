@@ -228,10 +228,19 @@ export const videoFetchingService=async(userId:string,listingId:string)=>{
     take: number,
   };
 
+// Searching offers two choices, not three: Buy and Rent. A PG room is still
+// something you rent, so asking for RENT returns PG listings too. Listing a
+// property keeps all three — an owner has to say which one they are putting up,
+// and the difference matters to them even though it does not to a searcher.
+// Literals rather than the enum object: ListingType is imported as a type here,
+// so it exists at compile time only.
+const rentCoversPg = (type: ListingType) =>
+  type === "RENT" ? { in: ["RENT", "PG"] as ListingType[] } : type;
+
 export const listsFetchingService = async (page: number,filters:filterType) => {
   const {listingType, propertyType, postedBy, maxPrice, beds, sort, take} =filters 
   const where = { status: "ACTIVE" as const ,
-    ...(listingType && { listingType }),
+    ...(listingType && { listingType: rentCoversPg(listingType) }),
     ...(propertyType && { propertyType }),
     ...(postedBy && { postedBy }),
     ...(maxPrice && { price: { lte: maxPrice } }),
@@ -535,7 +544,7 @@ const long = Number(result.lon);
 const where:ListingWhereInput=({
   status:ListingStatus.ACTIVE,
   ...(type && {
-    listingType:type
+    listingType: rentCoversPg(type)
   }),
   ...(property && {
     propertyType:property

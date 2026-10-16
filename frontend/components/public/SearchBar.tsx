@@ -25,10 +25,12 @@ type Props = {
   variant?: "card" | "toolbar" | "compact";
 };
 
+// Two, not three. PG listings come back under Rent — the API folds them in —
+// so offering PG separately would be a third choice that filters out the very
+// rentals most people mean.
 const MODES = [
   { value: "SALE", label: "Buy" },
   { value: "RENT", label: "Rent" },
-  { value: "PG", label: "PG" },
 ];
 
 const MAX_LOCATION_LENGTH = 100;
@@ -119,7 +121,11 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
         // Sits on the drawing, so it needs a shadow to lift off it — the one
         // place on this page where a shadow is doing real work rather than
         // decorating a card.
-        className="flex items-center gap-1 rounded-xl bg-panel p-1.5 shadow-[0_10px_30px_-10px_rgba(48,32,68,0.35)] ring-1 ring-line"
+        // Two rows on a phone, one from sm up. At 320px a pin, an input, a
+        // divider, a select and a button share about 280px, which leaves the
+        // place name roughly 130px to live in — the field you are asked to
+        // type into ends up the smallest thing in the row.
+        className="flex flex-wrap items-center gap-1.5 rounded-xl bg-ground p-1.5 ring-1 ring-line md:flex-nowrap md:gap-1 md:bg-panel md:shadow-[0_10px_30px_-10px_rgba(48,32,68,0.35)]"
         suppressHydrationWarning
       >
         <label htmlFor="hero-location" className="sr-only">
@@ -139,13 +145,17 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           required
           autoComplete="off"
           enterKeyHint="search"
-          className="min-w-0 flex-1 bg-transparent px-1.5 py-2.5 text-[16px] text-ink placeholder:text-muted/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+          // 16px, because anything smaller makes iOS zoom the page in on focus.
+          className="min-w-0 flex-1 basis-0 bg-transparent px-1.5 py-2.5 text-[16px] text-ink placeholder:text-muted/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           suppressHydrationWarning
         />
         {/* How far to look, beside the place to look. Asking for the distance
             after the search would mean a second round trip for the commonest
             adjustment there is. */}
-        <span aria-hidden="true" className="h-6 w-px shrink-0 bg-line" />
+        <span
+          aria-hidden="true"
+          className="hidden h-6 w-px shrink-0 bg-line md:block"
+        />
         <label htmlFor="hero-radius" className="sr-only">
           Distance
         </label>
@@ -153,7 +163,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           id="hero-radius"
           value={radius}
           onChange={(event) => setRadius(event.target.value)}
-          className="h-11 shrink-0 rounded-lg bg-transparent pl-1 pr-1 text-[14px] font-medium text-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="h-11 shrink-0 rounded-lg bg-panel px-2 text-[14px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:bg-transparent md:px-1 md:ring-0"
         >
           <option value="">10 km</option>
           {RADIUS_OPTIONS.map((option) => (
@@ -167,9 +177,13 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           disabled={!canSearch}
           title={canSearch ? undefined : "Enter a location to search"}
           aria-label="Search this location"
-          className={`h-11 w-11 shrink-0 !px-0 ${primaryButton}`}
+          // Grows into the rest of the second row on a phone and carries a
+          // word, because a lone icon is the least obvious thing on a screen
+          // where it is the only action.
+          className={`h-11 flex-1 ${primaryButton} md:w-11 md:flex-none md:!px-0`}
         >
           <SearchIcon />
+          <span className="ml-1.5 md:hidden">Search</span>
         </button>
       </form>
     );

@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "incentives-customise-statistics-document.trycloudflare.com",
+    "charter-placement-documentation-around.trycloudflare.com",
   ],
 };
 

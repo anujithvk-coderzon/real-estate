@@ -4,10 +4,20 @@ import type { Listing, ListingFormData, LngLat } from "@/lib/types";
 
 export type Option = { value: string; label: string };
 
+// Every mode a property can be listed under. The create and edit forms use
+// this: an owner has to say which one they are putting up.
 export const LISTING_TYPES: Option[] = [
   { value: "SALE", label: "For sale" },
   { value: "RENT", label: "For rent" },
   { value: "PG", label: "PG or hostel" },
+];
+
+// What a searcher is offered: two choices, not three. PG is not dropped — the
+// API folds PG listings into RENT — it just stops being a third thing to
+// decide between before you have said where you are looking.
+export const SEARCH_LISTING_TYPES: Option[] = [
+  { value: "SALE", label: "For sale" },
+  { value: "RENT", label: "For rent or PG" },
 ];
 
 export const PROPERTY_TYPES: Option[] = [
