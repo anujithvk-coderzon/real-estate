@@ -460,7 +460,7 @@ const EditListing = ({ id }: Props) => {
                 className="aspect-video w-full bg-ground"
               />
               <div className="flex items-center justify-between px-3 py-2">
-                <span className="truncate text-[13px] font-medium text-accent">
+                <span className="min-w-0 truncate text-[13px] font-medium text-accent">
                   New · {newVideo.file.name} ·{" "}
                   {formatFileSize(newVideo.file.size)}
                 </span>

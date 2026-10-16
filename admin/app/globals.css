@@ -17,6 +17,15 @@
   --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 }
 
+@layer base {
+  /* An operator's email or a listing slug is one unbreakable word. Let any word
+     that cannot fit break rather than push the page sideways. The public site
+     carries the same rule. */
+  body {
+    overflow-wrap: break-word;
+  }
+}
+
 @layer components {
   /* Manrope only comes in heavy here, tracked in — the one typographic move
      the public site makes, so headings match across both. */

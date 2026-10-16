@@ -18,7 +18,7 @@ import {
 // live in for the rest of the page.
 //
 // Built to the reference's own numbers: 280px of scroll, a sticky stage, cards
-// that straighten out of a tilt, captions that fade as they tidy up, and the
+// that straighten out of a tilt, and the
 // dashed orbit ring fading back as the cards leave it.
 //
 // The implementation is inverted from the reference's, on purpose. There, the
@@ -140,7 +140,6 @@ const HeroStage = () => {
   const column = useRef<HTMLDivElement>(null);
   const plate = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLLIElement | null)[]>([]);
-  const captions = useRef<(HTMLSpanElement | null)[]>([]);
   const ring = useRef<HTMLDivElement>(null);
 
 
@@ -303,13 +302,11 @@ const HeroStage = () => {
         const card = cards.current[index];
         if (!card) continue;
         const orbit = orbits[index];
-        const caption = captions.current[index];
 
         if (!orbit) {
           // No room for an orbit: the cards simply live in their row.
           card.style.transform = "";
           card.style.zIndex = "";
-          if (caption) caption.style.opacity = "0";
           continue;
         }
 
@@ -337,8 +334,6 @@ const HeroStage = () => {
         )}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
         // A card still travelling sits above one that has landed.
         card.style.zIndex = t < 1 ? "7" : "6";
-        // Also squared: text under a moving card is noise, so it leaves early.
-        if (caption) caption.style.opacity = (away * away).toFixed(3);
       }
 
       // The ring's own fade follows the gather as a whole, not any one card.
@@ -676,29 +671,13 @@ const HeroStage = () => {
                         decoding="async"
                         className="plinth-solid hidden w-full rounded-xl object-cover md:block md:h-[70px]"
                       />
-                      <span className="flex items-center gap-1.5 whitespace-nowrap text-[inherit] font-semibold leading-tight text-ink">
+                      <span className="flex items-center gap-1.5 whitespace-nowrap text-[inherit] font-semibold leading-tight text-ink md:items-start md:whitespace-normal">
                         <span
                           aria-hidden="true"
                           style={{ background: TYPE_COLOUR[type.value] }}
-                          className="h-[7px] w-[7px] shrink-0 rounded-full"
+                          className="h-[7px] w-[7px] shrink-0 rounded-full md:mt-[5px]"
                         />
                         {type.label}
-                      </span>
-                      {/* Their caption, fading as the cards tidy up. Absolutely
-                          positioned and opacity-only: animating its height
-                          forced a layout every frame and made the row's height
-                          change while cards were still arriving. */}
-                      <span
-                        ref={(element) => {
-                          captions.current[index] = element;
-                        }}
-                        // Decorative: the link it sits inside already says
-                        // where it goes, so it is hidden from a screen reader
-                        // whether it is faded in or out.
-                        aria-hidden="true"
-                        className="pointer-events-none absolute left-0 right-0 top-full hidden pt-1 text-center text-[10px] leading-snug text-muted md:block"
-                      >
-                        Browse {type.label.toLowerCase()} &#8599;
                       </span>
                     </Link>
                   </li>

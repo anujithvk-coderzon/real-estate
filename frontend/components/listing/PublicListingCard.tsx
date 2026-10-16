@@ -126,7 +126,7 @@ const PublicListingCard = ({
 
         <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-muted">
           <span aria-hidden="true">&#8982;</span>
-          <span className="truncate">{place}</span>
+          <span className="min-w-0 truncate">{place}</span>
           {typeof listing.distanceKm === "number" && (
             <span className="shrink-0 tabular-nums">
               &middot; {formatDistance(listing.distanceKm)}
