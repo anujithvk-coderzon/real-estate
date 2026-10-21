@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import MapPlate from "@/components/public/MapPlate";
+import NearbyButton from "@/components/public/NearbyButton";
 import SearchBar from "@/components/public/SearchBar";
 import { authReady, isSignedIn } from "@/lib/api";
 import {
@@ -622,6 +623,11 @@ const HeroStage = () => {
                           );
                         })}
                       </div>
+                    </div>
+                    {/* The phone is the device that has a GPS chip, so this is
+                        the one control that belongs to it first. */}
+                    <div className="md:flex md:justify-center">
+                      <NearbyButton />
                     </div>
                   </div>
               </div>

@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { api, setAccessToken } from "@/lib/api";
-import { PROFILE_UPDATED } from "@/lib/events";
+import ChatsDrawer from "@/components/layout/ChatsDrawer";
+import { api, authReady, setAccessToken } from "@/lib/api";
+import { CHAT_UNREAD_CHANGED, PROFILE_UPDATED } from "@/lib/events";
 import type { AuthUser } from "@/lib/types";
 
 type User = Pick<AuthUser, "name" | "email" | "avatarUrl">;
@@ -42,6 +43,13 @@ const ListingsIcon = () => (
   <svg {...iconProps}>
     <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
     <path d="M7.5 9.5h9M7.5 14.5h6" />
+  </svg>
+);
+
+const ChatsIcon = () => (
+  <svg {...iconProps}>
+    <path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4.5 3.5Z" />
+    <path d="M8.5 8.5h7M8.5 11.5h4" />
   </svg>
 );
 
@@ -125,7 +133,9 @@ const focusRing =
 const Sidebar = () => {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false); // phones
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [chatsOpen, setChatsOpen] = useState(false);
+  const [unread, setUnread] = useState(0); // phones
   const [collapsed, setCollapsed] = useState(false); // desktop
   const [loggingOut, setLoggingOut] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false); // falls back to initials
@@ -144,6 +154,26 @@ const Sidebar = () => {
     window.addEventListener(PROFILE_UPDATED, loadUser);
     return () => window.removeEventListener(PROFILE_UPDATED, loadUser);
   }, []);
+
+  useEffect(() => {
+    let live = true;
+    const loadUnread = async () => {
+      // Without this the request can leave before the refresh token has been
+      // exchanged, and the badge silently stays at zero.
+      await authReady;
+      try {
+        const { data } = await api.get("/chat/conversation/unread");
+        if (live) setUnread(data.count);
+      } catch {
+      }
+    };
+    loadUnread();
+    window.addEventListener(CHAT_UNREAD_CHANGED, loadUnread);
+    return () => {
+      live = false;
+      window.removeEventListener(CHAT_UNREAD_CHANGED, loadUnread);
+    };
+  }, [pathname]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -207,7 +237,51 @@ const Sidebar = () => {
     );
   };
 
+  // Chats opens a panel, not a page, so it cannot be a Link — but it has to
+  // look identical to the links above it.
+  const chatsButton = (
+    <li>
+      <button
+        type="button"
+        onClick={() => {
+          setChatsOpen(true);
+          setMenuOpen(false);
+        }}
+        aria-haspopup="dialog"
+        aria-expanded={chatsOpen}
+        aria-label={collapsed ? "Chats" : undefined}
+        title={collapsed ? "Chats" : undefined}
+        // text-left because a <button> centres its text by default, while the
+        // <a> elements above it inherit left — the label would not line up.
+        className={`relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium transition-colors ${focusRing} ${
+          collapsed ? "lg:justify-center" : ""
+        } ${chatsOpen ? "bg-accent-soft text-ink" : "text-muted hover:bg-accent-soft/60 hover:text-ink"}`}
+      >
+        <span className={chatsOpen ? "text-accent" : ""}>
+          <ChatsIcon />
+        </span>
+        <span className={`flex-1 ${hideWhenCollapsed}`}>Chats</span>
+        {unread > 0 && (
+          <span
+            aria-label={`${unread} unread`}
+            // Collapsed, there is no room for a number and no label to sit
+            // beside, so it becomes a dot on the icon's corner.
+            className={`flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums ${
+              collapsed
+                ? "lg:absolute lg:right-2 lg:top-2 lg:h-2.5 lg:min-w-2.5 lg:px-0 lg:text-transparent"
+                : ""
+            }`}
+          >
+            {/* Three digits change the pill's width and shove the row around. */}
+            {unread > 99 ? "99+" : unread}
+          </span>
+        )}
+      </button>
+    </li>
+  );
+
   return (
+    <>
     <aside
       className={`relative isolate overflow-hidden border-b border-line bg-panel text-ink lg:border-b-0 lg:border-r lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0 lg:flex-col lg:transition-[width] lg:duration-200 motion-reduce:transition-none ${
         collapsed ? "lg:w-[76px]" : "lg:w-60"
@@ -256,6 +330,28 @@ const Sidebar = () => {
           )}
         </div>
 
+        {/* On phones the nav lives behind "Menu", which would hide the unread
+            badge behind a tap. Messaging is the one thing that has to announce
+            itself, so it gets its own always-visible trigger up here. */}
+        <button
+          type="button"
+          onClick={() => {
+            setChatsOpen(true);
+            setMenuOpen(false);
+          }}
+          aria-haspopup="dialog"
+          aria-expanded={chatsOpen}
+          aria-label={unread > 0 ? `Chats, ${unread} unread` : "Chats"}
+          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-muted lg:hidden ${focusRing}`}
+        >
+          <ChatsIcon />
+          {unread > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -275,6 +371,7 @@ const Sidebar = () => {
         <nav aria-label="Main">
           <ul className="space-y-1">
             {NAV_ITEMS.map((item) => navLink(item))}
+            {chatsButton}
           </ul>
         </nav>
 
@@ -320,6 +417,11 @@ const Sidebar = () => {
         </div>
       </div>
     </aside>
+
+    {/* A sibling of the rail, not a child: the panel is fixed to the viewport,
+        and nesting it inside the rail would tie it to the rail's own box. */}
+    <ChatsDrawer open={chatsOpen} onClose={() => setChatsOpen(false)} />
+    </>
   );
 };
 

@@ -132,7 +132,11 @@ const SearchResults = () => {
 
   const [retry, setRetry] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  const [view, setView] = useState<"list" | "map">("list"); // phones and tablets
+  // Phones and tablets. "Find nearby properties" sends view=map, because the
+  // answer to "what is around me" is a map, not a list of names.
+  const [view, setView] = useState<"list" | "map">(
+    searchParams.get("view") === "map" ? "map" : "list",
+  );
   const [mapHidden, setMapHidden] = useState(false); // desktop
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const cardRefs = useRef(new Map<string, HTMLLIElement>());

@@ -100,6 +100,9 @@ model User {
   agentReraVerifiedAt DateTime?
   projects            Project[]          @relation("BuiltProjects")
   interest            UserInterest[]
+  BuyerChats          Conversation[] @relation("BuyerChats")
+  sellerChats         Conversation[] @relation("SellerChats")
+  messagesSent        Message[]
   @@map("users")
 }
 
@@ -211,6 +214,7 @@ model Listing {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   interest        UserInterest[]
+  conversations  Conversation[]
   @@index([city, listingType, status])
   @@index([status, createdAt])
   @@index([price])
@@ -265,4 +269,33 @@ model UserInterest{
   @@unique([userId,listingId])
   @@index([userId])
   @@map("user_interests")
+}
+
+model Conversation {
+id    String  @id @default(uuid())
+listingId String
+listing Listing @relation(fields: [listingId],references: [id],onDelete: Cascade)
+buyerId String
+buyer   User @relation("BuyerChats",fields: [buyerId],references: [id],onDelete: Cascade)
+sellerId String
+seller  User @relation("SellerChats",fields: [sellerId],references: [id],onDelete: Cascade)
+lastMessageAt DateTime @default(now())
+lastMessageText String @default("")
+buyerUnread Int @default(0)
+sellerUnread Int @default(0)
+createdAt DateTime @default(now())
+messages  Message[]
+@@unique([listingId,buyerId])
+@@map("conversations")
+}
+
+model Message {
+id String @id @default(uuid())
+conversationId String
+conversation Conversation @relation(fields: [conversationId],references: [id],onDelete: Cascade)
+senderId String
+sender User @relation(fields: [senderId],references: [id],onDelete: Cascade)
+body String
+createdAt DateTime @default(now())
+@@map("messages")
 }

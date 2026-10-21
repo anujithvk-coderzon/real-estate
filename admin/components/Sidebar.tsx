@@ -28,13 +28,16 @@ const Glyph = ({ d }: { d: string }) => (
   </svg>
 );
 
-// Only Home exists. The rest are shown but not linked — a staff tool should
-// say what it will hold, and a link to a route that 404s is worse than a label
-// that admits it is not ready.
+const NAV = [
+  { href: "/home", label: "Home", d: icon.home },
+  { href: "/interests", label: "User interests", d: icon.interests },
+] as const;
+
+// Shown but not linked — a staff tool should say what it will hold, and a link
+// to a route that 404s is worse than a label that admits it is not ready.
 const SOON = [
   { label: "Listings", d: icon.listings, note: "approve, hide, remove" },
   { label: "Sellers", d: icon.users, note: "accounts and RERA" },
-  { label: "Interest", d: icon.interests, note: "who contacted whom" },
 ] as const;
 
 const itemBase =
@@ -50,7 +53,6 @@ const Sidebar = ({
   onNavigate?: () => void;
 }) => {
   const pathname = usePathname();
-  const onHome = pathname === "/home";
 
   return (
     <div className="flex h-full flex-col bg-panel">
@@ -64,19 +66,28 @@ const Sidebar = ({
       </div>
 
       <nav aria-label="Admin sections" className="flex-1 overflow-y-auto p-3">
-        <Link
-          href="/home"
-          onClick={onNavigate}
-          aria-current={onHome ? "page" : undefined}
-          className={`${itemBase} ${
-            onHome
-              ? "bg-accent-soft font-semibold text-accent"
-              : "text-ink hover:bg-ground"
-          }`}
-        >
-          <Glyph d={icon.home} />
-          Home
-        </Link>
+        <ul className="space-y-0.5">
+          {NAV.map((item) => {
+            const current = pathname === item.href;
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={onNavigate}
+                  aria-current={current ? "page" : undefined}
+                  className={`${itemBase} ${
+                    current
+                      ? "bg-accent-soft font-semibold text-accent"
+                      : "text-ink hover:bg-ground"
+                  }`}
+                >
+                  <Glyph d={item.d} />
+                  <span className="min-w-0 truncate">{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
 
         <p className="mt-6 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
           Not built yet

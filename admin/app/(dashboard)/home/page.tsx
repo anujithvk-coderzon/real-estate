@@ -20,16 +20,10 @@ const AREAS = [
     body: "Accounts, account type and the RERA details agents entered when they registered.",
     needs: "an admin users endpoint",
   },
-  {
-    title: "Interest",
-    body: "Who tapped contact on which property, so a seller's claim can be checked against the record.",
-    needs: "UserInterest to be migrated and read",
-  },
 ] as const;
 
 const PENDING = [
   "POST /admin/create has no auth on it — anyone who can reach the API can mint an ADMIN.",
-  "A requireAdmin middleware, so the backend refuses an ordinary user's token instead of trusting this app.",
   "The database password and the operator password both still need rotating.",
 ] as const;
 
@@ -47,7 +41,7 @@ const Page = () => (
     </p>
 
     <h2 className="mt-10 text-[13px] font-bold uppercase tracking-[0.12em] text-muted">
-      Sections
+      Still to build
     </h2>
     {/* auto-fit, so 320px gets one column and a desktop gets three without a
         breakpoint for each step. */}

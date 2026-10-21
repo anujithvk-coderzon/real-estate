@@ -11,8 +11,6 @@ export const adminRegisterService=async(name:string,email:string,pass:string)=>{
     role:"ADMIN",
     isVerified:true
  }})
- console.log(hashedPassword);
- 
  return 'Admin Registered Successfully'
 }
 
@@ -28,3 +26,34 @@ await prisma.userInterest.upsert({where:{userId_listingId:{userId:id,listingId:l
 },update:{}})
 return 'Interest saved successfully'
 }
+
+
+export const interestsFetchingService = async (page: number, take: number) => {
+  const [rows, total] = await prisma.$transaction([
+    prisma.userInterest.findMany({
+      orderBy: { createdAt: "desc" },
+      take,
+      skip: (page - 1) * take,
+      select: {
+        id: true,
+        createdAt: true,
+        user: { select: { name: true, email: true } },
+        listing: {
+          select: {
+            slug: true,
+            title: true,
+            locality: true,
+            city: true,
+            price: true,
+            listingType: true,
+            contactName: true,
+            contactPhone: true,
+            owner: { select: { name: true, email: true } },
+          },
+        },
+      },
+    }),
+    prisma.userInterest.count(),
+  ]);
+  return { total, interests: rows };
+};

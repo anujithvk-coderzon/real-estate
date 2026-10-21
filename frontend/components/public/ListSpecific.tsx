@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Gallery from "@/components/listing/Gallery";
 import {
   AreaIcon,
@@ -20,6 +21,8 @@ import {
   SofaIcon,
 } from "@/components/public/icons";
 import { api, authReady } from "@/lib/api";
+import { errorToast } from "@/lib/toast";
+import { apiMessage } from "@/lib/validation/apiError";
 import {
   formatDate,
   formatNumber,
@@ -120,6 +123,8 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
 
 // Price, the running costs for rentals, and how to reach the seller.
 const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
+  const router = useRouter();
+  const [opening, setOpening] = useState(false);
   const rental = isRental(listing.listingType);
   const pricePerSqft =
     !rental && Number(listing.areaSqft) > 0
@@ -133,6 +138,21 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
   const whatsappText = encodeURIComponent(
     `Hi, I saw "${listing.title}" and would like to know more.`,
   );
+
+  // The server upserts on (listing, buyer), so a second click returns the same
+  // chat id rather than starting a new thread.
+  const openChat = async () => {
+    setOpening(true);
+    try {
+      const { data } = await api.post("/chat/conversation", {
+        listingSlug: listing.slug,
+      });
+      router.push(`/list/messages/${data.chatId}`);
+    } catch (error) {
+      errorToast(apiMessage(error));
+      setOpening(false);
+    }
+  };
 
   return (
     <div className="overflow-hidden rounded-2xl bg-panel shadow-[0_10px_34px_-20px_rgba(48,32,68,0.35)] ring-1 ring-line">
@@ -272,6 +292,20 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
             No phone number on this listing yet. Published listings always carry
             one.
           </p>
+        )}
+
+        {/* Chat sits outside the phone branches on purpose: a listing with no
+            number is the one where messaging matters most. */}
+        {signedIn && !listing.isOwner && (
+          <button
+            type="button"
+            onClick={openChat}
+            disabled={opening}
+            className={`mt-2 w-full gap-2 bg-panel ${secondaryButton}`}
+          >
+            <ChatIcon className="h-4 w-4" />
+            {opening ? "Opening chat…" : "Chat now"}
+          </button>
         )}
 
         {/* Who is selling, and a way to see everything else they have listed. */}
