@@ -2,6 +2,7 @@ import "dotenv/config.js";
 
 import app from "./app.js";
 import { redisConnect } from "./lib/redis.js";
+import { startChatSocketServer } from "./modules/chat/chat.socket.js";
 
 const PORT = process.env.PORT || 5001;
 await redisConnect();
@@ -9,6 +10,8 @@ await redisConnect();
 const server=app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+startChatSocketServer(server)
 
 let closing = false;
 

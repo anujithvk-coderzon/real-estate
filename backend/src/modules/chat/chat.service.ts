@@ -3,6 +3,7 @@ import { BadRequestError, NotFoundError } from "../../errors/Errors.js"
 import { avatarPublicUrl } from "../../lib/bunny.js"
 import { prisma } from "../../lib/prisma.js"
 import { conversationSide } from "./chat.helper.js"
+import { sendToUser } from "./chat.socket.js"
 
 
 export const chatIntitializeService=async(slug:string,userId:string)=>{
@@ -35,7 +36,7 @@ return result
 export const messageSendService=async(conversationId:string,userId:string,body:string)=>{
     const side=await conversationSide(conversationId,userId)
     const now=new Date()
-    const [message]=await prisma.$transaction([
+    const [message,conversation]=await prisma.$transaction([
         prisma.message.create({
             data:{conversationId,senderId:userId,body},
         }),
@@ -48,6 +49,10 @@ export const messageSendService=async(conversationId:string,userId:string,body:s
             }
         })
     ]) 
+    const recipientId=side==='buyer'?conversation.sellerId:conversation.buyerId
+    sendToUser(recipientId,{type:"message",conversationId,message})
+    console.log(message);
+    
     return message
 }
 
@@ -86,5 +91,6 @@ export const totalUnreadService=async(userId:string)=>{
 export const markAsReadService=async(conversationId:string,userId:string)=>{
 const side=await conversationSide(conversationId,userId)
 await prisma.conversation.update({where:{id:conversationId},data:side==='buyer' ? {buyerUnread:0}:{sellerUnread:0}})
+sendToUser(userId,{type:"read",conversationId})
 return "Conversation marked read"
 }

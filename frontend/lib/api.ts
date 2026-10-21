@@ -6,6 +6,10 @@ export const setAccessToken=(token:string|null)=>{
     accessToken=token
 }
 
+// The chat socket needs it: new WebSocket() cannot send an Authorization
+// header, so the token travels in the first frame instead.
+export const getAccessToken=()=>accessToken
+
 
 let markReady:()=>void
 export const authReady=new Promise<void>((resolve)=>{markReady=resolve})

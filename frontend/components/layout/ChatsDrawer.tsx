@@ -22,8 +22,6 @@ type Row = {
 const initialsOf = (name: string) => {
   const parts = name.split(" ").filter(Boolean).slice(0, 2);
   const initials = parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
-  // Never return an empty string: an avatar with nothing in it reads as a
-  // rendering bug rather than as a missing name.
   return initials || "?";
 };
 

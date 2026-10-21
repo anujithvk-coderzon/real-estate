@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ChatsDrawer from "@/components/layout/ChatsDrawer";
-import { api, authReady, setAccessToken } from "@/lib/api";
+import { api, authReady, getAccessToken, setAccessToken } from "@/lib/api";
 import { CHAT_UNREAD_CHANGED, PROFILE_UPDATED } from "@/lib/events";
 import type { AuthUser } from "@/lib/types";
 
@@ -174,6 +174,30 @@ const Sidebar = () => {
       window.removeEventListener(CHAT_UNREAD_CHANGED, loadUnread);
     };
   }, [pathname]);
+
+  // A socket for the badge. The Sidebar is on every page, so this is what keeps
+  // the count live when the user is nowhere near a chat page.
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_WS_URL;
+    if (!url) return;
+
+    const socket = new WebSocket(url);
+      socket.onopen = async () => {
+      await authReady;
+      const token = getAccessToken();
+      if (!token) return socket.close(); // signed out, nothing to count
+      socket.send(JSON.stringify({ type: "login", token }));
+    };
+
+    socket.onmessage = (frame) => {
+      const event = JSON.parse(frame.data);
+      if (event.type === "message" || event.type === "read") {
+        window.dispatchEvent(new Event(CHAT_UNREAD_CHANGED));
+      }
+    };
+
+    return () => socket.close();
+  }, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);

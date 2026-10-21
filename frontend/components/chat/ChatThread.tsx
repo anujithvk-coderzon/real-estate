@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { api, authReady } from "@/lib/api";
+import { api, authReady, getAccessToken } from "@/lib/api";
 import { clockTime, dayLabel } from "@/lib/chatTime";
 import { CHAT_UNREAD_CHANGED } from "@/lib/events";
 import { formatRupeesShort } from "@/lib/format";
@@ -127,6 +127,32 @@ const ChatThread = ({ id }: { id: string }) => {
     return () => {
       live = false;
     };
+  }, [id]);
+
+  // Live messages. The fetch above loads the history; this one handles whatever
+  // arrives while the page is open.
+  useEffect(() => {
+    const socket = new WebSocket(process.env.NEXT_PUBLIC_WS_URL as string);
+
+    socket.onopen = async () => {
+      // A socket cannot carry an Authorization header, so the first frame says
+      // who we are. Waiting for authReady means the token actually exists.
+      await authReady;
+      socket.send(JSON.stringify({ type: "login", token: getAccessToken() }));
+    };
+
+    socket.onmessage = (frame) => {
+      const event = JSON.parse(frame.data);
+      if (event.type !== "message") return;
+      
+      if (event.conversationId !== id) return;
+      setMessages((previous) => [...previous, event.message]);
+          api
+          .post(`/chat/conversation/${id}/read`)
+          .then(() => window.dispatchEvent(new Event(CHAT_UNREAD_CHANGED)))
+          .catch(() => {});
+    };
+    return () => socket.close();
   }, [id]);
 
   // The newest message is at the bottom, so that is where the thread opens and
