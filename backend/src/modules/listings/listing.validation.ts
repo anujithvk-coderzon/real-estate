@@ -56,7 +56,9 @@ export const listingFields=z.object({
       .trim()
       .regex(/^[6-9]\d{9}$/, "Enter a 10-digit Indian mobile number")
       .optional(),
-
+    contactPhoneVisibility:z.boolean(),
+    contactWatsappVisibility:z.boolean(),
+    contactInappVisibility:z.boolean(),
     amenityIds: z.array(z.string().uuid("Invalid amenity")).optional(),
     // The builder's project this unit belongs to; its RERA number covers the sale.
     projectId: z.string().trim().min(1,"Choose a project").optional(),

@@ -34,9 +34,6 @@ if(data.projectNameText && user.accountType==="BUILDER"){
   throw new BadRequestError("Add the project to your profile, then choose it here")
 }
 
-// A project nobody registered here carries nothing of its own, so the lister must
-// supply all three: without the number the name cannot be checked anywhere, and
-// without the builder a buyer does not know whose project they are buying into.
 if(data.projectNameText && !data.projectReraText){
   throw new BadRequestError("Give the project's RERA registration number, or say the unit is not part of a project")
 }
@@ -44,8 +41,6 @@ if(data.projectNameText && !data.builderNameText){
   throw new BadRequestError("Give the name of the builder of this project")
 }
 
-// Off-plan: there is no "not part of a project" answer, because such a unit is
-// sold out of a project that must be registered before it is advertised.
 if(offPlan && !data.projectId && !data.projectNameText){
   throw new BadRequestError("An under-construction unit must name its project. Choose it from our records, or type its name and RERA number.")
 }
@@ -74,7 +69,6 @@ const post=await prisma.listing.create({data:{
     propertyStatus:data.propertyStatus??null,
     availableFrom:data.availableFrom??null,
     projectId:data.projectId??null,
-    // Only kept when the project is not one of our records.
     projectNameText:data.projectId ? null : (data.projectNameText??null),
     projectReraText:data.projectId ? null : (data.projectReraText??null),
     builderNameText:data.projectId ? null : (data.builderNameText??null),
@@ -89,6 +83,9 @@ const post=await prisma.listing.create({data:{
     longitude:data.longitude??null,
     contactName:data.contactName??null,
     contactPhone:data.contactPhone??null,
+    contactPhoneVisibility:data.contactPhoneVisibility,
+    contactWatsappVisibility:data.contactWatsappVisibility,
+    contactInappVisibility:data.contactInappVisibility,
     ...(data.amenityIds?.length && 
     {amenities: {connect:data.amenityIds.map((id)=>({id}))}})
     },

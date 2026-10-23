@@ -33,6 +33,7 @@ import {
 } from "@/lib/format";
 import {
   amenityCategoryLabel,
+  contactChannels,
   isRental,
   labelOf,
   listingLocation,
@@ -140,6 +141,20 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
     `Hi, I saw "${listing.title}" and would like to know more.`,
   );
 
+  // What the seller left switched on. Call and WhatsApp also need a number to
+  // dial, so both are gated on the phone as well as on the toggle; chat only
+  // needs an account, which is why a listing with no number still has one way in.
+  const channels = contactChannels(listing);
+  const canCall = Boolean(phone) && channels.call;
+  const canWhatsapp = Boolean(phone) && channels.whatsapp;
+  const canChat = signedIn && !listing.isOwner && channels.chat;
+  // Phrased as the seller reads it, for the owner's own copy of this card.
+  const ownerChannels = [
+    Boolean(phone) && channels.call && "call you",
+    Boolean(phone) && channels.whatsapp && "message you on WhatsApp",
+    channels.chat && "chat here",
+  ].filter(Boolean) as string[];
+
   // The server upserts on (listing, buyer), so a second click returns the same
   // chat id rather than starting a new thread.
   const openChat = async () => {
@@ -237,6 +252,14 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
                   <dd className="tabular-nums">+91 {phone}</dd>
                 </div>
               )}
+              <div className="flex gap-2">
+                <dt className="shrink-0 text-muted">Buyers can</dt>
+                <dd>
+                  {ownerChannels.length > 0
+                    ? ownerChannels.join(", ")
+                    : "do nothing — every option is switched off"}
+                </dd>
+              </div>
             </dl>
             <Link
               href="/list/my/listings"
@@ -258,51 +281,79 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               Login to contact
             </Link>
           </>
-        ) : phone ? (
+        ) : (
           <>
             {/* The name is required on new listings, so the fallback is only
                 for rows created before that rule. Kept, because a phone number
                 with nobody attached reads like a number scraped from somewhere. */}
-            <p className="mt-1.5 text-[15px]">
-              {listing.contactName || listing.owner?.name}
-            </p>
-            <div className="mt-4 grid grid-cols-1 gap-2">
-              <a
-              onClick={()=>api.post(`/admin/interest/create/${listing.slug}`)}
-                href={`tel:+91${phone}`}
-                className={`flex items-center justify-center gap-2 ${primaryButton}`}
-              >
-                <PhoneIcon className="h-4 w-4" />
-                Call <span className="tabular-nums">+91 {phone}</span>
-              </a>
-              <a
-               onClick={()=>api.post(`/admin/interest/create/${listing.slug}`)}
-                href={`https://wa.me/91${phone}?text=${whatsappText}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`flex items-center justify-center gap-2 bg-panel ${secondaryButton}`}
-              >
-                <ChatIcon className="h-4 w-4" />
-                Message on WhatsApp
-                {newTabNote}
-              </a>
-            </div>
+            {(canCall || canWhatsapp || canChat) && (
+              <p className="mt-1.5 text-[15px]">
+                {listing.contactName || listing.owner?.name}
+              </p>
+            )}
+
+            {(canCall || canWhatsapp) && (
+              <div className="mt-4 grid grid-cols-1 gap-2">
+                {canCall && (
+                  <a
+                    onClick={() =>
+                      api.post(`/admin/interest/create/${listing.slug}`)
+                    }
+                    href={`tel:+91${phone}`}
+                    className={`flex items-center justify-center gap-2 ${primaryButton}`}
+                  >
+                    <PhoneIcon className="h-4 w-4" />
+                    Call <span className="tabular-nums">+91 {phone}</span>
+                  </a>
+                )}
+                {canWhatsapp && (
+                  <a
+                    onClick={() =>
+                      api.post(`/admin/interest/create/${listing.slug}`)
+                    }
+                    href={`https://wa.me/91${phone}?text=${whatsappText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    // Whichever channel comes first is the solid button: with
+                    // Call switched off, a card of outline buttons reads as
+                    // though nothing on it is the thing to do.
+                    className={`flex items-center justify-center gap-2 ${
+                      canCall ? `bg-panel ${secondaryButton}` : primaryButton
+                    }`}
+                  >
+                    <ChatIcon className="h-4 w-4" />
+                    Message on WhatsApp
+                    {newTabNote}
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Two different situations, and a buyer deserves to know which:
+                the seller closed every door, or the listing predates the rule
+                that one must carry a number. */}
+            {!canCall && !canWhatsapp && !canChat && (
+              <p className="mt-1.5 text-[14px] text-muted">
+                {phone
+                  ? "The seller has turned off every way of being contacted on this listing."
+                  : "No phone number on this listing yet. Published listings always carry one."}
+              </p>
+            )}
           </>
-        ) : (
-          <p className="mt-1.5 text-[14px] text-muted">
-            No phone number on this listing yet. Published listings always carry
-            one.
-          </p>
         )}
 
         {/* Chat sits outside the phone branches on purpose: a listing with no
             number is the one where messaging matters most. */}
-        {signedIn && !listing.isOwner && (
+        {canChat && (
           <button
             type="button"
             onClick={openChat}
             disabled={opening}
-            className={`mt-2 w-full gap-2 bg-panel ${secondaryButton}`}
+            className={`mt-2 w-full gap-2 ${
+              canCall || canWhatsapp
+                ? `bg-panel ${secondaryButton}`
+                : primaryButton
+            }`}
           >
             <ChatIcon className="h-4 w-4" />
             {opening ? "Opening chat…" : "Chat now"}

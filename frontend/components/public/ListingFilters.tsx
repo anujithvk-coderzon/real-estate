@@ -626,7 +626,12 @@ const ListingFilters = ({
         //
         // Grid rows rather than flex for the same reason: minmax(0,1fr) states
         // outright that the middle row takes the leftover and may shrink to zero.
-        className="sheet fixed inset-x-0 bottom-0 top-auto m-0 h-[88dvh] w-full max-w-[36rem] grid-rows-[auto_minmax(0,1fr)_auto] rounded-t-2xl bg-panel p-0 text-ink backdrop:bg-ink/40 open:grid sm:mx-auto lg:hidden"
+        // z-50 matters only on the show() fallback above: showModal() promotes
+        // the dialog to the browser's top layer, where z-index does not apply at
+        // all, but show() leaves it an ordinary fixed element at z-auto — and the
+        // search page's floating Map button is fixed at z-40 over the same
+        // bottom strip of the screen, so it would paint across this footer.
+        className="sheet fixed inset-x-0 bottom-0 top-auto z-50 m-0 h-[88dvh] w-full max-w-[36rem] grid-rows-[auto_minmax(0,1fr)_auto] rounded-t-2xl bg-panel p-0 text-ink backdrop:bg-ink/40 open:grid sm:mx-auto lg:hidden"
       >
         <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
           <h2 id="filter-sheet-title" className="font-display text-[17px]">

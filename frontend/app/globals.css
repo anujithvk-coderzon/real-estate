@@ -28,6 +28,29 @@
   --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ---------- the stacking ladder ----------
+
+   Five rungs, and nothing should invent a sixth. A number only ever competes
+   with others in the same stacking context, so these are the page-level rungs:
+
+     -z-10  artwork behind a panel's own content (the sidebar's contour, the
+            admin plan grid). Always inside an `isolate` parent, or it slides
+            behind the page itself.
+      z-10  a control drawn over a panel's content: gallery arrows, the photo
+            counter, the map legend.
+      z-20  sticky page chrome: the search toolbar, the owner bar, a chat
+            header, an open filter popover.
+      z-40  a floating control that follows the viewport — the search page's
+            Map/List pill.
+      z-50  a sheet or dialog that covers the page, so it clears z-40.
+    z-[100] ChatsDrawer: full-screen, and must cover the sidebar it is opened
+            from, which is a sibling earlier in the DOM.
+
+   Two things on this ladder that are not numbers at all, and are better for it:
+   a <dialog> opened with showModal() and sonner's toaster both render in the
+   browser's top layer, above every z-index on the page. Reach for those before
+   reaching for a bigger number. */
+
 /* ---------- the drawing language ---------- */
 
 /* A survey grid behind the hero. Its 2rem module is the same rhythm the layout

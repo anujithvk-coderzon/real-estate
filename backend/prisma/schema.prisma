@@ -199,6 +199,9 @@ model Listing {
   //contact 
   contactName     String?
   contactPhone    String?
+  contactPhoneVisibility Boolean? @default(true)
+  contactWatsappVisibility Boolean? @default(true)
+  contactInappVisibility  Boolean? @default(true)
   //status
   status          ListingStatus   @default(DRAFT)
   expiresAt       DateTime?

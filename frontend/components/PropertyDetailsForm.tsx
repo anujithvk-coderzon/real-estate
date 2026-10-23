@@ -38,6 +38,26 @@ type ChangeEvent = React.ChangeEvent<
 const groupTitle = "text-[15px] font-semibold text-ink";
 const monoInput = `${inputClass} tabular-nums`;
 
+// The three ways a buyer can open a conversation. Keyed by the form field so
+// one map renders all three rows and the names cannot drift from the payload.
+const CONTACT_CHANNELS = [
+  {
+    name: "contactPhoneVisibility",
+    label: "Phone call",
+    hint: "Shows a Call button with your number on it.",
+  },
+  {
+    name: "contactWatsappVisibility",
+    label: "WhatsApp",
+    hint: "Opens WhatsApp on your number with a first message ready.",
+  },
+  {
+    name: "contactInappVisibility",
+    label: "Chat here",
+    hint: "Messages arrive in your inbox and your number stays private.",
+  },
+] as const;
+
 // A mouse wheel over a focused number input silently changes its value.
 // Blurring it first lets the wheel scroll the page instead.
 const blurNumberInputOnWheel = (event: React.WheelEvent) => {
@@ -443,6 +463,57 @@ const PropertyDetailsForm = ({
             />
           </Field>
         </div>
+
+        {/* Which of those channels the listing actually offers. Both phone
+            options are greyed out until there is a number to put behind them —
+            a Call button on no number is a dead end for the buyer. */}
+        <fieldset className="rounded-lg border border-line p-4">
+          <legend className="px-1 text-[14px] font-medium text-ink">
+            How buyers can reach you
+          </legend>
+          <p className="text-[13px] text-muted">
+            Turn off anything you would rather not receive. Whatever stays on
+            becomes a button on your listing.
+          </p>
+          <div className="mt-3 space-y-3.5">
+            {CONTACT_CHANNELS.map((channel) => {
+              const needsPhone = channel.name !== "contactInappVisibility";
+              const disabled = needsPhone && data.contactPhone.trim() === "";
+              return (
+                <label
+                  key={channel.name}
+                  className={`flex items-start gap-2.5 text-[15px] ${
+                    disabled ? "text-muted" : "text-ink"
+                  }`}
+                >
+                  <input
+                    name={channel.name}
+                    type="checkbox"
+                    checked={data[channel.name] && !disabled}
+                    disabled={disabled}
+                    onChange={handleChange}
+                    className="mt-0.5 h-4 w-4 accent-accent"
+                  />
+                  <span>
+                    {channel.label}
+                    <span className="block text-[13px] text-muted">
+                      {disabled
+                        ? "Add a phone number above to offer this."
+                        : channel.hint}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          {!data.contactPhoneVisibility &&
+            !data.contactWatsappVisibility &&
+            !data.contactInappVisibility && (
+              <p className="mt-3.5 text-[13px] text-danger">
+                Leave at least one on, or nobody can answer your listing.
+              </p>
+            )}
+        </fieldset>
       </div>
     </div>
   );

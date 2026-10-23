@@ -50,6 +50,12 @@ export type ListingFormData = {
 
   contactName: string;
   contactPhone: string;
+  // Which of the three ways of reaching the seller this listing offers. Named
+  // exactly after the database columns, including the Watsapp spelling, so the
+  // payload needs no translation layer.
+  contactPhoneVisibility: boolean;
+  contactWatsappVisibility: boolean;
+  contactInappVisibility: boolean;
 
   addressLine: string;
   landmark: string;
@@ -84,6 +90,11 @@ export const emptyListing: ListingFormData = {
   availableFrom: "",
   contactName: "",
   contactPhone: "",
+  // All three on, matching the column defaults: a new listing is reachable
+  // every way until the seller decides otherwise.
+  contactPhoneVisibility: true,
+  contactWatsappVisibility: true,
+  contactInappVisibility: true,
   addressLine: "",
   landmark: "",
   locality: "",
@@ -149,6 +160,11 @@ export type Listing = {
   longitude: number | null;
   contactName: string | null;
   contactPhone: string | null;
+  // Nullable because rows created before these columns existed hold null, and
+  // the column default is true — so null means shown, not hidden.
+  contactPhoneVisibility: boolean | null;
+  contactWatsappVisibility: boolean | null;
+  contactInappVisibility: boolean | null;
   status: ListingStatus;
   expiresAt: string | null;
   createdAt: string;

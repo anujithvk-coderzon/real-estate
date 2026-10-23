@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { formatDate, formatRupees, formatRupeesShort } from "@/lib/format";
 import {
   amenityCategoryLabel,
+  contactChannels,
   isRental,
   labelOf,
   listingLocation,
@@ -149,6 +150,15 @@ const MySpecificListing = ({ id }: Props) => {
       errorToast(apiMessage(error));
     }
   };
+
+  // The same reading of the toggles the public page does, so this panel and
+  // the listing itself can never tell the owner two different stories.
+  const channels = contactChannels(listing);
+  const ownerChannels = [
+    listing.contactPhone && channels.call && "call",
+    listing.contactPhone && channels.whatsapp && "message on WhatsApp",
+    channels.chat && "chat here",
+  ].filter(Boolean) as string[];
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-6 lg:px-8 lg:pt-8">
@@ -406,6 +416,14 @@ const MySpecificListing = ({ id }: Props) => {
                 No contact details added.
               </p>
             )}
+            {/* The details alone do not say what a buyer is offered — a number
+                on the listing with its toggle off is still a number nobody can
+                ring. This line is the part the owner came to check. */}
+            <p className="mt-2 text-[13px] text-muted">
+              {ownerChannels.length > 0
+                ? `Buyers can ${ownerChannels.join(", ")}.`
+                : "Every contact option is off, so buyers have no way to answer this listing."}
+            </p>
           </div>
 
           <dl className="space-y-2 p-5 text-[13px]">

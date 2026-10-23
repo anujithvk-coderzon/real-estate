@@ -309,6 +309,14 @@ export const getMissingFields = (
     // old number on a listing the owner believes they have cleared.
     ["a contact name", data.contactName.trim().length >= 2],
     ["a contact phone number", /^[6-9]\d{9}$/.test(data.contactPhone.trim())],
+    // With all three off, a published listing is one nobody can answer, which
+    // is worse for the seller than not publishing at all.
+    [
+      "at least one way for buyers to reach you",
+      data.contactPhoneVisibility ||
+        data.contactWatsappVisibility ||
+        data.contactInappVisibility,
+    ],
     ["floors to be consistent", !floorsInconsistent(data)],
   ];
 
@@ -362,6 +370,12 @@ export const buildListingPayload = (
 
   contactName: textOrUndefined(data.contactName),
   contactPhone: textOrUndefined(data.contactPhone),
+  // Sent as real booleans, never undefined: these are the one group of fields
+  // where "leave it as it was" is the wrong default — an owner switching a
+  // channel off has to be able to switch it off.
+  contactPhoneVisibility: data.contactPhoneVisibility,
+  contactWatsappVisibility: data.contactWatsappVisibility,
+  contactInappVisibility: data.contactInappVisibility,
 
   amenityIds: data.amenityIds,
 });
@@ -392,6 +406,9 @@ export const listingToFormData = (listing: Listing): ListingFormData => ({
   availableFrom: listing.availableFrom?.slice(0, 10) ?? "",
   contactName: listing.contactName ?? "",
   contactPhone: listing.contactPhone ?? "",
+  contactPhoneVisibility: listing.contactPhoneVisibility ?? true,
+  contactWatsappVisibility: listing.contactWatsappVisibility ?? true,
+  contactInappVisibility: listing.contactInappVisibility ?? true,
   addressLine: listing.addressLine,
   landmark: listing.landmark ?? "",
   locality: listing.locality,
@@ -400,6 +417,22 @@ export const listingToFormData = (listing: Listing): ListingFormData => ({
   state: listing.state,
   pincode: listing.pincode,
   amenityIds: listing.amenities.map((amenity) => amenity.id),
+});
+
+// Which contact buttons a listing offers.
+//
+// Anything that is not an explicit false counts as shown, for three reasons:
+// listings created before these columns existed hold null, the column default
+// is true, and an API response that omits the fields should leave the page
+// working rather than silently strip every button off it.
+export const contactChannels = (listing: {
+  contactPhoneVisibility?: boolean | null;
+  contactWatsappVisibility?: boolean | null;
+  contactInappVisibility?: boolean | null;
+}) => ({
+  call: listing.contactPhoneVisibility !== false,
+  whatsapp: listing.contactWatsappVisibility !== false,
+  chat: listing.contactInappVisibility !== false,
 });
 
 export const listingLocation = (
