@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { isAuthorized } from "../../middlewares/jwtTokens.js";
-import { fetchSellerListings, createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch } from "./listing.controller.js";
+import { fetchSellerListings, createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch, similarListings } from "./listing.controller.js";
 import { upload } from "../../lib/multer.js";
 
 const router=Router()
 
 
 router.post('/create',isAuthorized,createListingPost);
+
 router.patch('/publish/:id',isAuthorized,publishListing)
 router.get('/amenities',isAuthorized,getAmentites)
 router.post('/images/:id',isAuthorized,upload.array("images",10),uploadListingImages)
@@ -25,5 +26,5 @@ router.delete('/delete/:listingId',isAuthorized,deleteListing)
 router.patch('/update/:listingId',isAuthorized,updateListing)
 router.get('/details/geocode',geoCode)
 router.get('/details/reverse',reverseGeoCode)
-
+router.get('/similar/:slug',similarListings)
 export default router

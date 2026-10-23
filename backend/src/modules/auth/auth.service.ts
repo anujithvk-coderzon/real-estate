@@ -32,11 +32,12 @@ export const registerService = async (validatedData: regValidation) => {
   const existing_user = await prisma.user.findUnique({
     where: { email: validatedData.email },
   });
-  if (existing_user && existing_user?.isVerified)
-    throw new AlreadyExistError("User with this email already exists");
+  if (existing_user && existing_user?.isVerified) throw new AlreadyExistError("User with this email already exists");
+
   const redisTokenExists = await redis.get(
     `email_verification_token:${existing_user?.id}`,
   );
+
   if (redisTokenExists && existing_user && !existing_user?.isVerified) {
     const ttl = await redis.ttl(`email_verification_token:${existing_user.id}`);
     const minutes = Math.floor(ttl / 60);
@@ -310,16 +311,11 @@ export const updateProfileService = async (
 ) => {
   const user = await prisma.user.update({
     where: { id: userId },
-    // Only the fields that were sent are touched, so one screen never wipes
-    // what another screen saved.
     data: {
       ...(data.name && { name: data.name }),
-      // Sent but empty means "remove it", so it is stored as null, not "".
       ...(data.description !== undefined && { description: data.description.trim() || null }),
       ...(data.accountType && { accountType: data.accountType }),
     },
-    // role: the admin app needs it to tell an operator from an ordinary user.
-    // Additive, so the public sidebar simply ignores it.
     select: { name: true, email: true, avatarUrl: true, description: true, accountType: true, role: true },
   });
   return { ...user, avatarUrl: avatarPublicUrl(user.avatarUrl) };

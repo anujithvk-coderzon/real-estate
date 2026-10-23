@@ -228,12 +228,6 @@ export const videoFetchingService=async(userId:string,listingId:string)=>{
     take: number,
   };
 
-// Searching offers two choices, not three: Buy and Rent. A PG room is still
-// something you rent, so asking for RENT returns PG listings too. Listing a
-// property keeps all three — an owner has to say which one they are putting up,
-// and the difference matters to them even though it does not to a searcher.
-// Literals rather than the enum object: ListingType is imported as a type here,
-// so it exists at compile time only.
 const rentCoversPg = (type: ListingType) =>
   type === "RENT" ? { in: ["RENT", "PG"] as ListingType[] } : type;
 
@@ -588,8 +582,6 @@ const final_result=listings.map((list)=>({
 return final_result
 }
 
-// A seller's published listings for their public profile: one page at a time,
-// never the whole lot, and the same card fields as search (no id, no address).
 export const sellerListsFetchingService=async(slug:string,page:number)=>{
   const take=9;
   const seller=await prisma.user.findUnique({where:{slug},select:{id:true}})
@@ -620,4 +612,50 @@ export const sellerListsFetchingService=async(slug:string,page:number)=>{
       listingImages:listing.listingImages.map((image)=>({path:cdnUrl(image.path)})),
     })),
   }
+}
+
+export const similarListingService=async(slug:string,page:number)=>{
+const listing=await prisma.listing.findUnique({where:{slug}})
+if(!listing) throw new NotFoundError("Listing not found")
+const take=8;
+const skip=(page-1)*take
+const existingCache=await redis.get(`related/${slug}/${skip}`)
+if(existingCache){
+  const result=JSON.parse(existingCache)
+  return result
+}
+const where:ListingWhereInput={
+  AND:[
+    {id:{not:listing.id},status:'ACTIVE'},
+    {OR:[
+      {locality:listing.locality},
+      {city:listing.city},
+      {district:listing.district},
+    ]}
+  ]
+}
+const [similar,count]=await Promise.all([
+  prisma.listing.findMany({
+    where,
+    skip,
+    take,
+    orderBy:{
+      createdAt:'desc'
+    },
+    select:{slug:true,title:true,price:true,addressLine:true,locality:true,listingImages:{take:1,orderBy:{position:'asc'},select:{path:true}}}
+  }),
+  prisma.listing.count({where})
+])
+const result=similar.map((listing)=>({
+  slug:listing.slug,
+  title:listing.title,
+  price:listing.price,
+  addressLine:listing.addressLine,
+  locality:listing.locality,
+  image:listing.listingImages[0] ? cdnUrl(listing.listingImages[0].path) : null
+}))
+await redis.set(`related/${slug}/${skip}`,JSON.stringify({result,count}),{
+  expiration:{type:"EX",value:5*60}
+})
+return {result,count}
 }

@@ -1,7 +1,7 @@
 import {  type Request, type Response } from "express";
 import { listTake, registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
-import { sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService } from "./listing.service.js";
+import { sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService, similarListingService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
 import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
 import type { ListingType, PostedBy, PropertyType } from "../../generated/prisma/enums.js";
@@ -185,4 +185,11 @@ export const fetchSellerListings=async(req:Request,res:Response)=>{
     const page=Number(req.query.page) || 1;
     const {lists,total}=await sellerListsFetchingService(slug,page)
     return res.status(200).json({message:"Listings fetched successfully",lists,total})
+}
+
+export const similarListings=async(req:Request,res:Response)=>{
+    const slug=req.params.slug as string
+    const page=Number(req.query.page)||1
+    const result=await similarListingService(slug,page)
+    res.status(200).json({message:"Similar listings fetched ",result})
 }

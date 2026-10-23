@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Gallery from "@/components/listing/Gallery";
+import SimilarListings from "@/components/public/SimilarListings";
 import {
   AreaIcon,
   BalconyIcon,
@@ -730,6 +731,13 @@ const ListSpecific = ({ slug }: Props) => {
           </section>
         </div>
       </div>
+
+      {/* Renders itself only when the API has something to suggest. */}
+      <SimilarListings
+        key={slug}
+        slug={slug}
+        place={listing.locality ?? listing.city ?? listing.district}
+      />
     </main>
   );
 };

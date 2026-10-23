@@ -159,8 +159,6 @@ model Listing {
   id              String          @id @default(uuid())
   projectId       String?
   project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  // Stated by the lister when the project is not in our records. Nobody has
-  // checked either value, so they are shown as a claim, not as a fact.
   projectNameText String?
   projectReraText String?
   builderNameText String?

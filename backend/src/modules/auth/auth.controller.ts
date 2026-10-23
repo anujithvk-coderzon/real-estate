@@ -33,11 +33,7 @@ const refreshCookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 } as const;
 
-export const register = async (
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-) => {
+export const register = async (req: Request,res: Response,_next: NextFunction,) => {
   const validatedData = registerSchema.safeParse(req.body);
   if (!validatedData.success) throw validatedData.error;
   const response = await registerService(validatedData.data);

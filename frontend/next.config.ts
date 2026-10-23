@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "excellence-attempt-modes-participating.trycloudflare.com",
+    "broke-reception-temporary-source.trycloudflare.com",
   ],
 };
 
