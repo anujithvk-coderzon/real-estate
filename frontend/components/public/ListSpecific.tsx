@@ -155,6 +155,18 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
     channels.chat && "chat here",
   ].filter(Boolean) as string[];
 
+  // Feeds the admin interest table, which answers "who tried to reach this
+  // seller". The server upserts on (user, listing), so a buyer who taps Call
+  // and then WhatsApp still counts once.
+  //
+  // Deliberately not awaited, and its failure is swallowed: this is bookkeeping
+  // on the side, and it must never delay or block the contact the buyer asked
+  // for. Without the .catch it would raise an unhandled rejection in the
+  // console on every flaky network.
+  const recordInterest = () => {
+    api.post(`/admin/interest/create/${listing.slug}`).catch(() => {});
+  };
+
   // The server upserts on (listing, buyer), so a second click returns the same
   // chat id rather than starting a new thread.
   const openChat = async () => {
@@ -296,9 +308,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               <div className="mt-4 grid grid-cols-1 gap-2">
                 {canCall && (
                   <a
-                    onClick={() =>
-                      api.post(`/admin/interest/create/${listing.slug}`)
-                    }
+                    onClick={recordInterest}
                     href={`tel:+91${phone}`}
                     className={`flex items-center justify-center gap-2 ${primaryButton}`}
                   >
@@ -308,9 +318,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
                 )}
                 {canWhatsapp && (
                   <a
-                    onClick={() =>
-                      api.post(`/admin/interest/create/${listing.slug}`)
-                    }
+                    onClick={recordInterest}
                     href={`https://wa.me/91${phone}?text=${whatsappText}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -347,7 +355,10 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
         {canChat && (
           <button
             type="button"
-            onClick={openChat}
+            onClick={() => {
+              recordInterest();
+              openChat();
+            }}
             disabled={opening}
             className={`mt-2 w-full gap-2 ${
               canCall || canWhatsapp

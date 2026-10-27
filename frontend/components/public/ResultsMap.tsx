@@ -13,13 +13,34 @@ type Props = {
   // What the map frames: the whole search. Filters then only add or remove pins,
   // so the view stays put instead of jumping (or flying off to all of India at 0 matches).
   frame?: PublicListingSummary[];
+  // Where the search was aimed, as the API geocoded it. Used only when nothing
+  // matched: the map shows that place instead of falling back to all of India.
+  center?: [number, number] | null;
+  // The radius the search used, so an empty result frames the area that was
+  // actually looked at rather than an arbitrary zoom.
+  radiusKm?: number;
   activeSlug?: string | null;
   onActiveChange?: (slug: string | null) => void;
   onSelect?: (slug: string) => void;
 };
 
-// [longitude, latitude]: the middle of India, shown before any results arrive.
+// [longitude, latitude]: the middle of India, shown for the moment before the
+// first frame is worked out, and when the place could not be geocoded at all.
 const INDIA_CENTER: [number, number] = [79, 22.5];
+
+// A box `km` either side of a point. A degree of latitude is ~111.32 km
+// anywhere; a degree of longitude covers less ground the further from the
+// equator you are, so it is divided by cos(latitude). Without that correction
+// the box is noticeably too wide in Srinagar and barely wrong in Thiruvananthapuram
+// — and this app covers both.
+const boxAround = ([lon, lat]: [number, number], km: number) => {
+  const latDelta = km / 111.32;
+  const lonDelta = km / (111.32 * Math.cos((lat * Math.PI) / 180));
+  return new maplibregl.LngLatBounds(
+    [lon - lonDelta, lat - latDelta],
+    [lon + lonDelta, lat + latDelta],
+  );
+};
 
 // MapLibre positions a marker by setting `transform` on the element it is given,
 // so that outer element gets no styles of its own. The look (and the hover grow)
@@ -110,6 +131,8 @@ const buildCard = (listing: PublicListingSummary) => {
 const ResultsMap = ({
   listings,
   frame,
+  center = null,
+  radiusKm = 10,
   activeSlug = null,
   onActiveChange,
   onSelect,
@@ -265,17 +288,31 @@ const ResultsMap = ({
   const target = frame ?? listings;
   useEffect(() => {
     const current = map.current;
+    if (!current) return;
     const located = target.filter(
       (listing) =>
         typeof listing.latitude === "number" &&
         typeof listing.longitude === "number",
     );
-    if (!current || located.length === 0) return;
-    const bounds = new maplibregl.LngLatBounds();
-    for (const listing of located)
-      bounds.extend([listing.longitude!, listing.latitude!]);
-    current.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 0 });
-  }, [target]);
+
+    if (located.length > 0) {
+      const bounds = new maplibregl.LngLatBounds();
+      for (const listing of located)
+        bounds.extend([listing.longitude!, listing.latitude!]);
+      current.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 0 });
+      return;
+    }
+
+    // Nothing to pin. Showing the whole country answers a question nobody
+    // asked; showing the searched place framed to its radius says "this is
+    // where you looked, and it is empty", which is the actual answer.
+    if (!center) return;
+    current.fitBounds(boxAround(center, radiusKm), {
+      padding: 24,
+      maxZoom: 13,
+      duration: 0,
+    });
+  }, [target, center, radiusKm]);
 
   // Light up the pin of the card being hovered (and bring it above its neighbours).
   useEffect(() => {

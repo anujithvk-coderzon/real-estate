@@ -24,6 +24,9 @@ import { primaryButton, secondaryButton } from "@/lib/ui";
 type Result = {
   key: string;
   listings: PublicListingSummary[];
+  // Where the API geocoded the search to, [longitude, latitude]. Null when the
+  // place could not be found at all, which is a different kind of nothing.
+  center: [number, number] | null;
   failed: boolean;
 };
 
@@ -148,15 +151,28 @@ const SearchResults = () => {
     api
       .get(`/list/search?${serverQuery}`)
       .then((response) => {
-        if (!ignore)
+        if (!ignore) {
+          // { lat, lon } from the API, in Nominatim's own order; MapLibre wants
+          // longitude first, so it is flipped once, here.
+          const place = response.data.center;
           setResult({
             key: fetchKey,
             listings: response.data.lists ?? [],
+            center: place
+              ? [Number(place.lon), Number(place.lat)]
+              : null,
             failed: false,
           });
+        }
       })
       .catch(() => {
-        if (!ignore) setResult({ key: fetchKey, listings: [], failed: true });
+        if (!ignore)
+          setResult({
+            key: fetchKey,
+            listings: [],
+            center: null,
+            failed: true,
+          });
       });
     return () => {
       ignore = true;
@@ -169,6 +185,11 @@ const SearchResults = () => {
     () => (loading || !result ? [] : result.listings),
     [loading, result],
   );
+  // Held on the result rather than in its own state, so the reference is stable
+  // between renders and the map's framing effect runs once per search.
+  const center = loading || !result ? null : result.center;
+  // Empty means the API's own default, which is 10 km.
+  const radiusKm = Number(radius) || 10;
 
   // 3. Sort and filter. Memoised, so hovering a card doesn't rebuild the map's pins.
   const shown = useMemo(() => {
@@ -453,6 +474,8 @@ const SearchResults = () => {
           <ResultsMap
             listings={shown}
             frame={all}
+            center={center}
+            radiusKm={radiusKm}
             activeSlug={activeSlug}
             onActiveChange={setActiveSlug}
             onSelect={selectFromMap}

@@ -327,7 +327,6 @@ if(!existingUser) throw new BadRequestError("Invalid Token")
 const path=await avatarImageUpload(image)
 await prisma.user.update({where:{id:userId},data:{avatarUrl:path}})
 
-// Only photos we uploaded live on Bunny; a Google photo URL is simply replaced.
 const old=existingUser.avatarUrl
 if(isOwnAvatar(old)){
   await queueMediaCleanup({kind:"image",path:old})

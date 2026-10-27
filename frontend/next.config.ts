@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "broke-reception-temporary-source.trycloudflare.com",
+    "purple-region-immediate-shakira.trycloudflare.com",
   ],
 };
 

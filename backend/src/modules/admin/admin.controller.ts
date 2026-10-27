@@ -29,6 +29,6 @@ export const fetchUserInterests=async(req:Request,res:Response)=>{
     const page=Number(req.query.page) || 1
     const take=interestsTake.safeParse(req.query.take)
     if(!take.success) throw take.error
-    const {interests,total}=await interestsFetchingService(page,take.data)
-    return res.status(200).json({message:"Interests fetched successfully",interests,total})
+    const {users,total}=await interestsFetchingService(page,take.data)
+    return res.status(200).json({message:"Interests fetched successfully",users,total})
 }

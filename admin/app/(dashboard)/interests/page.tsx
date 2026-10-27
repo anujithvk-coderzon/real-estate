@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
+// One property a person tapped contact on.
 type Interest = {
   id: string;
   createdAt: string;
-  user: { name: string; email: string };
   listing: {
     slug: string;
     title: string;
@@ -20,6 +20,20 @@ type Interest = {
   };
 };
 
+// GET /admin/interests groups by account: one row per person, their properties
+// nested, ordered by the last time they tapped anything.
+type InterestedUser = {
+  id: string;
+  name: string;
+  email: string;
+  // How many properties this person has tapped contact on. Sent by the server
+  // rather than counted here, because a page may carry only the newest few.
+  count: number;
+  lastAt: string;
+  interests: Interest[];
+};
+
+// Accounts per page, not records: the pages count people now.
 const TAKE = 25;
 
 const MODE: Record<string, string> = {
@@ -48,8 +62,11 @@ const when = (iso: string) =>
 const place = (listing: Interest["listing"]) =>
   [listing.locality, listing.city].filter(Boolean).join(", ");
 
+const button =
+  "inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-[14px] font-medium transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
 type Result =
-  | { key: string; rows: Interest[]; total: number }
+  | { key: string; users: InterestedUser[]; total: number }
   | { key: string; error: true };
 
 const Page = () => {
@@ -72,7 +89,7 @@ const Page = () => {
         if (live) {
           setResult({
             key: `${page}:${attempt}`,
-            rows: data.interests ?? [],
+            users: data.users ?? [],
             total: data.total ?? 0,
           });
         }
@@ -90,8 +107,8 @@ const Page = () => {
   const current = result?.key === key ? result : null;
   const loading = current === null;
   const failed = current !== null && "error" in current;
-  const rows = current && "rows" in current ? current.rows : null;
-  const total = current && "rows" in current ? current.total : 0;
+  const users = current && "users" in current ? current.users : null;
+  const total = current && "users" in current ? current.total : 0;
 
   const pages = Math.max(1, Math.ceil(total / TAKE));
 
@@ -104,15 +121,16 @@ const Page = () => {
         User interests
       </h1>
       <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-muted sm:text-[15px]">
-        Every time someone signed in taps contact on a property, it is recorded
-        here — who it was, which property, and when. Newest first.
+        Everyone signed in who has tapped contact on a property, grouped by
+        account. Open a person to see what they were looking at. The most
+        recently active are first.
       </p>
 
-      {rows !== null && (
-        <p className="mt-6 text-[13px] text-muted tabular-nums">
+      {users !== null && (
+        <p className="mt-6 text-[13px] tabular-nums text-muted">
           {total === 0
-            ? "No records"
-            : `${total} record${total === 1 ? "" : "s"}`}
+            ? "Nobody yet"
+            : `${total} ${total === 1 ? "person" : "people"}`}
         </p>
       )}
 
@@ -123,7 +141,7 @@ const Page = () => {
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="h-16 animate-pulse rounded-xl border border-line bg-panel"
+              className="h-[72px] animate-pulse rounded-xl border border-line bg-panel"
             />
           ))}
         </div>
@@ -140,7 +158,7 @@ const Page = () => {
           <button
             type="button"
             onClick={() => setAttempt((n) => n + 1)}
-            className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-[14px] font-medium transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={`mt-4 ${button}`}
           >
             Try again
           </button>
@@ -148,7 +166,7 @@ const Page = () => {
       )}
 
       {/* ---------- empty ---------- */}
-      {rows?.length === 0 && (
+      {users?.length === 0 && (
         <div className="mt-6 rounded-xl border border-dashed border-line bg-panel p-8 text-center">
           <h2 className="font-display text-[17px]">Nothing yet</h2>
           <p className="mx-auto mt-2 max-w-sm text-[13.5px] leading-relaxed text-muted">
@@ -158,124 +176,165 @@ const Page = () => {
         </div>
       )}
 
-      {/* ---------- phones: one card each ---------- */}
-      {rows && rows.length > 0 && (
-        <ul className="mt-4 space-y-2 md:hidden">
-          {rows.map((row) => (
-            <li
-              key={row.id}
-              className="rounded-xl border border-line bg-panel p-4"
-            >
-              <p className="truncate text-[15px] font-semibold">
-                {row.user.name}
-              </p>
-              <p className="truncate text-[12.5px] text-muted">
-                {row.user.email}
-              </p>
+      {/* ---------- one person per row, opening to their properties ---------- */}
+      {users && users.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {users.map((user) => (
+            <li key={user.id}>
+              {/* A native <details> rather than a useState: it is a button to a
+                  screen reader, answers Enter and Space, and keeps no state of
+                  ours to get out of step with the page. Every row starts shut,
+                  so the list stays a list however many people are on it. */}
+              <details
+                className="group overflow-hidden rounded-xl border border-line bg-panel open:border-accent/30"
+              >
+                <summary className="flex cursor-pointer list-none items-center gap-3 p-4 transition-colors hover:bg-ground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-semibold">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-[12.5px] text-muted">
+                      {user.email}
+                    </p>
+                  </div>
 
-              <p className="mt-3 border-t border-line pt-3 text-[13.5px] font-medium">
-                {row.listing.title}
-              </p>
-              <p className="mt-0.5 text-[12.5px] text-muted">
-                {place(row.listing)} &middot; {MODE[row.listing.listingType]}{" "}
-                &middot;{" "}
-                <span className="tabular-nums">
-                  {rupees.format(row.listing.price)}
-                </span>
-              </p>
+                  {/* The two numbers an operator is actually scanning for:
+                      how keen, and how recently. */}
+                  <div className="shrink-0 text-right">
+                    <p className="text-[13.5px] font-medium tabular-nums">
+                      {user.count}{" "}
+                      <span className="font-normal text-muted">
+                        {user.count === 1 ? "property" : "properties"}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 text-[12px] tabular-nums text-muted">
+                      {when(user.lastAt)}
+                    </p>
+                  </div>
 
-              <p className="mt-3 text-[12px] text-muted tabular-nums">
-                {when(row.createdAt)}
-              </p>
+                  <svg
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+                  >
+                    <path
+                      d="M5 7.5 10 12.5 15 7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </summary>
+
+                {/* ---------- phones: one card per property ---------- */}
+                <ul className="divide-y divide-line border-t border-line md:hidden">
+                  {user.interests.map((interest) => (
+                    <li key={interest.id} className="p-4">
+                      <p className="text-[13.5px] font-medium">
+                        {interest.listing.title}
+                      </p>
+                      <p className="mt-0.5 text-[12.5px] text-muted">
+                        {place(interest.listing)} &middot;{" "}
+                        {MODE[interest.listing.listingType]} &middot;{" "}
+                        <span className="tabular-nums">
+                          {rupees.format(interest.listing.price)}
+                        </span>
+                      </p>
+                      <p className="mt-2.5 text-[12.5px]">
+                        {interest.listing.contactName ??
+                          interest.listing.owner.name}{" "}
+                        <span className="tabular-nums text-muted">
+                          {interest.listing.contactPhone ?? "No number"}
+                        </span>
+                      </p>
+                      <p className="mt-2 text-[12px] tabular-nums text-muted">
+                        {when(interest.createdAt)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* ---------- from md: a table, because this is tabular ---------- */}
+                <div className="hidden border-t border-line md:block">
+                  <table className="w-full table-fixed border-collapse text-left">
+                    <caption className="sr-only">
+                      Properties {user.name} tapped contact on, newest first
+                    </caption>
+                    <thead>
+                      <tr className="border-b border-line text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
+                        <th scope="col" className="w-[46%] px-4 py-2.5">
+                          Property
+                        </th>
+                        <th scope="col" className="w-[28%] px-4 py-2.5">
+                          Seller contact
+                        </th>
+                        <th scope="col" className="w-[26%] px-4 py-2.5">
+                          When
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {user.interests.map((interest) => (
+                        <tr
+                          key={interest.id}
+                          className="border-b border-line align-top last:border-0"
+                        >
+                          <td className="px-4 py-3">
+                            <p className="truncate text-[14px]">
+                              {interest.listing.title}
+                            </p>
+                            <p className="truncate text-[12.5px] text-muted">
+                              {place(interest.listing)} &middot;{" "}
+                              {MODE[interest.listing.listingType]} &middot;{" "}
+                              <span className="tabular-nums">
+                                {rupees.format(interest.listing.price)}
+                              </span>
+                            </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="truncate text-[13.5px]">
+                              {interest.listing.contactName ??
+                                interest.listing.owner.name}
+                            </p>
+                            <p className="truncate text-[12.5px] tabular-nums text-muted">
+                              {interest.listing.contactPhone ?? "No number"}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-[12.5px] tabular-nums text-muted">
+                            {when(interest.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
             </li>
           ))}
         </ul>
       )}
 
-      {/* ---------- from md: a table, because this is tabular ---------- */}
-      {rows && rows.length > 0 && (
-        <div className="mt-4 hidden overflow-hidden rounded-xl border border-line bg-panel md:block">
-          <table className="w-full table-fixed border-collapse text-left">
-            <caption className="sr-only">
-              Visitors who tapped contact, newest first
-            </caption>
-            <thead>
-              <tr className="border-b border-line text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
-                <th scope="col" className="w-[26%] px-4 py-3">
-                  Who
-                </th>
-                <th scope="col" className="w-[36%] px-4 py-3">
-                  Property
-                </th>
-                <th scope="col" className="w-[20%] px-4 py-3">
-                  Seller contact
-                </th>
-                <th scope="col" className="w-[18%] px-4 py-3">
-                  When
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-line last:border-0 align-top"
-                >
-                  <td className="px-4 py-3">
-                    <p className="truncate text-[14px] font-semibold">
-                      {row.user.name}
-                    </p>
-                    <p className="truncate text-[12.5px] text-muted">
-                      {row.user.email}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="truncate text-[14px]">{row.listing.title}</p>
-                    <p className="truncate text-[12.5px] text-muted">
-                      {place(row.listing)} &middot;{" "}
-                      {MODE[row.listing.listingType]} &middot;{" "}
-                      <span className="tabular-nums">
-                        {rupees.format(row.listing.price)}
-                      </span>
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="truncate text-[13.5px]">
-                      {row.listing.contactName ?? row.listing.owner.name}
-                    </p>
-                    <p className="truncate text-[12.5px] text-muted tabular-nums">
-                      {row.listing.contactPhone ?? "No number"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-[12.5px] text-muted tabular-nums">
-                    {when(row.createdAt)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {/* ---------- pages ---------- */}
-      {rows && rows.length > 0 && pages > 1 && (
+      {users && users.length > 0 && pages > 1 && (
         <div className="mt-4 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             disabled={page === 1}
-            className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-[14px] font-medium transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={button}
           >
             Previous
           </button>
-          <p className="text-[13px] text-muted tabular-nums">
+          <p className="text-[13px] tabular-nums text-muted">
             Page {page} of {pages}
           </p>
           <button
             type="button"
             onClick={() => setPage((current) => Math.min(pages, current + 1))}
             disabled={page >= pages}
-            className="inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-[14px] font-medium transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line disabled:hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={button}
           >
             Next
           </button>

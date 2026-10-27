@@ -175,8 +175,8 @@ export const userSearch=async(req:Request,res:Response)=>{
     if(!location) throw new BadRequestError("Location required")
     const radius=searchRadius.safeParse(req.query.radius)
     if(!radius.success) throw radius.error
-    const result=await searchService(location,radius.data,listingType,propertyType)
-    return res.status(200).json({message:"Search results fetched successfully",lists:result})
+    const {listings,center}=await searchService(location,radius.data,listingType,propertyType)
+    return res.status(200).json({message:"Search results fetched successfully",lists:listings,center})
 }
 
 export const fetchSellerListings=async(req:Request,res:Response)=>{

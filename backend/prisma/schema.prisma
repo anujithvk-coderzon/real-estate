@@ -103,6 +103,7 @@ model User {
   BuyerChats          Conversation[] @relation("BuyerChats")
   sellerChats         Conversation[] @relation("SellerChats")
   messagesSent        Message[]
+  propertyViews  PropertyView[]
   @@map("users")
 }
 
@@ -216,6 +217,7 @@ model Listing {
   updatedAt       DateTime        @updatedAt
   interest        UserInterest[]
   conversations  Conversation[]
+  propertyViews  PropertyView[]
   @@index([city, listingType, status])
   @@index([status, createdAt])
   @@index([price])
@@ -272,6 +274,7 @@ model UserInterest{
   @@map("user_interests")
 }
 
+
 model Conversation {
 id    String  @id @default(uuid())
 listingId String
@@ -299,4 +302,28 @@ sender User @relation(fields: [senderId],references: [id],onDelete: Cascade)
 body String
 createdAt DateTime @default(now())
 @@map("messages")
+}
+
+model PropertyView{
+  id String @id @default(uuid())
+  userId String
+  listingId String
+  user User @relation(fields: [userId],references: [id])
+  listing Listing @relation(fields: [listingId],references: [id])
+  createdAt DateTime @default(now())
+  @@index([userId,createdAt])
+  @@index([listingId,createdAt])
+  @@map("property_views")
+}
+
+model Promotions{
+  id  String @id @default(uuid())
+  userId String 
+  listingId String? 
+  projectId String?
+  path String
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(false)
+  @@index([isActive])
+  @@map("promotions")
 }

@@ -53,6 +53,13 @@ const ChatsIcon = () => (
   </svg>
 );
 
+const PromotionsIcon = () => (
+  <svg {...iconProps}>
+    <path d="M4.5 10.5 14 6.5v11l-9.5-4Z" />
+    <path d="M4.5 10.5H4a1.5 1.5 0 0 0 0 3h.5M14 8.5c2 .6 3.5 1.8 3.5 3.5s-1.5 2.9-3.5 3.5M7.5 14v4.5" />
+  </svg>
+);
+
 const AddIcon = () => (
   <svg {...iconProps}>
     <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
@@ -86,6 +93,9 @@ const NAV_ITEMS = [
   { href: "/", label: "Home", Icon: HomeIcon },
   { href: "/list/my/profile", label: "My profile", Icon: ProfileIcon },
   { href: "/list/my/listings", label: "My listings", Icon: ListingsIcon },
+  // Beside the listings it is about, not down with the account links: a seller
+  // reaches for this while thinking about their properties.
+  { href: "/list/promotions", label: "Promotions", Icon: PromotionsIcon },
   { href: "/list/create", label: "List a property", Icon: AddIcon },
 ];
 

@@ -9,6 +9,7 @@ import listRoutes from "./modules/listings/listing.routes.js"
 import projectRoutes from "./modules/projects/project.routes.js"
 import adminRoutes from './modules/admin/admin.route.js'
 import chatRoutes from './modules/chat/chat.routes.js'
+import promotionRoutes from './modules/promotion/promotion.routes.js'
 const app = express();
 
 app.use(helmet());
@@ -27,6 +28,7 @@ app.use("/list", listRoutes)
 app.use("/project", projectRoutes)
 app.use('/admin',adminRoutes)
 app.use('/chat',chatRoutes)
+app.use('/promotion',promotionRoutes)
 
 
 app.use(errorHandler);

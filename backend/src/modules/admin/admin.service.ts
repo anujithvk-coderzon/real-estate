@@ -29,15 +29,12 @@ return 'Interest saved successfully'
 
 
 export const interestsFetchingService = async (page: number, take: number) => {
-  const [rows, total] = await prisma.$transaction([
-    prisma.userInterest.findMany({
+  const rows = await prisma.userInterest.findMany({
       orderBy: { createdAt: "desc" },
-      take,
-      skip: (page - 1) * take,
       select: {
         id: true,
         createdAt: true,
-        user: { select: { name: true, email: true } },
+        user: { select: {id:true, name: true, email: true } },
         listing: {
           select: {
             slug: true,
@@ -52,8 +49,18 @@ export const interestsFetchingService = async (page: number, take: number) => {
           },
         },
       },
-    }),
-    prisma.userInterest.count(),
-  ]);
-  return { total, interests: rows };
+    })
+    const byUser=new Map<string, { id: string; name: string; email: string; count: number; lastAt: Date; interests: typeof rows }>();
+    for( const row of rows){
+      const theirs=byUser.get(row.user.email);
+      if(theirs){
+        theirs.interests.push(row);
+        theirs.count++;
+      }
+      else{
+        byUser.set(row.user.email,{...row.user,count:1,lastAt: row.createdAt, interests: [row] })
+      }
+    }
+  const users = [...byUser.values()];
+  return {total:users.length,users};
 };

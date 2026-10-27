@@ -528,7 +528,9 @@ const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
     format:"jsonv2"
 }})
 const result = response.data[0];
-if (!result) return [];
+// No such place. A null centre is how the page tells "we could not find that
+// place" apart from "we found it and nothing is for sale there".
+if (!result) return {center:null,listings:[]};
 const lat = Number(result.lat);
 const long = Number(result.lon);
 
@@ -576,7 +578,10 @@ const final_result=listings.map((list)=>({
   listingImages: list.listingImages.map((image) => ({ path: cdnUrl(image.path) })),
 })).filter((list)=>list.distanceKm<=km)
    .sort((a,b)=>a.distanceKm - b.distanceKm)
-return final_result
+// The centre was geocoded above to build the search box, so sending it costs
+// nothing — and it is what the map frames when no listing matched, instead of
+// falling back to the whole country.
+return {center:{lat,lon:long},listings:final_result}
 }
 
 export const sellerListsFetchingService=async(slug:string,page:number)=>{
