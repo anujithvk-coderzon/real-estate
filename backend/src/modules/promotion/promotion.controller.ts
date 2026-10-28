@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { BadRequestError } from "../../errors/Errors.js";
-import { allPromotionService, myPromotionsService, promotionCreationService } from "./promotion.service.js";
+import { togglePromotionService, allPromotionService, myPromotionsService, promotionCreationService, showActivePromotionService } from "./promotion.service.js";
 
 const BANNER_TYPE=["image/jpeg","image/png","image/webp"]
 const MAX_BANNER_BYTES=10*1024*1024
@@ -49,4 +49,15 @@ export const allPromotions=async(req:Request,res:Response)=>{
      }
     const promotions=await allPromotionService(type === "true")
     return res.status(200).json({message:"promotions fetched",promotions})
+}
+
+export const togglePromotion=async(req:Request,res:Response)=>{
+    const id=req.params.id as string;
+    const response=await togglePromotionService(id);
+    return res.status(200).json({message:response})
+}
+
+export const showActivePromotions=async(req:Request,res:Response)=>{
+    const promotions=await showActivePromotionService()
+    return res.status(200).json({message:'promotions fetched',promotions})
 }

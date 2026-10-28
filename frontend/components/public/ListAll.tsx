@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PublicListingCard from "@/components/listing/PublicListingCard";
+import FeaturedPromotions from "@/components/public/FeaturedPromotions";
 import HeroStage from "@/components/public/HeroStage";
 import ListingFilters from "@/components/public/ListingFilters";
 import { api, authReady, isSignedIn } from "@/lib/api";
@@ -335,6 +336,11 @@ const ListAll = () => {
       <HeroStage />
 
       <div className="mx-auto w-full max-w-7xl px-5 pb-8 pt-7 sm:pt-8 lg:px-10">
+        {/* Live banners, straight under the type row the hero ends on. Renders
+            nothing at all when nobody has one live, so the filter bar simply
+            stays where it was. */}
+        <FeaturedPromotions />
+
         {/* Narrows the grid below. Separate from the search bar on purpose: that
             one leaves this page, these stay on it. */}
         {/* showTypes={false}: the hero above already asks Buy/Rent/PG and the

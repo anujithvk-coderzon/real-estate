@@ -11,6 +11,7 @@ const icon = {
   listings: "M4 4h16v6H4Zm0 10h16v6H4Z",
   users: "M4 20a6 6 0 0 1 12 0M10 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8m8 16a5 5 0 0 0-3-4.6",
   interests: "M12 20s-7-4.4-7-9.3A4 4 0 0 1 12 8a4 4 0 0 1 7 2.7C19 15.6 12 20 12 20Z",
+  promotions: "M4 10v4h3l5 4V6L7 10H4Zm12-2a5 5 0 0 1 0 8",
 } as const;
 
 const Glyph = ({ d }: { d: string }) => (
@@ -31,6 +32,7 @@ const Glyph = ({ d }: { d: string }) => (
 const NAV = [
   { href: "/home", label: "Home", d: icon.home },
   { href: "/interests", label: "User interests", d: icon.interests },
+  { href: "/promotions", label: "Promotions", d: icon.promotions },
 ] as const;
 
 // Shown but not linked — a staff tool should say what it will hold, and a link

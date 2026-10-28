@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "purple-region-immediate-shakira.trycloudflare.com",
+    "planning-bald-police-kills.trycloudflare.com",
   ],
 };
 
