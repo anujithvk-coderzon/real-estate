@@ -51,7 +51,7 @@ export const allPromotions=async(req:Request,res:Response)=>{
     return res.status(200).json({message:"promotions fetched",promotions})
 }
 
-export const togglePromotion=async(req:Request,res:Response)=>{
+ export const togglePromotion=async(req:Request,res:Response)=>{
     const id=req.params.id as string;
     const response=await togglePromotionService(id);
     return res.status(200).json({message:response})

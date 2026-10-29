@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PROPERTY_TYPES, RADIUS_OPTIONS } from "@/lib/listing";
+import {
+  RADIUS_OPTIONS,
+  SEARCH_PROPERTY_TYPES,
+  searchLabelOf,
+} from "@/lib/listing";
 import { inputClass, labelClass, primaryButton } from "@/lib/ui";
 
 // What the user picked. "" means "any", and is not sent as a filter.
@@ -34,6 +38,13 @@ const MODES = [
 ];
 
 const MAX_LOCATION_LENGTH = 100;
+
+// Every control in the hero card wears one of these on a phone and none of
+// them from md, where the row is self-evident. Exported because the mode
+// buttons and the type select live in HeroStage — they write the URL rather
+// than this form — and have to caption themselves identically.
+export const FIELD_LABEL =
+  "mb-0.5 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted md:sr-only";
 
 const PinIcon = () => (
   <svg
@@ -93,14 +104,18 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canSearch) return;
-    // compact renders neither the mode nor the type: the hero owns those
-    // controls and keeps them in the URL. So for that variant the props are the
+    // compact renders none of the mode, the type or the distance: the hero
+    // owns those controls and keeps them in the URL. So for that variant the props are the
     // truth and the local state is a stale copy — it was seeded once at mount
     // and the hero's links change the URL without ever remounting this form,
     // which is how Rent was being dropped on the way to the results page.
-    const mode = variant === "compact" ? initialValues?.listingType ?? "" : listingType;
+    const mode =
+      variant === "compact" ? (initialValues?.listingType ?? "") : listingType;
     const kind =
-      variant === "compact" ? initialValues?.propertyType ?? "" : propertyType;
+      variant === "compact"
+        ? (initialValues?.propertyType ?? "")
+        : propertyType;
+    const km = variant === "compact" ? (initialValues?.radius ?? "") : radius;
 
     const params = new URLSearchParams();
     if (mode) params.set("listingType", mode);
@@ -108,7 +123,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     if (location.trim()) params.set("location", location.trim());
     // Carried even where there is no control for it, so editing the search on the
     // results page keeps the distance the visitor chose there.
-    if (radius) params.set("radius", radius);
+    if (km) params.set("radius", km);
     router.push(`/property/search?${params}`);
     setExpanded(false);
   };
@@ -118,69 +133,50 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
       <form
         role="search"
         onSubmit={handleSubmit}
-        // Sits on the drawing, so it needs a shadow to lift off it — the one
-        // place on this page where a shadow is doing real work rather than
-        // decorating a card.
-        // Two rows on a phone, one from sm up. At 320px a pin, an input, a
-        // divider, a select and a button share about 280px, which leaves the
-        // place name roughly 130px to live in — the field you are asked to
-        // type into ends up the smallest thing in the row.
-        className="flex flex-wrap items-center gap-1.5 rounded-xl bg-ground p-1.5 ring-1 ring-line md:flex-nowrap md:gap-1 md:bg-panel md:shadow-[0_10px_30px_-10px_rgba(48,32,68,0.35)]"
+        // No surface of its own below md. On a phone this sits inside the
+        // hero's card, which already has a panel, a ring and padding — so the
+        // form was a second box inside it and the field a third, and three
+        // nested boxes is most of why the card felt oversized. From md it
+        // becomes the pill that floats on the drawing, where it IS the
+        // surface and earns the shadow.
+        className="md:flex md:flex-nowrap md:items-center md:gap-1 md:rounded-xl md:bg-panel md:p-1.5 md:shadow-[0_10px_30px_-10px_rgba(48,32,68,0.35)]"
         suppressHydrationWarning
       >
-        <label htmlFor="hero-location" className="sr-only">
-          Location
-        </label>
-        <span className="pointer-events-none pl-2 text-muted">
-          <PinIcon />
-        </span>
-        <input
-          id="hero-location"
-          name="search-location"
-          type="search"
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          maxLength={MAX_LOCATION_LENGTH}
-          placeholder="Kakkanad, Kannur, Mumbai…"
-          required
-          autoComplete="off"
-          enterKeyHint="search"
-          // 16px, because anything smaller makes iOS zoom the page in on focus.
-          className="min-w-0 flex-1 basis-0 bg-transparent px-1.5 py-2.5 text-[16px] text-ink placeholder:text-muted/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
-          suppressHydrationWarning
-        />
-        {/* How far to look, beside the place to look. Asking for the distance
-            after the search would mean a second round trip for the commonest
-            adjustment there is. */}
-        <span
-          aria-hidden="true"
-          className="hidden h-6 w-px shrink-0 bg-line md:block"
-        />
-        <label htmlFor="hero-radius" className="sr-only">
-          Distance
-        </label>
-        <select
-          id="hero-radius"
-          value={radius}
-          onChange={(event) => setRadius(event.target.value)}
-          className="h-11 shrink-0 rounded-lg bg-panel px-2 text-[14px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:bg-transparent md:px-1 md:ring-0"
-        >
-          <option value="">10 km</option>
-          {RADIUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className="min-w-0 md:flex-1">
+          <label htmlFor="hero-location" className={FIELD_LABEL}>
+            Where
+          </label>
+          <div className="flex items-center rounded-lg bg-ground ring-1 ring-line md:bg-transparent md:ring-0">
+            <span className="pointer-events-none pl-2.5 text-muted">
+              <PinIcon />
+            </span>
+            <input
+              id="hero-location"
+              name="search-location"
+              type="search"
+              value={location}
+              onChange={(event) => setLocation(event.target.value)}
+              maxLength={MAX_LOCATION_LENGTH}
+              placeholder="Enter your preferred location"
+              required
+              autoComplete="off"
+              enterKeyHint="search"
+              // 16px, because anything smaller makes iOS zoom the page in on focus.
+              className="min-w-0 flex-1 basis-0 bg-transparent px-2 py-2.5 text-[16px] text-ink placeholder:text-muted/60 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+              suppressHydrationWarning
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
           disabled={!canSearch}
           title={canSearch ? undefined : "Enter a location to search"}
           aria-label="Search this location"
-          // Grows into the rest of the second row on a phone and carries a
-          // word, because a lone icon is the least obvious thing on a screen
-          // where it is the only action.
-          className={`h-11 flex-1 ${primaryButton} md:w-11 md:flex-none md:!px-0`}
+          // Its own line on a phone, carrying the word, and the only solid
+          // accent in the card: a lone icon is the least obvious thing on a
+          // screen where it is the only action.
+          className={`mt-1.5 h-11 w-full ${primaryButton} md:mt-0 md:w-11 md:flex-none md:!px-0`}
         >
           <SearchIcon />
           <span className="ml-1.5 md:hidden">Search</span>
@@ -195,7 +191,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
       location.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase()) ||
         "Search a location",
       MODES.find((mode) => mode.value === listingType)?.label,
-      PROPERTY_TYPES.find((type) => type.value === propertyType)?.label,
+      searchLabelOf(propertyType),
     ]
       .filter(Boolean)
       .join(" · ");
@@ -240,7 +236,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
               value={location}
               onChange={(event) => setLocation(event.target.value)}
               maxLength={MAX_LOCATION_LENGTH}
-              placeholder="Locality, city or area"
+              placeholder="Enter your preferred location"
               required
               autoComplete="off"
               enterKeyHint="search"
@@ -284,7 +280,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             className="h-11 shrink-0 rounded-lg border border-line bg-panel px-3 text-[16px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:h-10 md:w-44 md:text-[15px]"
           >
             <option value="">Any type</option>
-            {PROPERTY_TYPES.map((type) => (
+            {SEARCH_PROPERTY_TYPES.map((type) => (
               <option key={type.value} value={type.value}>
                 {type.label}
               </option>
@@ -372,7 +368,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
               suppressHydrationWarning
             >
               <option value="">Any type</option>
-              {PROPERTY_TYPES.map((type) => (
+              {SEARCH_PROPERTY_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
                 </option>
@@ -424,7 +420,7 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
                 value={location}
                 onChange={(event) => setLocation(event.target.value)}
                 maxLength={MAX_LOCATION_LENGTH}
-                placeholder="e.g. Kakkanad, Kannur"
+                placeholder="Enter your preferred location"
                 required
                 autoComplete="off"
                 enterKeyHint="search"

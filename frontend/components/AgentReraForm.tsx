@@ -49,6 +49,10 @@ type Props = {
   variant?: "page" | "inline";
   // Shown in the number field when they already have one on file.
   current?: string | null;
+  // The state that number was filed in, when there is one. Without it an edit
+  // asks for the state again, and the only answer the form could offer by
+  // itself was a guess.
+  currentState?: string | null;
 };
 
 // Shown to a broker or dealer before their first sale listing. Agents must be
@@ -60,12 +64,13 @@ const AgentReraForm = ({
   onBack,
   variant = "page",
   current,
+  currentState,
 }: Props) => {
-  const [state, setState] = useState("Kerala");
+  const [state, setState] = useState(currentState ?? "");
   const [number, setNumber] = useState(current ?? "");
   const [saving, setSaving] = useState(false);
 
-  const canSave = number.trim().length >= 5 && !saving;
+  const canSave = state !== "" && number.trim().length >= 5 && !saving;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -94,6 +99,7 @@ const AgentReraForm = ({
           onChange={(event) => setState(event.target.value)}
           className={inputClass}
         >
+          <option value="">Select your state</option>
           {STATES.map((name) => (
             <option key={name} value={name}>
               {name}

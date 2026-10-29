@@ -115,8 +115,15 @@ const FeaturedPromotions = () => {
     if (clamped !== index) setIndex(clamped);
   };
 
+  // Two layers on purpose. The button keeps a 44px tap target, because a 32px
+  // one on a phone is hit by luck; only the disc you can see inside it shrinks.
   const arrow =
-    "absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-panel/90 text-ink shadow-[0_6px_20px_-8px_rgba(48,32,68,0.45)] ring-1 ring-line backdrop-blur-sm transition-colors hover:bg-panel hover:ring-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+    "group absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
+  // Light enough to sit over a banner without competing with it: a translucent
+  // disc, a hairline ring and muted ink, darkening only on hover.
+  const disc =
+    "flex h-8 w-8 items-center justify-center rounded-full bg-panel/75 text-muted ring-1 ring-line/60 backdrop-blur-sm transition-colors group-hover:bg-panel group-hover:text-ink sm:h-10 sm:w-10 sm:bg-panel/90";
 
   return (
     <section aria-labelledby="featured-heading" className="pb-7">
@@ -125,9 +132,10 @@ const FeaturedPromotions = () => {
           Featured
         </h2>
         <div className="flex items-center gap-3">
-          {/* Said plainly, because the ordering here is not merit: these are
-              up because the people listing them put them up. */}
-          <p className="annot">Promoted by their sellers</p>
+          {/* The word every platform uses, because it is the one a buyer
+              recognises without reading it twice: these are up because the
+              people listing them put them up, not because they rank. */}
+          <p className="annot">Sponsored</p>
           {many && (
             // WCAG 2.2.2: anything that moves on its own for more than five
             // seconds owes the visitor a way to stop it, and hover does not
@@ -173,7 +181,7 @@ const FeaturedPromotions = () => {
                 : null;
 
             const frame = (
-              <div className="relative aspect-[3/1] overflow-hidden rounded-2xl bg-ground ring-1 ring-line">
+              <div className="relative aspect-[5/3] overflow-hidden rounded-2xl bg-ground ring-1 ring-line sm:aspect-[3/1]">
                 {/* object-contain keeps the seller's banner uncropped; a
                     blurred copy of it fills whatever is left of the frame. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -228,39 +236,43 @@ const FeaturedPromotions = () => {
               type="button"
               onClick={() => goTo(index - 1)}
               aria-label="Previous banner"
-              className={`${arrow} left-2 sm:left-3`}
+              className={`${arrow} left-1 sm:left-3`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 5l-7 7 7 7" />
-              </svg>
+              <span className={disc}>
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M15 5l-7 7 7 7" />
+                </svg>
+              </span>
             </button>
             <button
               type="button"
               onClick={() => goTo(index + 1)}
               aria-label="Next banner"
-              className={`${arrow} right-2 sm:right-3`}
+              className={`${arrow} right-1 sm:right-3`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 5l7 7-7 7" />
-              </svg>
+              <span className={disc}>
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
             </button>
           </>
         )}

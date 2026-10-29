@@ -42,6 +42,104 @@ type Props = {
   mustHaveProject: boolean;
 };
 
+// The answer "it is not in the list": the project as the lister states it.
+// Shared, because a builder whose own project is not registered here yet and an
+// agent describing someone else's project need to say exactly the same three
+// things — and a buyer must be told the same way in both cases.
+type ManualProps = Pick<
+  Props,
+  | "manualName"
+  | "manualRera"
+  | "manualBuilder"
+  | "onManualChange"
+  | "mustHaveProject"
+> & {
+  // Whose project this is. The fields are the same either way; the sentences
+  // around them cannot be — "the builder has not registered this" read as a
+  // complaint about a stranger when the builder is the one reading it.
+  self: boolean;
+};
+
+const ManualFields = ({
+  manualName,
+  manualRera,
+  manualBuilder,
+  onManualChange,
+  mustHaveProject,
+  self,
+}: ManualProps) => (
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <Field id="manualName" label="Project name">
+      <input
+        id="manualName"
+        type="text"
+        value={manualName}
+        onChange={(event) => onManualChange("manualName", event.target.value)}
+        maxLength={120}
+        placeholder="As the builder calls it"
+        className={inputClass}
+      />
+    </Field>
+
+    {/* A buyer needs to know whose project they are buying into, and we
+                  have no builder account to read it from. */}
+    <Field
+      id="manualBuilder"
+      label="Builder"
+      hint="The company building the project."
+    >
+      <input
+        id="manualBuilder"
+        type="text"
+        value={manualBuilder}
+        onChange={(event) =>
+          onManualChange("manualBuilder", event.target.value)
+        }
+        maxLength={120}
+        placeholder="e.g. Skyline Builders"
+        className={inputClass}
+      />
+    </Field>
+
+    <div>
+      {/* Always required on this answer: an unregistered project with no
+                    number is a name a buyer cannot check anywhere. */}
+      <label htmlFor="manualRera" className={labelClass}>
+        Project RERA number
+        <span className="text-danger" aria-hidden="true">
+          {" "}
+          *
+        </span>
+      </label>
+      <input
+        id="manualRera"
+        type="text"
+        value={manualRera}
+        onChange={(event) => onManualChange("manualRera", event.target.value)}
+        maxLength={60}
+        placeholder="e.g. K-RERA/PRJ/ERN/123/2024"
+        className={`${inputClass} tabular-nums`}
+      />
+      <p className="mt-1.5 text-[13px] text-muted">
+        {self
+          ? "This project is not registered here yet, so this number is the only way a buyer can check it on the state RERA site."
+          : "The builder has not registered this project here, so this number is the only way a buyer can check it on the state RERA site."}
+        {mustHaveProject
+          ? " A unit under construction is sold off-plan, so the advertisement cannot go out without it."
+          : self
+            ? " If the building is old or exempt and has no number, choose \u201cNot part of a project\u201d in the list above instead."
+            : " If the building is old or exempt and has no number, choose \u201cNot part of a project\u201d below."}
+      </p>
+    </div>
+
+    <p className="text-[13px] leading-snug text-muted sm:col-span-2">
+      {self
+        ? "These details are shown to buyers as stated by you. Register the project and they come from the record instead, with its own page and one number against every unit in it."
+        : "These details are shown to buyers as stated by you, not as confirmed by the builder, until the builder registers the project here."}
+    </p>
+  </div>
+);
+
 const ProjectPicker = ({
   mode,
   value,
@@ -111,7 +209,9 @@ const ProjectPicker = ({
   // ---------- a builder's own projects ----------
   if (mode === "own") {
     return (
-      <div className="max-w-sm">
+      // Wider on the typed answer: three fields in a two-column grid do not
+      // fit the column a single select needs.
+      <div className={value === MANUAL ? "max-w-2xl" : "max-w-sm"}>
         <Field id="projectId" label="Project">
           <Select
             id="projectId"
@@ -123,6 +223,14 @@ const ProjectPicker = ({
                   ? `${project.name} — ${project.reraNumber}`
                   : project.name,
               })),
+              // A builder listing a unit in a project they have not registered
+              // here yet. It was only ever offered to agents, which left a
+              // builder with no answer at all in that case: their project is
+              // not in the select, and it is not "no project" either.
+              {
+                value: MANUAL,
+                label: "Not in this list — I will type its name",
+              },
               {
                 value: NONE,
                 label: "Not part of a project (resale, plot, old building)",
@@ -132,6 +240,19 @@ const ProjectPicker = ({
           />
         </Field>
 
+        {value === MANUAL && (
+          <div className="mt-4">
+            <ManualFields
+              manualName={manualName}
+              manualRera={manualRera}
+              manualBuilder={manualBuilder}
+              onManualChange={onManualChange}
+              mustHaveProject={mustHaveProject}
+              self
+            />
+          </div>
+        )}
+
         {value === NONE && mustHaveProject && (
           <p className="mt-3 text-[14px] leading-snug text-warn">
             An under-construction unit is sold off-plan, so the advertisement
@@ -140,9 +261,13 @@ const ProjectPicker = ({
           </p>
         )}
 
-        {own !== null && own.length === 0 && (
+        {own !== null && (
           <p className="mt-3 text-[14px] text-muted">
-            You have no projects yet.{" "}
+            {/* Shown even when they have projects: a builder with three of them
+                listing a flat in a fourth had nowhere to go from here. */}
+            {own.length === 0
+              ? "You have no projects yet."
+              : "Building something that is not in this list?"}{" "}
             <a
               href="/list/my/projects/new"
               target="_blank"
@@ -152,7 +277,9 @@ const ProjectPicker = ({
               Add one
               <span className="sr-only"> (opens in a new tab)</span>
             </a>{" "}
-            and it will appear here.
+            and it will appear here. Registering it keeps one RERA number
+            against every unit you list in it, and gives the project its own
+            page.
           </p>
         )}
       </div>
@@ -274,79 +401,16 @@ const ProjectPicker = ({
             </span>
           </label>
 
-          {/* Shown only on that answer: the builder's details, in the agent's words. */}
           {value === MANUAL && (
-            <div className="grid grid-cols-1 gap-4 sm:ml-7 sm:grid-cols-2">
-              <Field id="manualName" label="Project name">
-                <input
-                  id="manualName"
-                  type="text"
-                  value={manualName}
-                  onChange={(event) =>
-                    onManualChange("manualName", event.target.value)
-                  }
-                  maxLength={120}
-                  placeholder="As the builder calls it"
-                  className={inputClass}
-                />
-              </Field>
-
-              {/* A buyer needs to know whose project they are buying into, and we
-                  have no builder account to read it from. */}
-              <Field
-                id="manualBuilder"
-                label="Builder"
-                hint="The company building the project."
-              >
-                <input
-                  id="manualBuilder"
-                  type="text"
-                  value={manualBuilder}
-                  onChange={(event) =>
-                    onManualChange("manualBuilder", event.target.value)
-                  }
-                  maxLength={120}
-                  placeholder="e.g. Skyline Builders"
-                  className={inputClass}
-                />
-              </Field>
-
-              <div>
-                {/* Always required on this answer: an unregistered project with no
-                    number is a name a buyer cannot check anywhere. */}
-                <label htmlFor="manualRera" className={labelClass}>
-                  Project RERA number
-                  <span className="text-danger" aria-hidden="true">
-                    {" "}
-                    *
-                  </span>
-                </label>
-                <input
-                  id="manualRera"
-                  type="text"
-                  value={manualRera}
-                  onChange={(event) =>
-                    onManualChange("manualRera", event.target.value)
-                  }
-                  maxLength={60}
-                  placeholder="e.g. K-RERA/PRJ/ERN/123/2024"
-                  className={`${inputClass} tabular-nums`}
-                />
-                <p className="mt-1.5 text-[13px] text-muted">
-                  The builder has not registered this project here, so this
-                  number is the only way a buyer can check it on the state RERA
-                  site.
-                  {mustHaveProject
-                    ? " A unit under construction is sold off-plan, so the advertisement cannot go out without it."
-                    : " If the building is old or exempt and has no number, choose \u201cNot part of a project\u201d below."}
-                </p>
-              </div>
-
-              <p className="text-[13px] leading-snug text-muted sm:col-span-2">
-                These details are shown to buyers as stated by you, not as
-                confirmed by the builder, until the builder registers the
-                project here.
-              </p>
+            <div className="sm:ml-7">
+              <ManualFields
+                manualName={manualName}
+                manualRera={manualRera}
+                manualBuilder={manualBuilder}
+                onManualChange={onManualChange}
+                mustHaveProject={mustHaveProject}
+                self={false}
+              />
             </div>
           )}
 

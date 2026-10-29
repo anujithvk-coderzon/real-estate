@@ -24,10 +24,12 @@ import {
   NO_BEDROOMS,
   POSTED_BY,
   RADIUS_OPTIONS,
+  SEARCH_PROPERTY_TYPES,
   budgetAt,
   budgetPosition,
   labelOf,
   propertyTypeOptions,
+  searchLabelOf,
   type Option,
 } from "@/lib/listing";
 
@@ -306,6 +308,18 @@ const ListingFilters = ({
   const sort = searchParams.get("sort") ?? "";
 
   const showBedrooms = !NO_BEDROOMS.includes(propertyType);
+
+  // listingType=PG is a real, working URL — SiteFooter links to it and the API
+  // answers it — but PG is deliberately not one of the two choices offered
+  // here, because the API folds PG into Rent for searchers. Without this, that
+  // URL left the control showing "Buy or rent" and no pill selected while the
+  // chip beside it said "PG or hostel": two parts of one bar disagreeing about
+  // what is being filtered. Offered only when it is already set, so it never
+  // becomes a third thing to decide between.
+  const modeOptions =
+    listingType === "PG"
+      ? [...SEARCH_LISTING_TYPES, { value: "PG", label: labelOf("PG") }]
+      : SEARCH_LISTING_TYPES;
   // Radius is not in FILTER_PARAMS: that list is shared with the home page, which
   // has no radius. It still counts here, so the phone's badge matches the sheet.
   const activeCount =
@@ -378,14 +392,14 @@ const ListingFilters = ({
   if (showTypes && listingType) {
     chips.push({
       key: "listingType",
-      text: labelOf(listingType),
+      text: searchLabelOf(listingType),
       clear: { listingType: "" },
     });
   }
   if (showTypes && propertyType) {
     chips.push({
       key: "propertyType",
-      text: labelOf(propertyType),
+      text: searchLabelOf(propertyType),
       clear: { propertyType: "" },
     });
   }
@@ -469,7 +483,7 @@ const ListingFilters = ({
               className={inlineSelect}
             >
               <option value="">Buy or rent</option>
-              {SEARCH_LISTING_TYPES.map((option) => (
+              {modeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -486,11 +500,13 @@ const ListingFilters = ({
               className={inlineSelect}
             >
               <option value="">Any type</option>
-              {propertyTypeOptions(listingType).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              {propertyTypeOptions(listingType, SEARCH_PROPERTY_TYPES).map(
+                (option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ),
+              )}
             </select>
           </>
         )}
@@ -675,7 +691,7 @@ const ListingFilters = ({
             <>
               <Pills
                 legend="Looking to"
-                options={SEARCH_LISTING_TYPES}
+                options={modeOptions}
                 value={listingType}
                 anyLabel="Buy or rent"
                 onPick={(value) => setParam("listingType", value)}
@@ -697,11 +713,13 @@ const ListingFilters = ({
                   className={sheetSelect}
                 >
                   <option value="">Any type</option>
-                  {propertyTypeOptions(listingType).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {propertyTypeOptions(listingType, SEARCH_PROPERTY_TYPES).map(
+                    (option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
             </>

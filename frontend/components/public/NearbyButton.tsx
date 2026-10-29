@@ -33,7 +33,9 @@ const NearbyButton = () => {
           // fix may have no locality at all.
           const place = address.locality || address.city || address.district;
           if (!place) {
-            errorToast("Could not tell which area you are in. Search by name instead.");
+            errorToast(
+              "Could not tell which area you are in. Search by name instead.",
+            );
             setBusy(false);
             return;
           }
@@ -51,14 +53,20 @@ const NearbyButton = () => {
         // Each failure gets its own sentence. "Denied" lasts until the visitor
         // changes a browser setting, so inviting them to retry would be a lie.
         if (error.code === error.PERMISSION_DENIED) {
-          errorToast("Location is blocked for this site. Allow it in your browser settings.");
+          errorToast(
+            "Location is blocked for this site. Allow it in your browser settings.",
+          );
           return;
         }
         if (error.code === error.POSITION_UNAVAILABLE) {
-          errorToast("Could not get a location fix. Try again, or search by area name.");
+          errorToast(
+            "Could not get a location fix. Try again, or search by area name.",
+          );
           return;
         }
-        errorToast("Finding your location took too long. Try searching by area name.");
+        errorToast(
+          "Finding your location took too long. Try searching by area name.",
+        );
       },
       {
         // The phone's GPS chip rather than wifi positioning: this is the whole

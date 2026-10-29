@@ -75,7 +75,7 @@ export const allPromotionService=async(type:boolean)=>{
     return result.map(({path,...promotion})=>({...promotion,image:cdnUrl(path)}))
 }
 
-export const togglePromotionService=async(id:string)=>{
+ export const togglePromotionService=async(id:string)=>{
 const promotion=await prisma.promotions.findUnique({where:{id},select:{isActive:true,listing:{select:{ title:true}},project:{select:{name:true}}}})
 if(!promotion) throw new NotFoundError("Promotion not found")
 await prisma.promotions.update({where:{id},data:{isActive:!promotion.isActive}})

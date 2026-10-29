@@ -489,6 +489,7 @@ const ReraCard = ({
           variant="inline"
           revoked={user.agentReraStatus === "REVOKED"}
           current={user.agentReraNumber ?? null}
+          currentState={user.agentReraState ?? null}
           onSaved={() => {
             onSaved("PENDING");
             setEditing(false);

@@ -9,7 +9,9 @@ import { api, authReady, getAccessToken, setAccessToken } from "@/lib/api";
 import { CHAT_UNREAD_CHANGED, PROFILE_UPDATED } from "@/lib/events";
 import type { AuthUser } from "@/lib/types";
 
-type User = Pick<AuthUser, "name" | "email" | "avatarUrl">;
+// accountType joins the three the panel shows, because one nav item is
+// builders-only and /auth/me already sends it.
+type User = Pick<AuthUser, "name" | "email" | "avatarUrl" | "accountType">;
 
 /* ---------- icons (24px grid, drawn with the current text colour) ---------- */
 
@@ -89,10 +91,27 @@ const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
   </svg>
 );
 
+const ProjectsIcon = () => (
+  <svg {...iconProps}>
+    <rect x="3.5" y="9.5" width="7" height="10" rx="1.5" />
+    <rect x="13.5" y="4.5" width="7" height="15" rx="1.5" />
+    <path d="M6 13h2M6 16h2M16 8h2M16 11h2M16 14h2" />
+  </svg>
+);
+
 const NAV_ITEMS = [
   { href: "/", label: "Home", Icon: HomeIcon },
   { href: "/list/my/profile", label: "My profile", Icon: ProfileIcon },
   { href: "/list/my/listings", label: "My listings", Icon: ListingsIcon },
+  // Builders only. A plain seller has no projects, and a nav item that leads
+  // to a page which can only ever say "none" is worse than no nav item — so
+  // this one waits for /auth/me to say who is looking.
+  {
+    href: "/list/my/projects",
+    label: "Projects",
+    Icon: ProjectsIcon,
+    builderOnly: true,
+  },
   // Beside the listings it is about, not down with the account links: a seller
   // reaches for this while thinking about their properties.
   { href: "/list/promotions", label: "Promotions", Icon: PromotionsIcon },
@@ -174,8 +193,7 @@ const Sidebar = () => {
       try {
         const { data } = await api.get("/chat/conversation/unread");
         if (live) setUnread(data.count);
-      } catch {
-      }
+      } catch {}
     };
     loadUnread();
     window.addEventListener(CHAT_UNREAD_CHANGED, loadUnread);
@@ -192,7 +210,7 @@ const Sidebar = () => {
     if (!url) return;
 
     const socket = new WebSocket(url);
-      socket.onopen = async () => {
+    socket.onopen = async () => {
       await authReady;
       const token = getAccessToken();
       if (!token) return socket.close(); // signed out, nothing to count
@@ -316,145 +334,148 @@ const Sidebar = () => {
 
   return (
     <>
-    <aside
-      className={`relative isolate overflow-hidden border-b border-line bg-panel text-ink lg:border-b-0 lg:border-r lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0 lg:flex-col lg:transition-[width] lg:duration-200 motion-reduce:transition-none ${
-        collapsed ? "lg:w-[76px]" : "lg:w-60"
-      }`}
-    >
-      <ContourArt />
-
-      {/* ---------- user ---------- */}
-      <div
-        className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
+      <aside
+        className={`relative isolate overflow-hidden border-b border-line bg-panel text-ink lg:border-b-0 lg:border-r lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0 lg:flex-col lg:transition-[width] lg:duration-200 motion-reduce:transition-none ${
+          collapsed ? "lg:w-[76px]" : "lg:w-60"
+        }`}
       >
-        <span
-          title={collapsed ? user?.name : undefined}
-          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent text-[15px] font-semibold tracking-wide text-white"
+        <ContourArt />
+
+        {/* ---------- user ---------- */}
+        <div
+          className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
         >
-          {user?.avatarUrl && !avatarFailed ? (
-            // Google profile photos refuse requests that send a Referer, hence no-referrer.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.avatarUrl}
-              alt=""
-              referrerPolicy="no-referrer"
-              onError={() => setAvatarFailed(true)}
-              className="h-full w-full rounded-2xl object-cover"
-            />
-          ) : (
-            user && initialsOf(user.name)
-          )}
-        </span>
+          <span
+            title={collapsed ? user?.name : undefined}
+            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent text-[15px] font-semibold tracking-wide text-white"
+          >
+            {user?.avatarUrl && !avatarFailed ? (
+              // Google profile photos refuse requests that send a Referer, hence no-referrer.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarFailed(true)}
+                className="h-full w-full rounded-2xl object-cover"
+              />
+            ) : (
+              user && initialsOf(user.name)
+            )}
+          </span>
 
-        <div className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
-          {user ? (
-            <>
-              <p className="truncate font-display text-[19px] leading-tight">
-                {user.name}
-              </p>
-              <p className="mt-0.5 truncate text-[12.5px] text-muted">
-                {user.email}
-              </p>
-            </>
-          ) : (
-            <div className="space-y-2" aria-hidden="true">
-              <div className="h-4 w-28 animate-pulse rounded bg-accent-soft" />
-              <div className="h-3 w-36 animate-pulse rounded bg-accent-soft" />
-            </div>
-          )}
-        </div>
+          <div className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
+            {user ? (
+              <>
+                <p className="truncate font-display text-[19px] leading-tight">
+                  {user.name}
+                </p>
+                <p className="mt-0.5 truncate text-[12.5px] text-muted">
+                  {user.email}
+                </p>
+              </>
+            ) : (
+              <div className="space-y-2" aria-hidden="true">
+                <div className="h-4 w-28 animate-pulse rounded bg-accent-soft" />
+                <div className="h-3 w-36 animate-pulse rounded bg-accent-soft" />
+              </div>
+            )}
+          </div>
 
-        {/* On phones the nav lives behind "Menu", which would hide the unread
+          {/* On phones the nav lives behind "Menu", which would hide the unread
             badge behind a tap. Messaging is the one thing that has to announce
             itself, so it gets its own always-visible trigger up here. */}
-        <button
-          type="button"
-          onClick={() => {
-            setChatsOpen(true);
-            setMenuOpen(false);
-          }}
-          aria-haspopup="dialog"
-          aria-expanded={chatsOpen}
-          aria-label={unread > 0 ? `Chats, ${unread} unread` : "Chats"}
-          className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-muted lg:hidden ${focusRing}`}
-        >
-          <ChatsIcon />
-          {unread > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-expanded={menuOpen}
-          aria-controls="sidebar-menu"
-          className={`min-h-11 rounded-lg border border-line px-3.5 py-2.5 text-[14px] font-medium lg:hidden ${focusRing}`}
-        >
-          {menuOpen ? "Close" : "Menu"}
-        </button>
-      </div>
-
-      <div
-        id="sidebar-menu"
-        className={`${menuOpen ? "nav-open flex" : "hidden"} flex-1 flex-col px-3 pb-4 lg:flex`}
-      >
-        {/* ---------- navigation ---------- */}
-        <nav aria-label="Main">
-          <ul className="space-y-1">
-            {NAV_ITEMS.map((item) => navLink(item))}
-            {chatsButton}
-          </ul>
-        </nav>
-
-        {/* ---------- bottom ---------- */}
-        <div className="mt-6 space-y-1 border-t border-line pt-3 lg:mt-auto">
-          {/* Account things live at the bottom, apart from the everyday links above. */}
-          <ul>
-            {navLink({
-              href: "/list/settings",
-              label: "Settings",
-              Icon: SettingsIcon,
-            })}
-          </ul>
-
           <button
             type="button"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            aria-label={collapsed ? "Log out" : undefined}
-            title={collapsed ? "Log out" : undefined}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-muted transition-colors hover:bg-accent-soft/60 hover:text-danger disabled:opacity-60 ${focusRing} ${
-              collapsed ? "lg:justify-center" : ""
-            }`}
+            onClick={() => {
+              setChatsOpen(true);
+              setMenuOpen(false);
+            }}
+            aria-haspopup="dialog"
+            aria-expanded={chatsOpen}
+            aria-label={unread > 0 ? `Chats, ${unread} unread` : "Chats"}
+            className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-muted lg:hidden ${focusRing}`}
           >
-            <LogoutIcon />
-            <span className={hideWhenCollapsed}>
-              {loggingOut ? "Logging out…" : "Log out"}
-            </span>
+            <ChatsIcon />
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
           </button>
 
           <button
             type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-muted transition-colors hover:bg-accent-soft/60 hover:text-ink lg:flex ${focusRing} ${
-              collapsed ? "lg:justify-center" : ""
-            }`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-expanded={menuOpen}
+            aria-controls="sidebar-menu"
+            className={`min-h-11 rounded-lg border border-line px-3.5 py-2.5 text-[14px] font-medium lg:hidden ${focusRing}`}
           >
-            <CollapseIcon collapsed={collapsed} />
-            <span className={hideWhenCollapsed}>Collapse</span>
+            {menuOpen ? "Close" : "Menu"}
           </button>
         </div>
-      </div>
-    </aside>
 
-    {/* A sibling of the rail, not a child: the panel is fixed to the viewport,
+        <div
+          id="sidebar-menu"
+          className={`${menuOpen ? "nav-open flex" : "hidden"} flex-1 flex-col px-3 pb-4 lg:flex`}
+        >
+          {/* ---------- navigation ---------- */}
+          <nav aria-label="Main">
+            <ul className="space-y-1">
+              {NAV_ITEMS.filter(
+                (item) =>
+                  !("builderOnly" in item) || user?.accountType === "BUILDER",
+              ).map((item) => navLink(item))}
+              {chatsButton}
+            </ul>
+          </nav>
+
+          {/* ---------- bottom ---------- */}
+          <div className="mt-6 space-y-1 border-t border-line pt-3 lg:mt-auto">
+            {/* Account things live at the bottom, apart from the everyday links above. */}
+            <ul>
+              {navLink({
+                href: "/list/settings",
+                label: "Settings",
+                Icon: SettingsIcon,
+              })}
+            </ul>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              aria-label={collapsed ? "Log out" : undefined}
+              title={collapsed ? "Log out" : undefined}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-muted transition-colors hover:bg-accent-soft/60 hover:text-danger disabled:opacity-60 ${focusRing} ${
+                collapsed ? "lg:justify-center" : ""
+              }`}
+            >
+              <LogoutIcon />
+              <span className={hideWhenCollapsed}>
+                {loggingOut ? "Logging out…" : "Log out"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-muted transition-colors hover:bg-accent-soft/60 hover:text-ink lg:flex ${focusRing} ${
+                collapsed ? "lg:justify-center" : ""
+              }`}
+            >
+              <CollapseIcon collapsed={collapsed} />
+              <span className={hideWhenCollapsed}>Collapse</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* A sibling of the rail, not a child: the panel is fixed to the viewport,
         and nesting it inside the rail would tie it to the rail's own box. */}
-    <ChatsDrawer open={chatsOpen} onClose={() => setChatsOpen(false)} />
+      <ChatsDrawer open={chatsOpen} onClose={() => setChatsOpen(false)} />
     </>
   );
 };

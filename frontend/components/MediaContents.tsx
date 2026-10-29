@@ -211,7 +211,7 @@ const MediaContents = ({ id }: Props) => {
         </div>
         <p className="mt-1 text-[13px] text-muted">
           JPG, PNG or WebP · up to 10 MB each · {MAX_MEDIA_FILES} files in
-          total, including the video
+          total, including the video · 60 MB altogether
         </p>
 
         {images.length === 0 ? (

@@ -30,6 +30,26 @@ export const PROPERTY_TYPES: Option[] = [
   { value: "ROOM", label: "Room" },
 ];
 
+// What a searcher is offered: six, not seven. Somebody looking for premises to
+// work from does not reliably separate a shop unit from an office suite, and
+// two adjacent choices that mean nearly the same thing cost a decision instead
+// of making one.
+//
+// The database keeps both. A seller still says which they have, and a listing
+// still reads "Office" on its own page — so this merges the question, not the
+// data. Exactly the split LISTING_TYPES and SEARCH_LISTING_TYPES already make
+// for PG.
+//
+// Choosing it sends propertyType=COMMERCIAL. Widening that to both values is
+// the API's job, the mirror of what rentCoversPg already does for RENT.
+export const SEARCH_PROPERTY_TYPES: Option[] = PROPERTY_TYPES.filter(
+  (option) => option.value !== "OFFICE",
+).map((option) =>
+  option.value === "COMMERCIAL"
+    ? { value: "COMMERCIAL", label: "Commercial or office" }
+    : option,
+);
+
 // One photograph per type, and each one has to show THAT type — a card is a
 // label with a picture on it, so a picture of the wrong thing is a mislabelled
 // card. The reference's set was close but not ours: it had no office, so one
@@ -127,6 +147,20 @@ const LABELS: Record<string, string> = Object.fromEntries(
 
 export const labelOf = (value: string | null | undefined) =>
   value ? (LABELS[value] ?? value) : "";
+
+// The same values as the SEARCH surfaces name them. One bar must not carry a
+// chip reading "Commercial space" beside a select reading "Commercial or
+// office" — that is the same disagreement the PG filter had. Falls through to
+// labelOf, which is what every other screen keeps using: a listing of type
+// OFFICE still says "Office" on its own page.
+const SEARCH_LABELS: Record<string, string> = Object.fromEntries(
+  [SEARCH_LISTING_TYPES, SEARCH_PROPERTY_TYPES]
+    .flat()
+    .map((option) => [option.value, option.label]),
+);
+
+export const searchLabelOf = (value: string | null | undefined) =>
+  value ? (SEARCH_LABELS[value] ?? labelOf(value)) : "";
 
 const AMENITY_CATEGORY_LABELS: Record<string, string> = {
   BUILDING: "Building",
@@ -241,15 +275,19 @@ export const listingTypeOptions = (propertyType: string) =>
     : LISTING_TYPES;
 
 // A PG can only be a room, apartment or house; a plot cannot be rented.
-export const propertyTypeOptions = (listingType: string) => {
+export const propertyTypeOptions = (
+  listingType: string,
+  // Defaults to the full set, so the create and edit forms are untouched by
+  // the search-side merge. A search surface passes SEARCH_PROPERTY_TYPES.
+  base: Option[] = PROPERTY_TYPES,
+) => {
   if (listingType === "PG") {
-    return PROPERTY_TYPES.filter((o) =>
+    return base.filter((o) =>
       ["ROOM", "APARTMENT", "INDEPENDENT_HOUSE"].includes(o.value),
     );
   }
-  if (listingType === "RENT")
-    return PROPERTY_TYPES.filter((o) => o.value !== "PLOT");
-  return PROPERTY_TYPES;
+  if (listingType === "RENT") return base.filter((o) => o.value !== "PLOT");
+  return base;
 };
 
 export const floorsInconsistent = (data: ListingFormData) =>

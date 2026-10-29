@@ -69,28 +69,30 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
       className="mt-5 space-y-4 border-t border-line pt-5"
     >
       <Field id="addressLine" label="Property name or number">
-        <input {...input("addressLine", "Green Valley Apartments")} />
+        <input
+          {...input("addressLine", "Building or house name, or its number")}
+        />
       </Field>
       <Field id="landmark" label="Landmark" optional>
-        <input {...input("landmark", "Near the metro station")} />
+        <input {...input("landmark", "A well-known place nearby")} />
       </Field>
       <Field id="locality" label="Locality or street">
-        <input {...input("locality", "Panampilly Nagar, 2nd Cross Road")} />
+        <input {...input("locality", "Neighbourhood, then the street")} />
       </Field>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field id="city" label="City or town">
-          <input {...input("city", "Kochi")} />
+          <input {...input("city", "")} />
         </Field>
         <Field id="state" label="State">
-          <input {...input("state", "Kerala")} />
+          <input {...input("state", "")} />
         </Field>
         <Field id="district" label="District">
-          <input {...input("district", "Ernakulam")} />
+          <input {...input("district", "")} />
         </Field>
         <Field id="pincode" label="Pincode">
           <input
-            {...input("pincode", "682036")}
+            {...input("pincode", "6 digits")}
             inputMode="numeric"
             maxLength={6}
             className={`${inputClass} tabular-nums tracking-[0.08em]`}

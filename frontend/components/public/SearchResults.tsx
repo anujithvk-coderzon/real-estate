@@ -37,7 +37,9 @@ const PLURAL: Record<string, string> = {
   INDEPENDENT_HOUSE: "independent houses",
   VILLA: "villas",
   PLOT: "plots",
-  COMMERCIAL: "commercial spaces",
+  // The merged choice sends COMMERCIAL and the API answers with both kinds, so
+  // the sentence has to admit both or it misnames what is on screen.
+  COMMERCIAL: "commercial spaces and offices",
   OFFICE: "offices",
   ROOM: "rooms",
 };
@@ -47,7 +49,7 @@ const SINGULAR: Record<string, string> = {
   INDEPENDENT_HOUSE: "independent house",
   VILLA: "villa",
   PLOT: "plot",
-  COMMERCIAL: "commercial space",
+  COMMERCIAL: "commercial space or office",
   OFFICE: "office",
   ROOM: "room",
 };
@@ -55,7 +57,7 @@ const SINGULAR: Record<string, string> = {
 const MODE_PHRASE: Record<string, string> = {
   SALE: "for sale",
   RENT: "for rent",
-  PG: "for PG / hostel",
+  PG: "for PG or hostel",
 };
 
 // The API returns nearest first, so that is this page's default order. The home
@@ -158,9 +160,7 @@ const SearchResults = () => {
           setResult({
             key: fetchKey,
             listings: response.data.lists ?? [],
-            center: place
-              ? [Number(place.lon), Number(place.lat)]
-              : null,
+            center: place ? [Number(place.lon), Number(place.lat)] : null,
             failed: false,
           });
         }

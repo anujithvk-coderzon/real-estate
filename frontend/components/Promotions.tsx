@@ -24,13 +24,15 @@ const when = (iso: string) =>
     year: "numeric",
   });
 
-// What the seller is waiting to hear: is it up yet. isActive defaults to false
-// in the database, so everything new reads as in review until an operator
-// turns it on.
+// What the seller is waiting to hear: is it up yet. Deliberately NOT "In
+// review" for the off state — an operator can switch a live banner back off,
+// and /promotion/my sends one boolean, so a banner nobody has looked at yet
+// and one that was taken down are indistinguishable here. "Not live" is the
+// only label that is true of both. (A reviewedAt column would separate them.)
 const status = (promotion: Promotion) =>
   promotion.isActive
     ? { label: "Live", chip: "bg-accent/12 text-accent" }
-    : { label: "In review", chip: "bg-line text-muted" };
+    : { label: "Not live", chip: "bg-line text-muted" };
 
 // The response carries only the id of the thing promoted, not its title, so
 // this is all we can honestly say about the target for now.
@@ -69,7 +71,8 @@ const Promotions = () => {
     setAttempt((n) => n + 1);
   };
 
-  const live = promotions?.filter((promotion) => promotion.isActive).length ?? 0;
+  const live =
+    promotions?.filter((promotion) => promotion.isActive).length ?? 0;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-10 lg:py-10">

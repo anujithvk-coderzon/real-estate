@@ -344,7 +344,7 @@ const EditListing = ({ id }: Props) => {
         </div>
         <p className="mt-1 text-[13px] text-muted">
           JPG, PNG or WebP up to 10 MB · one MP4 or WebM video up to 30 MB · 10
-          files in total
+          files and 60 MB in total
         </p>
 
         <ul className="mt-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">

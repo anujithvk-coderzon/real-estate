@@ -11,6 +11,10 @@ const BROWSE = [
   { href: "/?listingType=SALE", label: "For sale" },
   { href: "/?listingType=RENT", label: "For rent" },
   { href: "/?listingType=PG", label: "PG and hostels" },
+  // Was the one survivor of a Help column whose other two links — /#safety
+  // and /#faq — pointed at a section that no longer exists. A column with one
+  // link in it is not a column.
+  { href: "/property/search", label: "Search by location" },
 ];
 
 const TYPES = [
@@ -19,12 +23,6 @@ const TYPES = [
   { href: "/?propertyType=VILLA", label: "Villas" },
   { href: "/?propertyType=PLOT", label: "Plots and land" },
   { href: "/?propertyType=OFFICE", label: "Offices" },
-];
-
-const HELP = [
-  { href: "/#safety", label: "Before you pay anyone" },
-  { href: "/#faq", label: "Questions people ask" },
-  { href: "/property/search", label: "Search by location" },
 ];
 
 const OWNERS = [
@@ -61,7 +59,7 @@ const SiteFooter = () => (
   // the only heavy block on an otherwise white page.
   <footer className="mt-16 border-t border-line bg-panel text-ink">
     <div className="mx-auto w-full max-w-7xl px-5 py-10 lg:px-10 lg:py-12">
-      <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] lg:gap-8">
+      <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] lg:gap-8">
         <div className="min-w-0">
           <p className="font-display text-[24px] leading-none">
             Properties&#8599;
@@ -74,7 +72,6 @@ const SiteFooter = () => (
 
         <Column title="Browse" links={BROWSE} />
         <Column title="Property types" links={TYPES} />
-        <Column title="Help" links={HELP} />
         <Column title="Listing" links={OWNERS} />
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 // "My profile": what buyers see when they look at the person behind a listing.
-// Builders will also show their projects here once that feature exists.
+// A builder's projects are listed here too, and in full at /list/my/projects.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";

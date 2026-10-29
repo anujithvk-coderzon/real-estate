@@ -47,7 +47,6 @@ import {
 } from "@/lib/listingDisplay";
 import type { PublicListing } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
-import axios from "axios";
 
 type Props = { slug: string };
 

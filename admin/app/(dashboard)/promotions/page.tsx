@@ -32,9 +32,14 @@ type Promotion = {
 };
 
 // The two states the column can be in, which is the whole of the API's ?type=.
-// "In review" first: it is the queue, the reason an operator opens this page.
+// Not live first: it is the queue, the reason an operator opens this page.
+//
+// Deliberately not "In review". Since the endpoint became a toggle this tab
+// holds two kinds of row — banners nobody has judged yet, and banners an
+// operator switched off — and isActive cannot tell them apart. "Not live" is
+// the only label that is true of both.
 const TABS = [
-  { key: "review", label: "In review", active: false },
+  { key: "review", label: "Not live", active: false },
   { key: "live", label: "Live", active: true },
 ] as const;
 
@@ -129,8 +134,7 @@ const quietButton = `inline-flex min-h-11 items-center rounded-lg px-3 text-[13p
 const dangerButton = `inline-flex min-h-11 items-center rounded-lg bg-danger px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
 
 type Result =
-  | { key: string; promotions: Promotion[] }
-  | { key: string; error: true };
+  { key: string; promotions: Promotion[] } | { key: string; error: true };
 
 // The API's own sentence when it sent one — "Promotion is already active" is
 // more use to an operator than a status code.
@@ -146,32 +150,26 @@ const reason = (error: unknown, live: boolean) => {
 
 /* The artwork is what is being judged, so it opens full size in its own tab
    rather than being squinted at in a thumbnail. */
-const Banner = ({
-  promotion,
-  alt,
-}: {
-  promotion: Promotion;
-  alt: string;
-}) =>
+const Banner = ({ promotion, alt }: { promotion: Promotion; alt: string }) =>
   !promotion.image ? (
     <p className="rounded-lg bg-ground px-3 py-6 text-center text-[12px] text-muted">
       No image URL from the API
     </p>
   ) : (
-  <a
-    href={promotion.image}
-    target="_blank"
-    rel="noreferrer"
-    title="Open full size"
-    className={`block overflow-hidden rounded-lg bg-ground ring-1 ring-line transition hover:ring-accent ${focusable}`}
-  >
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img
-      src={promotion.image}
-      alt={alt}
-      className="aspect-[3/1] w-full object-contain"
-    />
-  </a>
+    <a
+      href={promotion.image}
+      target="_blank"
+      rel="noreferrer"
+      title="Open full size"
+      className={`block overflow-hidden rounded-lg bg-ground ring-1 ring-line transition hover:ring-accent ${focusable}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={promotion.image}
+        alt={alt}
+        className="aspect-[3/1] w-full object-contain"
+      />
+    </a>
   );
 
 const Page = () => {
@@ -337,11 +335,11 @@ const Page = () => {
         Promotions
       </h1>
       <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-muted sm:text-[15px]">
-        Banners sellers want shown to buyers. Every one arrives switched off,
-        so <strong className="font-medium text-ink">In review</strong> is what
-        is waiting on a decision; anything already up can be taken down again
-        from <strong className="font-medium text-ink">Live</strong>. Newest
-        first.
+        Banners sellers want shown to buyers. Every one arrives switched off, so{" "}
+        <strong className="font-medium text-ink">Not live</strong> holds both
+        what is waiting on a decision and anything taken down since; anything
+        currently up can be switched off from{" "}
+        <strong className="font-medium text-ink">Live</strong>. Newest first.
       </p>
 
       {/* ---------- which column of the table ---------- */}
@@ -391,8 +389,8 @@ const Page = () => {
         >
           {promotions.length === 0
             ? tab === "review"
-              ? "Nothing waiting"
-              : "Nothing live"
+              ? "No banners are off"
+              : "No banners are live"
             : `${promotions.length} ${promotions.length === 1 ? "banner" : "banners"}`}
         </p>
       )}
@@ -434,11 +432,13 @@ const Page = () => {
       {promotions?.length === 0 && (
         <div className="mt-5 rounded-xl border border-dashed border-line bg-panel p-8 text-center">
           <h2 className="font-display text-[17px]">
-            {tab === "review" ? "The queue is clear" : "No banners are live"}
+            {tab === "review"
+              ? "Nothing is switched off"
+              : "No banners are live"}
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-[13.5px] leading-relaxed text-muted">
             {tab === "review"
-              ? "Every banner sellers have submitted has been dealt with."
+              ? "Every banner sellers have submitted is live."
               : "Banners appear here once they are switched on, and can be switched off again from this tab."}
           </p>
         </div>
@@ -492,8 +492,10 @@ const Page = () => {
           <div className="mt-4 hidden overflow-hidden rounded-xl border border-line bg-panel md:block">
             <table className="w-full table-fixed border-collapse text-left">
               <caption className="sr-only">
-                {tab === "review" ? "Banners awaiting review" : "Live banners"},
-                newest first
+                {tab === "review"
+                  ? "Banners that are not live"
+                  : "Live banners"}
+                , newest first
               </caption>
               <thead>
                 <tr className="border-b border-line text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
@@ -566,9 +568,7 @@ const Page = () => {
                       <td className="px-4 py-3 text-[12.5px] tabular-nums text-muted">
                         {when(promotion.createdAt)}
                       </td>
-                      <td className="px-4 py-3">
-                        {toggleControl(promotion)}
-                      </td>
+                      <td className="px-4 py-3">{toggleControl(promotion)}</td>
                     </tr>
                   );
                 })}

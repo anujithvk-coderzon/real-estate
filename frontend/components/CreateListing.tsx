@@ -215,6 +215,7 @@ const CreateListing = () => {
     return (
       <AgentReraForm
         revoked={reraStatus === "REVOKED"}
+        currentState={user?.agentReraState ?? null}
         onSaved={() => setReraStatus("PENDING")} // saved, not checked yet: let them carry on
         onBack={() => router.push("/list/create")}
       />
@@ -261,7 +262,7 @@ const CreateListing = () => {
           <h2 className={sectionTitle}>Which project is this unit in?</h2>
           <p className="mt-1 max-w-prose text-[14px] leading-relaxed text-muted">
             {role === "BUILDER"
-              ? "A project carries the RERA registration number a sale advertisement needs, so every unit you list in it is covered by the same number. A ready resale or a single plot needs no project."
+              ? "A project carries the RERA registration number a sale advertisement needs, so every unit you list in it is covered by the same number. If the project is not registered here yet, type its name and number instead. A ready resale or a single plot needs no project."
               : "Search the project this unit is in. If we do not have it yet, type its name and RERA number as the builder gave them to you. A resale or a plot needs no project."}
           </p>
 

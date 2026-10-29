@@ -1,34 +1,47 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import MapPlate from "@/components/public/MapPlate";
 import NearbyButton from "@/components/public/NearbyButton";
-import SearchBar from "@/components/public/SearchBar";
+import SearchBar, { FIELD_LABEL } from "@/components/public/SearchBar";
 import { authReady, isSignedIn } from "@/lib/api";
 import {
+  NO_BEDROOMS,
+  RADIUS_OPTIONS,
   SEARCH_LISTING_TYPES,
-  PROPERTY_TYPES,
+  SEARCH_PROPERTY_TYPES,
   TYPE_COLOUR,
   categoryPhoto,
+  listingTypeOptions,
+  propertyTypeOptions,
 } from "@/lib/listing";
 
-// The hero: a circular plate with the search at its centre, the property types
-// scattered in orbit around it, and a scroll that gathers them into the row they
-// live in for the rest of the page.
+// The hero: a circular plate with the controls on it — looking to, property
+// type, distance, where, search — and the property types scattered in orbit
+// around it, gathered into a row by the scroll.
 //
-// Built to the reference's own numbers: 280px of scroll, a sticky stage, cards
-// that straighten out of a tilt, and the
-// dashed orbit ring fading back as the cards leave it.
+// The cards are decoration. They were links, and a photograph of a villa that
+// filters when pressed is a control you cannot tell is a control, sitting on
+// the same screen as the select that asks the same question. So the orbit
+// stays and the pressing does not: aria-hidden, pointer-events-none, and the
+// accent ring still following the chosen type because reflecting an answer is
+// information rather than interaction.
 //
 // The implementation is inverted from the reference's, on purpose. There, the
 // scattered position is measured and the row is computed every frame from
 // offsetLeft/offsetTop — which forces a layout recalculation on each scroll
 // event. Here the ROW is the cards' natural CSS position and the orbit is a
-// transform away from it, so the scroll handler only ever writes transforms and
-// the browser never has to re-lay out the page. Measuring happens once per
-// resize.
+// transform away from it, so the scroll handler only ever writes transforms
+// and the browser never has to re-lay out the page. Measuring happens once
+// per resize.
 
 // A true ring: seven cards evenly spaced, the first straight up and the rest
 // every 360/7 around. Nothing is at the very bottom, which is where the row
@@ -42,9 +55,21 @@ import {
 // The cost is vertical room: a card directly above the plate needs 180px of
 // clear space over it, which is why the plate is smaller than it was and why
 // the stage carries that much top padding.
+// One angle per card, spread evenly. Derived from the list rather than written
+// as 7, so folding Office into Commercial re-spaces the ring instead of
+// leaving a gap where the seventh card used to be.
+//
+// 270 is straight up, and with SEVEN cards 90° — straight down, where the row
+// forms and the line about it now sits — fell between two of them. With SIX it
+// lands exactly on one, so an even count starts half a step round and keeps the
+// bottom of the ring clear.
+const ORBIT_STEP = 360 / SEARCH_PROPERTY_TYPES.length;
 const ORBIT_DEGREES = Array.from(
-  { length: 7 },
-  (_, index) => 270 + index * (360 / 7),
+  { length: SEARCH_PROPERTY_TYPES.length },
+  (_, index) =>
+    270 +
+    (SEARCH_PROPERTY_TYPES.length % 2 === 0 ? ORBIT_STEP / 2 : 0) +
+    index * ORBIT_STEP,
 );
 // Their alternating tilt, so the ring looks placed by hand rather than plotted.
 // Straightens to zero as the cards settle into the row.
@@ -79,7 +104,7 @@ const MIN_STAGE_WIDTH = 740;
 // sequence instead of all landing on the same frame. Seven cards moving in
 // perfect unison read as a mechanism resetting, not as things gathering.
 const STAGGER = 0.06;
-const SPAN = 1 - STAGGER * (7 - 1);
+const SPAN = 1 - STAGGER * (SEARCH_PROPERTY_TYPES.length - 1);
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 // Fast at the start, slow at the finish, so a card eases into its slot rather
@@ -127,13 +152,20 @@ type Orbit = {
   sweep: number;
 };
 
+// The card's two selects. A field, not a button: sunken fill, hairline ring,
+// and the browser's own chevron doing the "this opens" work.
+const HERO_SELECT =
+  "h-11 w-full rounded-lg bg-ground px-2 text-[15px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-10 md:bg-panel/95 md:backdrop-blur-sm";
+
 const HeroStage = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const propertyType = searchParams.get("propertyType") ?? "";
   const listingType = searchParams.get("listingType") ?? "";
   // Empty means the API's default of 10 km, which is what the ring must show.
-  const radiusKm = Number(searchParams.get("radius")) || 10;
+  const radius = searchParams.get("radius") ?? "";
+  const radiusKm = Number(radius) || 10;
 
   const stage = useRef<HTMLDivElement>(null);
   // The positioned ancestor of both the plate and the row, so one offsetParent
@@ -143,18 +175,50 @@ const HeroStage = () => {
   const cards = useRef<(HTMLLIElement | null)[]>([]);
   const ring = useRef<HTMLDivElement>(null);
 
-
   // null until the sign-in check settles, so neither version of the copy
   // flashes before the other. The same pattern PublicFrame uses.
   const [visitor, setVisitor] = useState<boolean | null>(null);
   const [orbits, setOrbits] = useState<Orbit[]>([]);
   const [ready, setReady] = useState(false);
 
+  // Writes one choice into the URL — and drops anything already there that
+  // cannot be true alongside it. The rules are not invented here: they are the
+  // same lib/listing helpers the filter bar obeys. Without this the hero can
+  // write combinations the catalogue has no answer for — Rent + Plot or land
+  // is the obvious one, since a plot is never let — and the visitor gets an
+  // empty page with nothing on screen explaining why.
   const href = (name: string, value: string) => {
     const next = new URLSearchParams(searchParams.toString());
-    if (value === searchParams.get(name)) next.delete(name);
+    // An empty value means "any", which is the absence of the parameter — not
+    // ?propertyType= with nothing after it. Choosing the current value again
+    // clears it too, so every chip is also its own off switch.
+    if (!value || value === searchParams.get(name)) next.delete(name);
     else next.set(name, value);
     next.delete("page");
+
+    const mode = next.get("listingType") ?? "";
+    const kind = next.get("propertyType") ?? "";
+
+    if (name === "listingType") {
+      // Renting while Plot is selected: the type is the one that goes, because
+      // the mode is what was just asked for.
+      if (kind && !propertyTypeOptions(mode).some((o) => o.value === kind))
+        next.delete("propertyType");
+      // A ceiling picked for monthly rents means nothing against sale prices.
+      next.delete("maxPrice");
+    }
+
+    if (name === "propertyType") {
+      // The mirror of the above: ask for plots while Rent is on and the MODE
+      // is what cannot hold, so that is what is dropped. Clearing it beats
+      // silently switching them to Buy, which would answer a question they
+      // did not ask.
+      if (mode && !listingTypeOptions(kind).some((o) => o.value === mode))
+        next.delete("listingType");
+      // Commercial, office and plots have no bedrooms to filter on.
+      if (NO_BEDROOMS.includes(kind)) next.delete("beds");
+    }
+
     const query = next.toString();
     return query ? `${pathname}?${query}` : pathname;
   };
@@ -167,7 +231,10 @@ const HeroStage = () => {
   const measure = useCallback(() => {
     const plateEl = plate.current;
     const root = column.current;
-    if (!plateEl || !root) return;
+    if (!plateEl || !root) {
+      setReady(true);
+      return;
+    }
 
     const host = stage.current;
     const stageWidth = host?.clientWidth ?? plateEl.offsetWidth;
@@ -221,7 +288,7 @@ const HeroStage = () => {
     // One missing ref would mean one card with a dead orbit sitting in the row
     // while six fly. No orbit at all is the better failure: ready stays true so
     // the row is still visible rather than held at opacity 0.
-    if (cards.current.length < PROPERTY_TYPES.length) {
+    if (cards.current.length < SEARCH_PROPERTY_TYPES.length) {
       setOrbits([]);
       setReady(true);
       return;
@@ -299,7 +366,7 @@ const HeroStage = () => {
     };
 
     const paint = (value: number) => {
-      for (let index = 0; index < PROPERTY_TYPES.length; index += 1) {
+      for (let index = 0; index < SEARCH_PROPERTY_TYPES.length; index += 1) {
         const card = cards.current[index];
         if (!card) continue;
         const orbit = orbits[index];
@@ -401,13 +468,15 @@ const HeroStage = () => {
   }, [orbits]);
 
   // ---------- signed in ----------
-  // No plate, no ring, no gather. The orbit is a first-impression device: it
-  // says "this site sells homes, plots, offices and rooms" to somebody who has
-  // never been here. A returning user already knows, and making them scroll
-  // 1080px of sticky stage past it to reach their listings is a tax.
+  // No drawing: it is a first-impression device, saying "this site sells
+  // homes, plots, offices and rooms" to somebody who has never been here. A
+  // returning user already knows, and a 230px illustration between them and
+  // their listings is a tax.
   //
-  // So they get the same controls, flat and compact: say where, say what, see
-  // results. Nothing moves except what answers a press.
+  // So they get the same questions in a flat row — where, what, how far — and
+  // keep the type chips, which here are a one-line filter bar over their own
+  // page rather than a second answer to the card above. Nothing moves except
+  // what answers a press.
   if (visitor === false) {
     return (
       <section
@@ -423,7 +492,14 @@ const HeroStage = () => {
           </h1>
 
           <div className="mt-4 max-w-2xl">
-            <SearchBar variant="compact" />
+            {/* The same reason the visitor hero passes these: compact renders
+                neither control, so without them the form submits an empty mode
+                and type and the Buy / Rent choice made right below is dropped
+                on the way to the results page. */}
+            <SearchBar
+              variant="compact"
+              initialValues={{ listingType, propertyType }}
+            />
           </div>
 
           {/* One row, wrapping: the mode on the left, the types after it. Both
@@ -437,11 +513,11 @@ const HeroStage = () => {
                     key={mode.value}
                     href={href("listingType", mode.value)}
                     scroll={false}
-                    aria-pressed={selected}
+                    aria-current={selected ? "true" : undefined}
                     className={`flex h-9 items-center rounded-lg px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                       selected
-                        ? "bg-accent text-white"
-                        : "text-muted hover:text-ink"
+                        ? "bg-accent-soft text-accent ring-1 ring-accent"
+                        : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
                     }`}
                   >
                     {mode.value === "SALE"
@@ -460,14 +536,14 @@ const HeroStage = () => {
             />
 
             <ul className="flex flex-wrap gap-2">
-              {PROPERTY_TYPES.map((type) => {
+              {SEARCH_PROPERTY_TYPES.map((type) => {
                 const selected = type.value === propertyType;
                 return (
                   <li key={type.value}>
                     <Link
                       href={href("propertyType", type.value)}
                       scroll={false}
-                      aria-pressed={selected}
+                      aria-current={selected ? "true" : undefined}
                       className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium ring-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                         selected
                           ? "bg-accent-soft text-ink ring-accent"
@@ -514,44 +590,34 @@ const HeroStage = () => {
           <em className="not-italic text-accent">Right nearby.</em>
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-[15px] text-muted">
-          Homes, plots and rooms across India. Search a locality, set how far
-          you will travel, and see every match on a map.
+          Search any locality in India, set how far you will travel, and see
+          every match on a map.
         </p>
       </div>
 
       {/* ---------- the stage ---------- */}
-      {/* From md up this is a tall, clipping box: tall enough to scroll the
-          gather through while the plate stays put, clipping because the
-          orbiting cards reach outside the content column and must not create a
-          horizontal scrollbar on the way.
-          Below md there is no orbit — no room for one — so the box is neither
-          fixed nor clipping. It used to be both, and 739px of phone content was
-          being cut off inside a 520px box, which is why the bottom rows of
-          cards were missing. A height that does not depend on its content is
-          only safe when the content cannot grow. */}
+      {/* The 180px of top padding below is clearance for the card that orbits
+          directly above the plate; the clip is because the ones on the flanks
+          reach outside the content column on their way in and must not widen
+          the page. Neither applies on a phone, where there is no room for an
+          orbit and the row is hidden. */}
       <div
         ref={stage}
-        // No pinning and no travel padding: the section is exactly as tall as
-        // what is in it. The gather runs while the hero scrolls up the screen
-        // rather than while it holds still, which costs the hold but means
-        // there is no empty room under it for the scroll to pass through.
-        // overflow-clip stays: the cards reach outside the content column on
-        // their way in and must not widen the page.
+        // overflow-clip: the cards reach outside the content column on their
+        // way in and must not widen the page.
         className="relative md:overflow-clip"
       >
         <div>
           <div
             ref={column}
-            // Enough room under the last row that the section breathes into
-            // the next one. It carries the whole separation now that there is
-            // no rule along the bottom, so it is a little more generous on a
-            // wide screen than on a phone.
+            // Enough room underneath that the section breathes into the next
+            // one. It carries the whole separation, there being no rule along
+            // the bottom, so it is a little more generous on a wide screen.
             className="relative mx-auto w-full max-w-7xl px-5 pb-10 pt-4 md:pb-16 md:pt-[180px] lg:px-10"
           >
             <div className="flex justify-center">
-              {/* The phone stacks map, then controls, then types. From md the
-                  controls move onto the middle of the map and the types go
-                  into orbit around it. */}
+              {/* A phone puts the drawing behind the card; from md the card
+                  sits on the middle of it. */}
               <div className="relative w-full md:w-[min(86vw,22rem)]">
                 {/* The dashed orbit, fading back as the cards leave it — their
                     opacity curve, 1 down to 0.15. */}
@@ -589,62 +655,181 @@ const HeroStage = () => {
                     one task rather than four separate controls stacked up.
                     From md it goes back to two transparent objects floating at
                     the centre of the circle. */}
-                <div className="relative mt-[118px] flex flex-col gap-2 rounded-2xl bg-panel p-2 shadow-[0_18px_44px_-22px_rgba(48,32,68,0.5)] ring-1 ring-line md:absolute md:inset-x-9 md:top-1/2 md:mt-0 md:-translate-y-1/2 md:gap-2.5 md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:ring-0">
-                    {/* The mode and type are not fields in here; they are
-                        the hero's own controls, held in the URL. Passed in so
-                        the form submits the choice instead of dropping it. */}
-                    <SearchBar
-                      variant="compact"
-                      initialValues={{ listingType, propertyType }}
-                    />
-                    <div className="order-first md:order-none md:flex md:justify-center">
-                      {/* Three equal columns on a phone: a segmented control
-                          that does not fill its line reads as three loose
-                          buttons. From md it needs its own surface, because
+                <div className="relative mt-[118px] flex flex-col gap-1.5 rounded-2xl bg-panel p-2 shadow-[0_18px_44px_-22px_rgba(48,32,68,0.5)] ring-1 ring-line md:absolute md:inset-x-9 md:top-1/2 md:mt-0 md:-translate-y-1/2 md:gap-2.5 md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:ring-0">
+                  {/* Buy / Rent sits first in the DOM because on a phone it
+                        sits first on the screen. It used to be second here and
+                        first visually, via order-first — so a thumb read mode,
+                        place, distance while a keyboard and a screen reader got
+                        place, distance, mode. Tab order that disagrees with the
+                        layout is the kind of confusion nobody can point at.
+                        From md the card opens out and the search goes back on
+                        top, which is an ordering of the same two things, so
+                        the explicit 1-2-3 below says it once. */}
+                  <div className="md:flex md:justify-center">
+                    {/* Two buttons with neither of them on does not read as a
+                        choice at all — which is exactly how it read. The
+                        caption says what the pair is for. sr-only from md,
+                        where it floats on the map and a caption over a
+                        two-button control would be noise. */}
+                    <p id="hero-mode-label" className={FIELD_LABEL}>
+                      Looking to
+                    </p>
+                    {/* Equal columns on a phone, one per mode: a segmented
+                          control that does not fill its line reads as loose
+                          buttons. It said grid-cols-3 from when PG was a third
+                          choice here — with two modes that left an empty third
+                          of the row, which is what made the pair look stranded.
+                          From md it needs its own surface, because
                           sitting straight on the map it would be unreadable
                           over the roads. */}
-                      <div className="grid grid-cols-3 gap-1 rounded-xl bg-ground p-1 md:inline-flex md:bg-panel/95 md:shadow-[0_8px_24px_-12px_rgba(48,32,68,0.3)] md:ring-1 md:ring-line md:backdrop-blur-sm">
-                        {SEARCH_LISTING_TYPES.map((mode) => {
-                          const selected = mode.value === listingType;
-                          return (
-                            <Link
-                              key={mode.value}
-                              href={href("listingType", mode.value)}
-                              scroll={false}
-                              aria-pressed={selected}
-                              className={`flex h-10 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-9 md:px-4 md:text-[14px] ${
-                                selected
-                                  ? "bg-accent text-white"
-                                  : "text-muted hover:text-ink"
-                              }`}
-                            >
-                              {mode.value === "SALE" ? "Buy" : "Rent"}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {/* The phone is the device that has a GPS chip, so this is
-                        the one control that belongs to it first. */}
-                    <div className="md:flex md:justify-center">
-                      <NearbyButton />
+                    <div
+                      role="group"
+                      aria-labelledby="hero-mode-label"
+                      className="grid grid-cols-2 gap-1 rounded-xl bg-ground p-1 md:inline-flex md:bg-panel/95 md:shadow-[0_8px_24px_-12px_rgba(48,32,68,0.3)] md:ring-1 md:ring-line md:backdrop-blur-sm"
+                    >
+                      {SEARCH_LISTING_TYPES.map((mode) => {
+                        const selected = mode.value === listingType;
+                        return (
+                          <Link
+                            key={mode.value}
+                            href={href("listingType", mode.value)}
+                            scroll={false}
+                            aria-current={selected ? "true" : undefined}
+                            className={`flex h-10 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-9 md:px-4 md:text-[14px] ${
+                              selected
+                                ? "bg-accent-soft text-accent ring-1 ring-accent"
+                                : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
+                            }`}
+                          >
+                            {mode.value === "SALE" ? "Buy" : "Rent"}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
+                  {/* Two-up: both are one-word questions with short answers,
+                      so a row each was height spent on nothing.
+                      
+                      These are what answers the type question now — the
+                      orbiting cards below are decoration. A grid of pictures
+                      is a browse list, not a filter: no selected state once it
+                      has scrolled past, and a second control for something
+                      this card already asks.
+
+                      Both are navigation: they
+                      write the URL, so they, the filter bar below and the
+                      results page can never disagree about the answer. The
+                      distance earns it twice over — the drawing behind this
+                      card reads ?radius, so choosing one redraws the circle
+                      being searched. */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="min-w-0">
+                      <label htmlFor="hero-type" className={FIELD_LABEL}>
+                        Property type
+                      </label>
+                      <select
+                        id="hero-type"
+                        value={propertyType}
+                        onChange={(event) =>
+                          router.push(
+                            href("propertyType", event.target.value),
+                            {
+                              scroll: false,
+                            },
+                          )
+                        }
+                        className={HERO_SELECT}
+                      >
+                        <option value="">Any type</option>
+                        {propertyTypeOptions(
+                          listingType,
+                          SEARCH_PROPERTY_TYPES,
+                        ).map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="min-w-0">
+                      <label htmlFor="hero-radius" className={FIELD_LABEL}>
+                        Distance
+                      </label>
+                      <select
+                        id="hero-radius"
+                        value={radius}
+                        onChange={(event) =>
+                          router.push(href("radius", event.target.value), {
+                            scroll: false,
+                          })
+                        }
+                        className={HERO_SELECT}
+                      >
+                        {/* Bare numbers: the caption above already says what is
+                            being measured, so "Within" on every line was the
+                            same word four times in a 150px control. */}
+                        <option value="">10 km</option>
+                        {RADIUS_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* The mode and type are not fields in here; they are
+                        the hero's own controls, held in the URL. Passed in so
+                        the form submits the choice instead of dropping it. */}
+                  <div>
+                    <SearchBar
+                      variant="compact"
+                      initialValues={{ listingType, propertyType, radius }}
+                    />
+                  </div>
+
+                  {/* The phone is the device that has a GPS chip, so this is
+                        the one control that belongs to it first. */}
+                  <div className="md:flex md:justify-center">
+                    <NearbyButton />
+                  </div>
+                </div>
               </div>
             </div>
+            {/* The types, in orbit. Decoration, not controls: the drawing
+                and these cards are the first-impression device — "this site
+                sells homes, plots, offices and rooms" — while the filtering is
+                the select in the card above. They were links, which is what
+                made a picture of a villa read as a button you press to filter,
+                and put two controls for one question on one screen.
 
-            {/* The types. On a phone these are chips: the photograph is what
-                makes them 100px tall each, and seven of those wrap into four
-                rows that eat 424px of screen before anything else is reached.
-                The label and its colour are the information — the colour is
-                the same one the map pins use — so the picture is what goes.
-                From md, where there is room, they become the photo cards the
-                orbit gathers into. */}
-            <p className="mt-7 text-[12.5px] font-semibold text-muted md:hidden">
-              Or browse by type
-            </p>
-            <ul className="mt-2 flex flex-wrap gap-1.5 md:mt-7 md:justify-center md:gap-3.5">
-              {PROPERTY_TYPES.map((type, index) => {
+                pointer-events-none and aria-hidden, so there is nothing to
+                press and nothing announced twice. The accent ring still tracks
+                the chosen type, because reflecting the answer is information,
+                not interaction. Desktop only — on a phone the row is 2 of
+                screen spent on something you cannot use. */}
+            {/* Why the cards are there. A statement, never an invitation:
+                "browse by type" or "pick one" would promise the press that was
+                deliberately taken away from them. It also answers the question
+                a decorative row raises on its own — what are these for — and
+                says the one thing visitors get wrong about the search, that
+                leaving the type alone returns all of them rather than none. */}
+            <div className="mt-12 hidden text-center md:block">
+              <h2 className="font-display text-[20px] leading-tight">
+                Every kind of property, in one search
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-muted">
+                Apartments and houses, villas, land, shops and single rooms.
+                Leave the type alone above and the search returns all of them.
+              </p>
+            </div>
+
+            <ul
+              aria-hidden="true"
+              className="mt-6 hidden flex-wrap justify-center gap-3.5 md:flex"
+            >
+              {SEARCH_PROPERTY_TYPES.map((type, index) => {
                 const selected = type.value === propertyType;
                 return (
                   <li
@@ -661,11 +846,8 @@ const HeroStage = () => {
                       opacity: ready ? 1 : 0,
                     }}
                   >
-                    <Link
-                      href={href("propertyType", type.value)}
-                      scroll={false}
-                      aria-pressed={selected}
-                      className={`group plinth relative flex h-9 items-center gap-1.5 rounded-full bg-panel px-3 text-left text-[12.5px] ring-1 transition-shadow hover:shadow-[0_12px_32px_-18px_rgba(121,71,198,0.5)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-auto md:w-[140px] md:flex-col md:items-stretch md:gap-1.5 md:rounded-2xl md:px-2 md:py-2 md:text-[13px] ${
+                    <div
+                      className={`plinth pointer-events-none relative flex w-[140px] flex-col items-stretch gap-1.5 rounded-2xl bg-panel px-2 py-2 text-left text-[13px] ring-1 ${
                         selected ? "ring-2 ring-accent" : "ring-line"
                       }`}
                     >
@@ -675,17 +857,17 @@ const HeroStage = () => {
                         alt=""
                         loading="lazy"
                         decoding="async"
-                        className="plinth-solid hidden w-full rounded-xl object-cover md:block md:h-[70px]"
+                        className="plinth-solid h-[70px] w-full rounded-xl object-cover"
                       />
-                      <span className="flex items-center gap-1.5 whitespace-nowrap text-[inherit] font-semibold leading-tight text-ink md:items-start md:whitespace-normal">
+                      <span className="flex items-start gap-1.5 text-[inherit] font-semibold leading-tight text-ink">
                         <span
                           aria-hidden="true"
                           style={{ background: TYPE_COLOUR[type.value] }}
-                          className="h-[7px] w-[7px] shrink-0 rounded-full md:mt-[5px]"
+                          className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full"
                         />
                         {type.label}
                       </span>
-                    </Link>
+                    </div>
                   </li>
                 );
               })}

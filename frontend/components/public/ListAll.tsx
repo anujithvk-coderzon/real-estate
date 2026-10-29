@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import PublicListingCard from "@/components/listing/PublicListingCard";
 import FeaturedPromotions from "@/components/public/FeaturedPromotions";
 import HeroStage from "@/components/public/HeroStage";
+import HowItWorks from "@/components/public/HowItWorks";
 import ListingFilters from "@/components/public/ListingFilters";
 import { api, authReady, isSignedIn } from "@/lib/api";
 import { formatNumber } from "@/lib/format";
@@ -341,13 +342,23 @@ const ListAll = () => {
             stays where it was. */}
         <FeaturedPromotions />
 
+        {/* What this place is and how either side uses it. Visitors only, and
+            only once the sign-in check has settled — a returning user has made
+            that decision and does not need the pitch between them and the
+            listings. visitor === true, not !== false, so it never flashes on
+            screen for somebody who turns out to be signed in. */}
+        {visitor === true && <HowItWorks />}
+
         {/* Narrows the grid below. Separate from the search bar on purpose: that
-            one leaves this page, these stay on it. */}
-        {/* showTypes={false}: the hero above already asks Buy/Rent/PG and the
-            property type, so this bar would be the second copy of both on one
-            screen. It keeps what the hero does not ask — budget, bedrooms,
-            seller and order. */}
-        <ListingFilters showTypes={false} />
+            one leaves this page, these stay on it.
+
+            It asks the type and the mode again, which the hero also asks. That
+            was left out as a duplicate, and the duplicate is the point: once
+            you have scrolled past the hero, this is the control within reach of
+            the listings it changes. Both write the same URL parameters, so they
+            cannot drift — the hero's select shows whatever this bar set, and the
+            chips below name it either way. */}
+        <ListingFilters />
 
         {/* Every listing, loaded as the visitor scrolls. No cap and no heading:
             the filter bar directly above already says what is being shown, and
@@ -382,8 +393,9 @@ const ListAll = () => {
                 )}{" "}
                 properties.
               </p>
-              <p className="mx-auto mt-1.5 max-w-sm text-[14px] text-muted">
-                Sign in to browse all of them and contact sellers directly.
+              <p className="mx-auto mt-1.5 max-w-md text-[14px] text-muted">
+                Sign in to browse all of them and contact sellers directly — or
+                put a property of your own up here.
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2.5">
                 <Link href="/auth/register" className={primaryButton}>
