@@ -32,6 +32,23 @@ const INTERVAL = 5_000;
 const reduceMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// 44px of tap target, no fill, no ring: on the page's own background an arrow
+// needs no surface to be legible, and two discs either side of the dots would
+// out-weigh the banner they belong to.
+const ARROW =
+  "flex h-11 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
+const CHEVRON = {
+  viewBox: "0 0 24 24",
+  "aria-hidden": true,
+  className: "h-5 w-5",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "2",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
 const FeaturedPromotions = () => {
   // [] not null: nothing here has a loading state. A buyer who sees the hero
   // and then has the page jump as banners arrive is worse off than one who
@@ -114,16 +131,6 @@ const FeaturedPromotions = () => {
     // worth a render.
     if (clamped !== index) setIndex(clamped);
   };
-
-  // Two layers on purpose. The button keeps a 44px tap target, because a 32px
-  // one on a phone is hit by luck; only the disc you can see inside it shrinks.
-  const arrow =
-    "group absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
-
-  // Light enough to sit over a banner without competing with it: a translucent
-  // disc, a hairline ring and muted ink, darkening only on hover.
-  const disc =
-    "flex h-8 w-8 items-center justify-center rounded-full bg-panel/75 text-muted ring-1 ring-line/60 backdrop-blur-sm transition-colors group-hover:bg-panel group-hover:text-ink sm:h-10 sm:w-10 sm:bg-panel/90";
 
   return (
     <section aria-labelledby="featured-heading" className="pb-7">
@@ -229,59 +236,30 @@ const FeaturedPromotions = () => {
             );
           })}
         </ul>
-
-        {many && (
-          <>
-            <button
-              type="button"
-              onClick={() => goTo(index - 1)}
-              aria-label="Previous banner"
-              className={`${arrow} left-1 sm:left-3`}
-            >
-              <span className={disc}>
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M15 5l-7 7 7 7" />
-                </svg>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(index + 1)}
-              aria-label="Next banner"
-              className={`${arrow} right-1 sm:right-3`}
-            >
-              <span className={disc}>
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </button>
-          </>
-        )}
       </div>
 
       {many && (
-        // Dots are both the position and the shortcut. Hit area is 44px; the
-        // mark inside it is small.
-        <div className="mt-1 flex justify-center">
+        // Under the banner, not on it. Floating over the artwork, an arrow's
+        // legibility depended on whoever's banner it was: opaque enough to
+        // read it covered part of what the seller paid to show, and
+        // translucent enough to stay out of the way made it vanish on a busy
+        // image. Off the image there is no trade-off to get wrong — and the
+        // dots, which were already down here, give the row its reason to
+        // exist.
+        <div className="mt-1 flex items-center justify-center gap-1">
+          <button
+            type="button"
+            onClick={() => goTo(index - 1)}
+            aria-label="Previous banner"
+            className={ARROW}
+          >
+            <svg {...CHEVRON}>
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+          </button>
+
+          {/* Dots are both the position and the shortcut. Hit area is 44px;
+              the mark inside it is small. */}
           {shown.map((promotion, slide) => (
             <button
               key={promotion.path}
@@ -299,6 +277,17 @@ const FeaturedPromotions = () => {
               />
             </button>
           ))}
+
+          <button
+            type="button"
+            onClick={() => goTo(index + 1)}
+            aria-label="Next banner"
+            className={ARROW}
+          >
+            <svg {...CHEVRON}>
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       )}
     </section>

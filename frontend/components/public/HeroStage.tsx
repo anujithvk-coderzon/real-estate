@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import MapPlate from "@/components/public/MapPlate";
 import NearbyButton from "@/components/public/NearbyButton";
 import SearchBar, { FIELD_LABEL } from "@/components/public/SearchBar";
@@ -159,13 +159,11 @@ const HERO_SELECT =
 
 const HeroStage = () => {
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const propertyType = searchParams.get("propertyType") ?? "";
   const listingType = searchParams.get("listingType") ?? "";
   // Empty means the API's default of 10 km, which is what the ring must show.
   const radius = searchParams.get("radius") ?? "";
-  const radiusKm = Number(radius) || 10;
 
   const stage = useRef<HTMLDivElement>(null);
   // The positioned ancestor of both the plate and the row, so one offsetParent
@@ -174,6 +172,19 @@ const HeroStage = () => {
   const plate = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLLIElement | null)[]>([]);
   const ring = useRef<HTMLDivElement>(null);
+
+  // The visitor card's own three answers. Local, NOT the URL: this card is a
+  // form with a Search button, and a form field that fires a request the
+  // moment you touch it is a field that has taken the decision off you. Every
+  // one of them used to write the URL, which refetched the grid below before
+  // you had finished saying what you wanted.
+  //
+  // Seeded once from the URL so arriving at /?propertyType=VILLA shows Villa,
+  // and deliberately not kept in step with it afterwards: the filter bar below
+  // narrows THIS page, while this card starts a new search on another one.
+  const [mode, setMode] = useState(listingType);
+  const [kind, setKind] = useState(propertyType);
+  const [km, setKm] = useState(radius);
 
   // null until the sign-in check settles, so neither version of the copy
   // flashes before the other. The same pattern PublicFrame uses.
@@ -637,7 +648,10 @@ const HeroStage = () => {
                   ref={plate}
                   className="absolute -left-5 -right-5 top-0 h-[230px] overflow-hidden bg-ground md:relative md:left-auto md:right-auto md:mx-auto md:aspect-square md:h-auto md:w-full md:rounded-full md:ring-[9px] md:ring-panel"
                 >
-                  <MapPlate radiusKm={radiusKm} />
+                  {/* The ring is the card's distance drawn, so it reads the
+                      card's state. It answers the select immediately, which is
+                      the feedback that control used to buy with a request. */}
+                  <MapPlate radiusKm={Number(km) || 10} />
                   {/* Fades the drawing into the page, so the card's own edge
                       stays the strongest line on the screen. */}
                   <div
@@ -687,22 +701,26 @@ const HeroStage = () => {
                       aria-labelledby="hero-mode-label"
                       className="grid grid-cols-2 gap-1 rounded-xl bg-ground p-1 md:inline-flex md:bg-panel/95 md:shadow-[0_8px_24px_-12px_rgba(48,32,68,0.3)] md:ring-1 md:ring-line md:backdrop-blur-sm"
                     >
-                      {SEARCH_LISTING_TYPES.map((mode) => {
-                        const selected = mode.value === listingType;
+                      {SEARCH_LISTING_TYPES.map((option) => {
+                        const selected = option.value === mode;
                         return (
-                          <Link
-                            key={mode.value}
-                            href={href("listingType", mode.value)}
-                            scroll={false}
-                            aria-current={selected ? "true" : undefined}
+                          <button
+                            key={option.value}
+                            type="button"
+                            // Pressing the chosen one again clears it, so "any"
+                            // stays reachable without a third button.
+                            onClick={() =>
+                              setMode(selected ? "" : option.value)
+                            }
+                            aria-pressed={selected}
                             className={`flex h-10 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-9 md:px-4 md:text-[14px] ${
                               selected
                                 ? "bg-accent-soft text-accent ring-1 ring-accent"
                                 : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
                             }`}
                           >
-                            {mode.value === "SALE" ? "Buy" : "Rent"}
-                          </Link>
+                            {option.value === "SALE" ? "Buy" : "Rent"}
+                          </button>
                         );
                       })}
                     </div>
@@ -716,12 +734,10 @@ const HeroStage = () => {
                       has scrolled past, and a second control for something
                       this card already asks.
 
-                      Both are navigation: they
-                      write the URL, so they, the filter bar below and the
-                      results page can never disagree about the answer. The
-                      distance earns it twice over — the drawing behind this
-                      card reads ?radius, so choosing one redraws the circle
-                      being searched. */}
+                      Both are plain form fields: they change this card and
+                      nothing else until Search is pressed. The distance still
+                      shows its work immediately, because the ring behind the
+                      card is drawn from it. */}
                   <div className="grid grid-cols-2 gap-1.5">
                     <div className="min-w-0">
                       <label htmlFor="hero-type" className={FIELD_LABEL}>
@@ -729,26 +745,18 @@ const HeroStage = () => {
                       </label>
                       <select
                         id="hero-type"
-                        value={propertyType}
-                        onChange={(event) =>
-                          router.push(
-                            href("propertyType", event.target.value),
-                            {
-                              scroll: false,
-                            },
-                          )
-                        }
+                        value={kind}
+                        onChange={(event) => setKind(event.target.value)}
                         className={HERO_SELECT}
                       >
                         <option value="">Any type</option>
-                        {propertyTypeOptions(
-                          listingType,
-                          SEARCH_PROPERTY_TYPES,
-                        ).map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
+                        {propertyTypeOptions(mode, SEARCH_PROPERTY_TYPES).map(
+                          (option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ),
+                        )}
                       </select>
                     </div>
 
@@ -758,12 +766,8 @@ const HeroStage = () => {
                       </label>
                       <select
                         id="hero-radius"
-                        value={radius}
-                        onChange={(event) =>
-                          router.push(href("radius", event.target.value), {
-                            scroll: false,
-                          })
-                        }
+                        value={km}
+                        onChange={(event) => setKm(event.target.value)}
                         className={HERO_SELECT}
                       >
                         {/* Bare numbers: the caption above already says what is
@@ -785,7 +789,11 @@ const HeroStage = () => {
                   <div>
                     <SearchBar
                       variant="compact"
-                      initialValues={{ listingType, propertyType, radius }}
+                      initialValues={{
+                        listingType: mode,
+                        propertyType: kind,
+                        radius: km,
+                      }}
                     />
                   </div>
 
@@ -830,7 +838,7 @@ const HeroStage = () => {
               className="mt-6 hidden flex-wrap justify-center gap-3.5 md:flex"
             >
               {SEARCH_PROPERTY_TYPES.map((type, index) => {
-                const selected = type.value === propertyType;
+                const selected = type.value === kind;
                 return (
                   <li
                     key={type.value}
