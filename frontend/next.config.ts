@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "dicke-scenario-query-lined.trycloudflare.com",
+    "displayed-concerts-andrea-mpegs.trycloudflare.com",
   ],
 };
 

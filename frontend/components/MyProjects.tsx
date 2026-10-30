@@ -130,7 +130,7 @@ const MyProjects = () => {
               <div className="min-w-0">
                 <Link
                   href={`/list/my/projects/${project.id}`}
-                  className="block truncate text-[16px] font-semibold hover:text-accent hover:underline"
+                  className="block truncate text-[16px] font-semibold hover:text-accent underline decoration-line decoration-1 underline-offset-[3px] hover:decoration-accent"
                 >
                   {project.name}
                 </Link>

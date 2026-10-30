@@ -53,6 +53,10 @@ type Props = {
   // asks for the state again, and the only answer the form could offer by
   // itself was a guess.
   currentState?: string | null;
+  // "I will do this later". Only passed where carrying on without a number is
+  // allowed — the create flow — so the Settings card does not grow a button
+  // for skipping something nobody made them open.
+  onSkip?: () => void;
 };
 
 // Shown to a broker or dealer before their first sale listing. Agents must be
@@ -65,6 +69,7 @@ const AgentReraForm = ({
   variant = "page",
   current,
   currentState,
+  onSkip,
 }: Props) => {
   const [state, setState] = useState(currentState ?? "");
   const [number, setNumber] = useState(current ?? "");
@@ -125,10 +130,30 @@ const AgentReraForm = ({
         />
       </Field>
 
-      <p className="text-[13px] leading-snug text-muted">
-        We show it as provided by you until someone checks it against the state
-        register. Only then does a verified badge appear on your listings.
-      </p>
+      {/* What the number buys them, stated before the buttons rather than as
+          an afterthought: a seller weighing "later" against "now" is weighing
+          this. All three claims are things the site actually does. */}
+      <div className="rounded-lg bg-ground p-3.5 text-[13px] leading-relaxed text-muted">
+        <p className="font-medium text-ink">
+          What a verified registration does for you
+        </p>
+        <ul className="mt-1.5 space-y-1">
+          <li>
+            Your listings carry a{" "}
+            <span className="font-medium text-accent">RERA verified</span>{" "}
+            badge, on every card and on the listing page.
+          </li>
+          <li>
+            Without one, a sale listing of yours says{" "}
+            <span className="font-medium">No RERA number</span> instead, which
+            buyers reading several listings do notice.
+          </li>
+          <li>
+            We show the number as you gave it until someone checks it against
+            the state register. The badge appears only after that.
+          </li>
+        </ul>
+      </div>
 
       <div className="flex gap-2">
         <button type="submit" disabled={!canSave} className={primaryButton}>
@@ -147,6 +172,20 @@ const AgentReraForm = ({
           {variant === "page" ? "Back" : "Cancel"}
         </button>
       </div>
+
+      {onSkip && (
+        // Third in the row's reading order and quiet, because it is the
+        // answer with a cost: nothing blocks them, and the listing carries
+        // "No RERA number" until a number arrives.
+        <button
+          type="button"
+          onClick={onSkip}
+          disabled={saving}
+          className="text-[13.5px] font-medium text-muted underline decoration-line decoration-1 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          I will do this later — carry on without it
+        </button>
+      )}
     </form>
   );
 

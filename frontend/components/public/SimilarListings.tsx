@@ -10,7 +10,10 @@ import { secondaryButton } from "@/lib/ui";
 // One row of GET /list/similar/:slug. Deliberately thinner than a search
 // result: this strip is a nudge towards the next property, not a result set.
 type SimilarListing = {
-  slug: string;
+  // Nullable, as Listing.slug is: rows older than slugs exist. Declaring it
+  // string did not make it one — it hid an href that would read
+  // /property/null and land the visitor on "this property is not available".
+  slug: string | null;
   title: string;
   price: string;
   locality: string | null;
@@ -46,7 +49,11 @@ const SimilarListings = ({ slug, place }: Props) => {
       .get(`/list/similar/${slug}?page=1`)
       .then(({ data }) => {
         if (!live) return;
-        setListings(data.result.result ?? []);
+        setListings(
+          ((data.result.result ?? []) as SimilarListing[]).filter(
+            (row) => row.slug,
+          ),
+        );
         setTotal(data.result.count ?? 0);
       })
       .catch(() => {});
@@ -61,7 +68,14 @@ const SimilarListings = ({ slug, place }: Props) => {
     try {
       const { data } = await api.get(`/list/similar/${slug}?page=${next}`);
       // Appended, not replaced: nobody loses the cards they were reading.
-      setListings((previous) => [...previous, ...(data.result.result ?? [])]);
+      // Same filter as the first page: Show more must not append a card that
+      // cannot be opened.
+      setListings((previous) => [
+        ...previous,
+        ...((data.result.result ?? []) as SimilarListing[]).filter(
+          (row) => row.slug,
+        ),
+      ]);
       setTotal(data.result.count ?? 0);
       setPage(next);
       // On a phone the new cards are off to the right, so the tap would look

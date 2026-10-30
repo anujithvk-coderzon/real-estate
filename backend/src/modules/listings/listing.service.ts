@@ -252,7 +252,7 @@ export const listsFetchingService = async (page: number,filters:filterType) => {
         locality: true, city: true, district: true, bedrooms: true, bathrooms: true,
         areaValue: true, areaUnit: true, createdAt: true, updatedAt: true, status: true,
         postedBy: true,                           // the card says who listed it
-        listingImages: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
+        listingImages: { orderBy: { position: "asc" }, select: { path: true } },owner:{select:{agentReraStatus:true}}
       },
     }),
     prisma.listing.count({ where }),

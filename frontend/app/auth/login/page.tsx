@@ -7,6 +7,7 @@ import { Field } from "@/components/form/Field";
 import GoogleButton from "@/components/form/GoogleButton";
 import PasswordInput from "@/components/form/PasswordInput";
 import { api, setAccessToken } from "@/lib/api";
+import { authHref, safePath, takeReturn } from "@/lib/returnTo";
 import { errorToast, successToast } from "@/lib/toast";
 import { inputClass, primaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
@@ -30,7 +31,20 @@ const LoginPage = () => {
       const response = await api.post("/auth/login", fields);
       setAccessToken(response.data.accessToken);
       successToast(response.data.message);
-      router.push("/");
+      // Back where they were, which is usually a property whose number they
+      // wanted. Landing them on the home page loses the enquiry they came to
+      // make and asks them to find the listing again.
+      //
+      // Read from window rather than useSearchParams: this file is the route
+      // itself, and that hook would make the whole page need a Suspense
+      // boundary for a value only wanted at submit time.
+      //
+      // replace, not push: Back should return to the property, not to a
+      // sign-in form they have already finished with.
+      const asked = safePath(
+        new URLSearchParams(window.location.search).get("next"),
+      );
+      router.replace(asked ?? takeReturn() ?? "/");
     } catch (error) {
       errorToast(apiMessage(error));
       setSubmitting(false);
@@ -89,7 +103,15 @@ const LoginPage = () => {
 
       <p className="mt-6 text-[14px] text-muted">
         New here?{" "}
-        <Link href="/auth/register" className={linkClass}>
+        <Link
+          href={authHref(
+            "/auth/register",
+            typeof window === "undefined"
+              ? ""
+              : (new URLSearchParams(window.location.search).get("next") ?? ""),
+          )}
+          className={linkClass}
+        >
           Create an account
         </Link>
       </p>

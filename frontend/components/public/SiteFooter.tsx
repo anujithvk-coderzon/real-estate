@@ -61,9 +61,15 @@ const SiteFooter = () => (
     <div className="mx-auto w-full max-w-7xl px-5 py-10 lg:px-10 lg:py-12">
       <div className="grid gap-9 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] lg:gap-8">
         <div className="min-w-0">
-          <p className="font-display text-[24px] leading-none">
+          {/* A wordmark with a go-arrow on it, which was not a link. People
+              click a logo to get home, and this one looked more clickable than
+              most. Now it is the thing it looked like. */}
+          <Link
+            href="/"
+            className="inline-block font-display text-[24px] leading-none transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
             Properties&#8599;
-          </p>
+          </Link>
           <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">
             Homes, plots and rooms across India. Listed by the people who own
             them, and by the brokers and builders who represent them.

@@ -60,6 +60,15 @@ const CreateListing = () => {
   // The signed-in user decides two things here: the pre-selected role on the start
   // screen, and whether an agent still has to give their RERA number.
   const [user, setUser] = useState<AuthUser | null>(null);
+  // Asked for, not demanded. A broker who has not got round to their
+  // registration can still list — and the listing says "No RERA number" in
+  // public until they do, which is the honest consequence rather than a locked
+  // door. Local state, not the URL: it is a decision about this one listing,
+  // and the next one asks again.
+  //
+  // Declared up here with the other hooks because there are early returns
+  // between this point and the RERA step that uses it.
+  const [reraSkipped, setReraSkipped] = useState(false);
   // Selling: which project the unit is in. Either one of our records, or the
   // name and RERA number the lister types in, or an explicit "no project".
   const [projectId, setProjectId] = useState("");
@@ -210,12 +219,14 @@ const CreateListing = () => {
   const needsRera =
     role === "BROKER" &&
     purpose === "SALE" &&
+    !reraSkipped &&
     (reraStatus === "NONE" || reraStatus === "REVOKED");
   if (needsRera) {
     return (
       <AgentReraForm
         revoked={reraStatus === "REVOKED"}
         currentState={user?.agentReraState ?? null}
+        onSkip={() => setReraSkipped(true)}
         onSaved={() => setReraStatus("PENDING")} // saved, not checked yet: let them carry on
         onBack={() => router.push("/list/create")}
       />

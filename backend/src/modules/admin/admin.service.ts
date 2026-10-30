@@ -1,4 +1,5 @@
 import { BadRequestError, UnauthorizedError } from "../../errors/Errors.js"
+import type { VerificationStatus } from "../../generated/prisma/enums.js"
 import { prisma } from "../../lib/prisma.js"
 import {hash} from 'bcrypt'
 
@@ -28,7 +29,7 @@ return 'Interest saved successfully'
 }
 
 
-export const interestsFetchingService = async (page: number, take: number) => {
+export const interestsFetchingService = async () => {
   const rows = await prisma.userInterest.findMany({
       orderBy: { createdAt: "desc" },
       select: {
@@ -64,3 +65,22 @@ export const interestsFetchingService = async (page: number, take: number) => {
   const users = [...byUser.values()];
   return {total:users.length,users};
 };
+
+export const reraVerficationRequestService=async(userId:string,type:VerificationStatus)=>{
+const requests=await prisma.user.findMany({where:{agentReraStatus:type,isVerified:true,NOT:{id:userId}},select:{id:true,name:true,email:true,accountType:true,agentReraName:true,agentReraState:true,agentReraNumber:true,}})
+return requests
+}
+
+export const approveRearaService=async(id:string)=>{
+const user=await prisma.user.findUnique({where:{id}})
+if(!user) throw new BadRequestError("Invalid token")
+await prisma.user.update({where:{id},data:{agentReraStatus:'VERIFIED',agentReraVerifiedAt:new Date()}})
+return "verification successfull."
+}
+
+export const rejectReraService=async(id:string)=>{
+const user=await prisma.user.findUnique({where:{id}})
+if(!user) throw new BadRequestError("Invalid token")
+await prisma.user.update({where:{id},data:{agentReraStatus:'REVOKED'}})
+return 'Verification revoked'
+}

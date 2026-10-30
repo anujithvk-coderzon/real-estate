@@ -1,12 +1,16 @@
 import type { Request, Response } from "express";
 import {
   adminRegisterService,
+  approveRearaService,
   interestSaveService,
   interestsFetchingService,
+  rejectReraService,
+  reraVerficationRequestService,
 } from "./admin.service.js";
 import { BadRequestError } from "../../errors/Errors.js";
 import { prisma } from "../../lib/prisma.js";
-import { adminCreationValidation, interestsTake } from "./admin.validation.js";
+import { adminCreationValidation,} from "./admin.validation.js";
+import { VerificationStatus } from "../../generated/prisma/enums.js";
 
 export const createAdmin=async(req:Request,res:Response)=>{
     const findexisting=await prisma.user.findFirst({where:{role:"ADMIN"}})
@@ -26,9 +30,26 @@ export const userInterestCreate=async(req:Request,res:Response)=>{
 }
 
 export const fetchUserInterests=async(req:Request,res:Response)=>{
-    const page=Number(req.query.page) || 1
-    const take=interestsTake.safeParse(req.query.take)
-    if(!take.success) throw take.error
-    const {users,total}=await interestsFetchingService(page,take.data)
+   
+    const {users,total}=await interestsFetchingService()
     return res.status(200).json({message:"Interests fetched successfully",users,total})
+}
+
+export const reraVerificationRequest=async(req:Request,res:Response)=>{
+    const userId=req.user?.id as string
+    const type=req.query.type ?? VerificationStatus.PENDING
+    const requests=await reraVerficationRequestService(userId,type as VerificationStatus)
+    return res.status(200).json({message:"Fetched successfully",requests})
+}
+
+export const approveRearaVerificationRequest=async(req:Request,res:Response)=>{
+    const id=req.params.id as string
+    const response=await approveRearaService(id)
+    return res.status(200).json({message:response})
+}
+
+export const rejectReraVerificationRequest=async(req:Request,res:Response)=>{
+    const id=req.params.id as string;
+    const response=await rejectReraService(id);
+    return res.status(200).json({message:response})
 }

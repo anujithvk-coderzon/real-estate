@@ -47,8 +47,12 @@ async(error)=>{
         } catch {
             setAccessToken(null)
              if (typeof window !== "undefined" && window.location.pathname.startsWith("/list")) {
+   // Carries the page they were thrown out of. A session that expires while
+   // somebody is halfway through a listing form should not also cost them the
+   // page they were on.
+   const here = `${window.location.pathname}${window.location.search}`
    setTimeout(() => {
-      window.location.href = "/auth/login";
+      window.location.href = `/auth/login?next=${encodeURIComponent(here)}`;
     }, 1500)
   }
         }

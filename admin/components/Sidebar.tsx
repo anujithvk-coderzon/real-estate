@@ -9,9 +9,14 @@ import { usePathname } from "next/navigation";
 const icon = {
   home: "M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H4a1 1 0 0 1-1-1Z",
   listings: "M4 4h16v6H4Zm0 10h16v6H4Z",
-  users: "M4 20a6 6 0 0 1 12 0M10 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8m8 16a5 5 0 0 0-3-4.6",
-  interests: "M12 20s-7-4.4-7-9.3A4 4 0 0 1 12 8a4 4 0 0 1 7 2.7C19 15.6 12 20 12 20Z",
+  users:
+    "M4 20a6 6 0 0 1 12 0M10 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8m8 16a5 5 0 0 0-3-4.6",
+  interests:
+    "M12 20s-7-4.4-7-9.3A4 4 0 0 1 12 8a4 4 0 0 1 7 2.7C19 15.6 12 20 12 20Z",
   promotions: "M4 10v4h3l5 4V6L7 10H4Zm12-2a5 5 0 0 1 0 8",
+  // A certificate with a tick: what the operator is checking and what they do
+  // to it.
+  rera: "M6 3h9l4 4v14H6Zm3 10 2 2 4-4",
 } as const;
 
 const Glyph = ({ d }: { d: string }) => (
@@ -33,13 +38,14 @@ const NAV = [
   { href: "/home", label: "Home", d: icon.home },
   { href: "/interests", label: "User interests", d: icon.interests },
   { href: "/promotions", label: "Promotions", d: icon.promotions },
+  { href: "/rera", label: "RERA verification", d: icon.rera },
 ] as const;
 
 // Shown but not linked — a staff tool should say what it will hold, and a link
 // to a route that 404s is worse than a label that admits it is not ready.
 const SOON = [
   { label: "Listings", d: icon.listings, note: "approve, hide, remove" },
-  { label: "Sellers", d: icon.users, note: "accounts and RERA" },
+  { label: "Sellers", d: icon.users, note: "accounts and profiles" },
 ] as const;
 
 const itemBase =
@@ -117,7 +123,9 @@ const Sidebar = ({
           <div className="px-2 pb-3">
             {/* min-w-0 + truncate, because a long email is the thing that
                 breaks a fixed-width sidebar. */}
-            <p className="truncate text-[13px] font-semibold">{operator.name}</p>
+            <p className="truncate text-[13px] font-semibold">
+              {operator.name}
+            </p>
             <p className="truncate text-[12px] text-muted">{operator.email}</p>
           </div>
         )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Gallery from "@/components/listing/Gallery";
 import SimilarListings from "@/components/public/SimilarListings";
 import {
@@ -21,6 +21,7 @@ import {
   PinIcon,
   SofaIcon,
 } from "@/components/public/icons";
+import { authHref, rememberReturn } from "@/lib/returnTo";
 import { api, authReady } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
 import { apiMessage } from "@/lib/validation/apiError";
@@ -124,6 +125,11 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
 
 // Price, the running costs for rentals, and how to reach the seller.
 const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
+  // The page's own address, which is what they should come back to. Taken from
+  // the router rather than rebuilt from a slug: this component is handed a
+  // listing, and the listing it is handed does not carry the URL it was
+  // fetched by.
+  const here = usePathname();
   const router = useRouter();
   const [opening, setOpening] = useState(false);
   const rental = isRental(listing.listingType);
@@ -285,8 +291,13 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               <LockIcon className="mt-0.5 h-4 w-4" />
               Sign in to see the phone number and message the seller.
             </p>
+            {/* Carries where it was pressed, twice over: ?next covers signing
+                in and coming straight back, and the stored copy survives the
+                register journey, which leaves the tab for an email and may
+                return in a different one. */}
             <Link
-              href="/auth/login"
+              href={authHref("/auth/login", here)}
+              onClick={() => rememberReturn(here)}
               className={`mt-4 block text-center ${primaryButton}`}
             >
               Login to contact
@@ -377,7 +388,7 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
             {listing.owner.slug ? (
               <Link
                 href={`/seller/${listing.owner.slug}`}
-                className="font-medium text-ink hover:text-accent hover:underline"
+                className="font-medium text-ink hover:text-accent underline decoration-line decoration-1 underline-offset-[3px] hover:decoration-accent"
               >
                 {listing.owner.name}
               </Link>
@@ -459,7 +470,7 @@ const ProjectBlock = ({
               {registered && project.builderSlug ? (
                 <Link
                   href={`/seller/${project.builderSlug}`}
-                  className="font-medium text-ink hover:text-accent hover:underline"
+                  className="font-medium text-ink hover:text-accent underline decoration-line decoration-1 underline-offset-[3px] hover:decoration-accent"
                 >
                   {project.builderName}
                 </Link>

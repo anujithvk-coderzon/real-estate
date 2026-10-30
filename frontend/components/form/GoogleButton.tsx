@@ -1,3 +1,6 @@
+"use client";
+
+import { rememberReturn, safePath } from "@/lib/returnTo";
 import { secondaryButton } from "@/lib/ui";
 
 // Google's four-colour "G", as their brand guidelines ask for on sign-in buttons.
@@ -24,6 +27,12 @@ const GoogleLogo = () => (
 
 // A plain link, not an api() call: the backend answers with "go to Google",
 // and only a full-page navigation can follow that to Google's sign-in page.
+//
+// Which is also why the return path is stored rather than put in the URL. The
+// backend's googleLogin() sends no `state` to Google, so nothing we add here
+// comes back — and its callback redirects to FRONTEND_URL, the home page,
+// whatever page the visitor started on. The store survives the round trip
+// because it never leaves the browser.
 const GoogleButton = () => (
   <>
     <div className="my-6 flex items-center gap-3 text-[13px] text-muted">
@@ -33,6 +42,14 @@ const GoogleButton = () => (
     </div>
     <a
       href="/api/auth/google"
+      onClick={() => {
+        // The page to come back to is whatever ?next says on this sign-in
+        // page — not this page itself.
+        const next = safePath(
+          new URLSearchParams(window.location.search).get("next"),
+        );
+        if (next) rememberReturn(next, "google");
+      }}
       className={`flex w-full items-center justify-center gap-3 bg-panel ${secondaryButton}`}
     >
       <GoogleLogo />

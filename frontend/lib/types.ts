@@ -203,6 +203,10 @@ export type ListingSummary = Pick<
 // A listing on public pages. The database id is never sent to the public;
 // the slug identifies the listing instead.
 export type PublicListingSummary = Omit<ListingSummary, "id"> & {
+  // What the lister's RERA registration is worth, for a card that says who
+  // posted it. /list/all has always selected owner.agentReraStatus; the card
+  // simply never read it.
+  owner?: { agentReraStatus?: VerificationStatus | null } | null;
   // The map pin. Sent by the search results; missing when the seller placed no pin.
   latitude?: number | null;
   longitude?: number | null;
