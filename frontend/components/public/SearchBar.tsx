@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { rememberHomeSearch } from "@/lib/homeSearch";
 import {
   RADIUS_OPTIONS,
   SEARCH_PROPERTY_TYPES,
@@ -124,6 +125,16 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     // Carried even where there is no control for it, so editing the search on the
     // results page keeps the distance the visitor chose there.
     if (km) params.set("radius", km);
+    // What the home row was set to, so pressing Back from the results finds
+    // it as it was. The URL used to carry this; it cannot any more, because
+    // these are form fields rather than links.
+    if (variant === "compact")
+      rememberHomeSearch({
+        location: location.trim(),
+        listingType: mode,
+        propertyType: kind,
+        radius: km,
+      });
     router.push(`/property/search?${params}`);
     setExpanded(false);
   };

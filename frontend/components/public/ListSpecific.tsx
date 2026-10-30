@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import BackLink from "@/components/public/BackLink";
 import Gallery from "@/components/listing/Gallery";
 import SimilarListings from "@/components/public/SimilarListings";
 import {
@@ -21,6 +22,7 @@ import {
   PinIcon,
   SofaIcon,
 } from "@/components/public/icons";
+import { BADGE_TONE, reraBadge } from "@/lib/rera";
 import { authHref, rememberReturn } from "@/lib/returnTo";
 import { api, authReady } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
@@ -125,6 +127,13 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
 
 // Price, the running costs for rentals, and how to reach the seller.
 const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
+  // The same four answers the card gave, so a buyer who clicked a card saying
+  // "No RERA number" is not met by a page that declines to mention it.
+  const agentRera = reraBadge({
+    postedBy: listing.postedBy,
+    listingType: listing.listingType,
+    status: listing.owner.agentReraStatus,
+  });
   // The page's own address, which is what they should come back to. Taken from
   // the router rather than rebuilt from a slug: this component is handed a
   // listing, and the listing it is handed does not carry the URL it was
@@ -401,18 +410,33 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
             </time>
           </p>
 
-          {/* The agent's own licence, not the project's registration, and only on a
-              listing they posted as an agent: on their own property they are the
-              owner, and the number would read as if the property were registered. */}
-          {listing.postedBy === "BROKER" && listing.owner.agentReraNumber && (
-            <p className="mt-1 text-[12px] text-muted">
-              Agent RERA{" "}
-              <span className="tabular-nums">
-                {listing.owner.agentReraNumber}
+          {/* The agent's own licence, not the project's registration, and only
+              on a listing posted as an agent: on their own property they are
+              the owner, and the number would read as if the property were
+              registered.
+
+              Through lib/rera, so the page and the card it was reached from
+              cannot say different things — and so the two states this panel
+              used to swallow are spoken: a broker with no number at all said
+              nothing here, and a REVOKED registration read as merely
+              unchecked, which is the opposite of what happened to it. */}
+          {agentRera && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] ${BADGE_TONE[agentRera.tone]}`}
+              >
+                {agentRera.label}
               </span>
-              {listing.owner.agentReraStatus === "VERIFIED"
-                ? " · checked against the state register"
-                : " · as provided by the agent"}
+              {listing.owner.agentReraNumber && (
+                <span className="text-[12px] tabular-nums text-muted">
+                  {listing.owner.agentReraNumber}
+                </span>
+              )}
+            </div>
+          )}
+          {agentRera && (
+            <p className="mt-1 text-[12px] leading-snug text-muted">
+              {agentRera.detail}
             </p>
           )}
 
@@ -584,12 +608,7 @@ const ListSpecific = ({ slug }: Props) => {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-20 pt-6 lg:px-8 lg:pt-8">
-      <Link
-        href="/"
-        className="text-[14px] font-medium text-muted transition-colors hover:text-ink"
-      >
-        ← All properties
-      </Link>
+      <BackLink />
 
       {/* Phones: photo first, since a phone-width photo is short and the title
           sits right below it. Desktop: title first, so a tall photo never hides

@@ -35,6 +35,10 @@ const REEL_MAX = 5;
 // card while the eye moves to the price.
 const REEL_MS = 1700;
 
+// Up to this width the grid is one card per row, so the card in view is the
+// card being looked at. Matches Tailwind's sm breakpoint (640px).
+const REEL_IN_VIEW_MAX = 639;
+
 // The frame the photograph has to live in. Keep in step with the aspect class
 // on the media box below; this is the number the fit is judged against.
 const FRAME = 16 / 10;
@@ -146,35 +150,61 @@ const PublicListingCard = ({
     );
   }, [count]);
 
-  // A touch screen has no cursor to answer, so the card runs its reel while it
-  // is the thing being looked at: a phone shows one card at a time, which
-  // makes "in view" as good a signal as hover is on a laptop.
+  // A narrow layout shows one card at a time, which makes "in view" as good a
+  // signal as hover is on a laptop. So the reel runs itself there.
   //
-  // Not on a pointer device — there the cursor decides, and both running at
-  // once would start reels on cards nobody has pointed at. Not under reduced
-  // motion either: hover is something the visitor did, while coming into view
-  // is not, and unrequested looping motion is exactly what that setting asks
-  // us to stop.
+  // Gated on WIDTH, not on (hover: hover) and (pointer: fine), which is what
+  // this asked before and why it did nothing on a phone-sized screen: a
+  // touchscreen laptop reports a fine pointer because a mouse is also present,
+  // and Chrome's device emulation reports one too. The capability query turned
+  // the feature off precisely where it was being tested. Width is also the
+  // honest reason — the trigger exists because of the single-column layout,
+  // not because of the input device.
+  //
+  // Re-evaluated on change rather than read once, so rotating a phone or
+  // dragging a window across the breakpoint picks the right trigger.
+  //
+  // Reduced motion no longer switches this off, which is why it did nothing
+  // on your phone: Windows with animations disabled, Android's "remove
+  // animations" and any battery saver all report that preference, and the
+  // photographs are information rather than decoration. The preference is
+  // honoured where it belongs instead — motion-reduce:transition-none on the
+  // strip, so those visitors get instant changes rather than sliding ones.
   useEffect(() => {
     if (count < 2) return;
-    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const element = card.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) beginReel();
-        else stopReel();
-      },
-      // Most of the card, not a sliver of it: a reel starting while the card
-      // is one line tall at the bottom of the screen is motion in the corner
-      // of the eye of somebody reading the card above it.
-      { threshold: 0.6 },
+    // Either condition: a single-column layout, or a device with no hover at
+    // all. The width alone missed a phone in landscape, which is 844px wide
+    // and still has nothing to hover with.
+    const byItself = window.matchMedia(
+      `(max-width: ${REEL_IN_VIEW_MAX}px), (hover: none)`,
     );
-    observer.observe(element);
+    let observer: IntersectionObserver | null = null;
+
+    const sync = () => {
+      observer?.disconnect();
+      observer = null;
+      stopReel();
+      if (!byItself.matches) return;
+      const element = card.current;
+      if (!element) return;
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry?.isIntersecting) beginReel();
+          else stopReel();
+        },
+        // Most of the card, not a sliver: a reel starting while the card is
+        // one line tall at the bottom of the screen is motion in the corner
+        // of the eye of somebody reading the card above it.
+        { threshold: 0.6 },
+      );
+      observer.observe(element);
+    };
+
+    sync();
+    byItself.addEventListener("change", sync);
     return () => {
-      observer.disconnect();
+      byItself.removeEventListener("change", sync);
+      observer?.disconnect();
       stopReel();
     };
   }, [count, beginReel, stopReel]);

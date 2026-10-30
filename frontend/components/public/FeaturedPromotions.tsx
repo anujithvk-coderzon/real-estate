@@ -60,6 +60,17 @@ const FeaturedPromotions = () => {
   const [index, setIndex] = useState(0);
   // The explicit control. interacting is the implicit one — a pointer over the
   // strip or a focused link inside it — and both stop the timer.
+  //
+  // Starts playing, always. It used to arrive paused for anyone whose OS asks
+  // for reduced motion, which is why it looked paused by default — Windows
+  // with animations turned off reports that, as does any battery saver. A
+  // banner nobody sees move is a banner the seller paid for and did not get.
+  //
+  // Reduced motion is still honoured where it costs nothing: the slide
+  // transition is dropped (motion-reduce:transition-none and the "auto"
+  // scroll behaviour below), so those visitors get instant changes rather
+  // than sliding ones, and the Pause button is there for anyone who wants it
+  // to stop.
   const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
   const track = useRef<HTMLUListElement>(null);
@@ -70,12 +81,6 @@ const FeaturedPromotions = () => {
       ({ data }) => {
         if (!live) return;
         setPromotions(data.promotions ?? []);
-        // Set here rather than in an effect: this is the moment the carousel
-        // first has something to move, and a visitor who has asked their OS
-        // to stop animations should not have to catch it moving once first.
-        // The Pause button becomes a Play button for them, so the control is
-        // still real — it is their choice to start it, not ours.
-        if (reduceMotion()) setPaused(true);
       },
       () => {
         // Advertising that failed to load is not an error a buyer should be

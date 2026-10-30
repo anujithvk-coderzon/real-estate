@@ -97,6 +97,7 @@ model User {
   agentReraState      String?
   agentReraName       String?
   agentReraStatus     VerificationStatus @default(NONE)
+  agentReraVerifiedReason String?
   agentReraVerifiedAt DateTime?
   projects            Project[]          @relation("BuiltProjects")
   interest            UserInterest[]
@@ -131,6 +132,7 @@ model Project {
   reraNumber     String?            @unique
   reraState      String?
   reraStatus     VerificationStatus @default(NONE)
+  reraVerifiedReason String?
   reraVerifiedAt DateTime?
   isReraExempt   Boolean            @default(false)
   exemptReason   String?

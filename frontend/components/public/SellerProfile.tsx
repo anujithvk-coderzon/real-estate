@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import BackLink from "@/components/public/BackLink";
 import PublicListingCard from "@/components/listing/PublicListingCard";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
@@ -126,12 +127,7 @@ const SellerProfile = ({ slug }: { slug: string }) => {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-8 lg:py-12">
-      <Link
-        href="/"
-        className="text-[14px] font-medium text-muted transition-colors hover:text-ink"
-      >
-        ← All properties
-      </Link>
+      <BackLink />
 
       {/* ---------- who they are ---------- */}
       <section

@@ -14,7 +14,6 @@ const STATES = [
   "Assam",
   "Bihar",
   "Chhattisgarh",
-  "Delhi",
   "Goa",
   "Gujarat",
   "Haryana",
@@ -29,7 +28,6 @@ const STATES = [
   "Mizoram",
   "Nagaland",
   "Odisha",
-  "Puducherry",
   "Punjab",
   "Rajasthan",
   "Sikkim",
@@ -39,6 +37,24 @@ const STATES = [
   "Uttar Pradesh",
   "Uttarakhand",
   "West Bengal",
+];
+
+// All eight, of which only Delhi and Puducherry were here. A broker in
+// Chandigarh or Jammu and Kashmir could not say where they are registered, so
+// they could not register at all — and both have their own authority.
+//
+// Eight, not six: there were seven until the Jammu and Kashmir reorganisation
+// in 2019 made nine, and Dadra and Nagar Haveli merging with Daman and Diu in
+// January 2020 brought it back to eight.
+const UNION_TERRITORIES = [
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ];
 
 type Props = {
@@ -97,7 +113,7 @@ const AgentReraForm = ({
 
   const form = (
     <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
-      <Field id="rera-state" label="State">
+      <Field id="rera-state" label="State or union territory">
         <select
           id="rera-state"
           value={state}
@@ -105,11 +121,22 @@ const AgentReraForm = ({
           className={inputClass}
         >
           <option value="">Select your state</option>
-          {STATES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
+          {/* Grouped: in one flat list of 36, nobody can tell whether their
+              own union territory is in there or simply absent. */}
+          <optgroup label="States">
+            {STATES.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Union territories">
+            {UNION_TERRITORIES.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </optgroup>
         </select>
       </Field>
 

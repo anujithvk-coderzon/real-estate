@@ -7,20 +7,18 @@ import {
   useRef,
   useState,
 } from "react";
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import MapPlate from "@/components/public/MapPlate";
 import NearbyButton from "@/components/public/NearbyButton";
 import SearchBar, { FIELD_LABEL } from "@/components/public/SearchBar";
 import { authReady, isSignedIn } from "@/lib/api";
+import { recallHomeSearch } from "@/lib/homeSearch";
 import {
-  NO_BEDROOMS,
   RADIUS_OPTIONS,
   SEARCH_LISTING_TYPES,
   SEARCH_PROPERTY_TYPES,
   TYPE_COLOUR,
   categoryPhoto,
-  listingTypeOptions,
   propertyTypeOptions,
 } from "@/lib/listing";
 
@@ -154,11 +152,18 @@ type Orbit = {
 
 // The card's two selects. A field, not a button: sunken fill, hairline ring,
 // and the browser's own chevron doing the "this opens" work.
+// This bar's labels and selects. Always-visible captions, unlike the card's,
+// which hide from md where the card itself names them.
+const BAR_LABEL =
+  "mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted";
+
+const BAR_SELECT =
+  "h-9 w-full rounded-lg bg-panel px-2.5 text-[13.5px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
 const HERO_SELECT =
   "h-11 w-full rounded-lg bg-ground px-2 text-[15px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-10 md:bg-panel/95 md:backdrop-blur-sm";
 
 const HeroStage = () => {
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const propertyType = searchParams.get("propertyType") ?? "";
   const listingType = searchParams.get("listingType") ?? "";
@@ -185,6 +190,10 @@ const HeroStage = () => {
   const [mode, setMode] = useState(listingType);
   const [kind, setKind] = useState(propertyType);
   const [km, setKm] = useState(radius);
+  // The place typed into the row last time, which lives in SearchBar's own
+  // state. Restoring it means re-seeding that form, so it is passed down as an
+  // initial value and the form is keyed on it.
+  const [place, setPlace] = useState("");
 
   // null until the sign-in check settles, so neither version of the copy
   // flashes before the other. The same pattern PublicFrame uses.
@@ -192,50 +201,43 @@ const HeroStage = () => {
   const [orbits, setOrbits] = useState<Orbit[]>([]);
   const [ready, setReady] = useState(false);
 
-  // Writes one choice into the URL — and drops anything already there that
-  // cannot be true alongside it. The rules are not invented here: they are the
-  // same lib/listing helpers the filter bar obeys. Without this the hero can
-  // write combinations the catalogue has no answer for — Rent + Plot or land
-  // is the obvious one, since a plot is never let — and the visitor gets an
-  // empty page with nothing on screen explaining why.
-  const href = (name: string, value: string) => {
-    const next = new URLSearchParams(searchParams.toString());
-    // An empty value means "any", which is the absence of the parameter — not
-    // ?propertyType= with nothing after it. Choosing the current value again
-    // clears it too, so every chip is also its own off switch.
-    if (!value || value === searchParams.get(name)) next.delete(name);
-    else next.set(name, value);
-    next.delete("page");
-
-    const mode = next.get("listingType") ?? "";
-    const kind = next.get("propertyType") ?? "";
-
-    if (name === "listingType") {
-      // Renting while Plot is selected: the type is the one that goes, because
-      // the mode is what was just asked for.
-      if (kind && !propertyTypeOptions(mode).some((o) => o.value === kind))
-        next.delete("propertyType");
-      // A ceiling picked for monthly rents means nothing against sale prices.
-      next.delete("maxPrice");
-    }
-
-    if (name === "propertyType") {
-      // The mirror of the above: ask for plots while Rent is on and the MODE
-      // is what cannot hold, so that is what is dropped. Clearing it beats
-      // silently switching them to Buy, which would answer a question they
-      // did not ask.
-      if (mode && !listingTypeOptions(kind).some((o) => o.value === mode))
-        next.delete("listingType");
-      // Commercial, office and plots have no bedrooms to filter on.
-      if (NO_BEDROOMS.includes(kind)) next.delete("beds");
-    }
-
-    const query = next.toString();
-    return query ? `${pathname}?${query}` : pathname;
+  // Choosing a mode can invalidate the type already chosen — a plot is never
+  // let — so the type goes with it rather than being submitted as a search
+  // nothing can answer. The rule is lib/listing's, the same one the filter bar
+  // obeys; this is the last thing the old URL-writing href() did that still
+  // needs doing.
+  const chooseMode = (next: string) => {
+    setMode(next);
+    if (
+      kind &&
+      !propertyTypeOptions(next, SEARCH_PROPERTY_TYPES).some(
+        (option) => option.value === kind,
+      )
+    )
+      setKind("");
   };
 
   useEffect(() => {
-    authReady.then(() => setVisitor(!isSignedIn()));
+    authReady.then(() => {
+      setVisitor(!isSignedIn());
+      // Put the row back the way it was left. Read here rather than in a
+      // useState initializer because sessionStorage does not exist on the
+      // server: seeding from it during the first render would make the server
+      // and the client disagree about what is in the box.
+      //
+      // Only when the URL has nothing of its own to say — arriving at
+      // /?propertyType=VILLA from a footer link should show Villa, not
+      // whatever was searched an hour ago.
+      if (listingType || propertyType || radius) return;
+      const last = recallHomeSearch();
+      if (!last) return;
+      setMode(last.listingType);
+      setKind(last.propertyType);
+      setKm(last.radius);
+      setPlace(last.location);
+    });
+    // Runs once; the three seeds are read inside, not watched.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // One layout read per resize. Everything after this is transforms.
@@ -484,10 +486,15 @@ const HeroStage = () => {
   // returning user already knows, and a 230px illustration between them and
   // their listings is a tax.
   //
-  // So they get the same questions in a flat row — where, what, how far — and
-  // keep the type chips, which here are a one-line filter bar over their own
-  // page rather than a second answer to the card above. Nothing moves except
-  // what answers a press.
+  // The same four questions as the visitor card, in a flat row, and — like
+  // that card — they are FORM FIELDS. They used to be links that wrote the
+  // URL, so choosing Buy, and then a type, refetched the listings below twice
+  // before anyone pressed Search. A row with a Search button in it should ask
+  // the API once, when asked to.
+  //
+  // The filter bar under the listings is what narrows this page, and it has
+  // the same two questions. That is the division: this row starts a search on
+  // the results page, that bar filters the page you are on.
   if (visitor === false) {
     return (
       <section
@@ -502,76 +509,102 @@ const HeroStage = () => {
             Where are you looking?
           </h1>
 
-          <div className="mt-4 max-w-2xl">
-            {/* The same reason the visitor hero passes these: compact renders
-                neither control, so without them the form submits an empty mode
-                and type and the Buy / Rent choice made right below is dropped
-                on the way to the results page. */}
-            <SearchBar
-              variant="compact"
-              initialValues={{ listingType, propertyType }}
-            />
-          </div>
-
-          {/* One row, wrapping: the mode on the left, the types after it. Both
-              write the same URL the filter bar below does. */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div className="flex gap-1 rounded-xl bg-panel p-1 ring-1 ring-line">
-              {SEARCH_LISTING_TYPES.map((mode) => {
-                const selected = mode.value === listingType;
-                return (
-                  <Link
-                    key={mode.value}
-                    href={href("listingType", mode.value)}
-                    scroll={false}
-                    aria-current={selected ? "true" : undefined}
-                    className={`flex h-9 items-center rounded-lg px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                      selected
-                        ? "bg-accent-soft text-accent ring-1 ring-accent"
-                        : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
-                    }`}
-                  >
-                    {mode.value === "SALE"
-                      ? "Buy"
-                      : mode.value === "RENT"
-                        ? "Rent"
-                        : "PG"}
-                  </Link>
-                );
-              })}
-            </div>
-
-            <span
-              aria-hidden="true"
-              className="hidden h-6 w-px bg-line sm:block"
-            />
-
-            <ul className="flex flex-wrap gap-2">
-              {SEARCH_PROPERTY_TYPES.map((type) => {
-                const selected = type.value === propertyType;
-                return (
-                  <li key={type.value}>
-                    <Link
-                      href={href("propertyType", type.value)}
-                      scroll={false}
-                      aria-current={selected ? "true" : undefined}
-                      className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium ring-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+          {/* Labels stay visible here at every width: this bar has no card
+              around it, and a bare "10 km" beside a bare "Any type" is two
+              controls nobody can name. */}
+          <div className="mt-4 flex flex-wrap items-end gap-2.5">
+            <div>
+              <p id="bar-mode-label" className={BAR_LABEL}>
+                Looking to
+              </p>
+              <div
+                role="group"
+                aria-labelledby="bar-mode-label"
+                className="flex gap-1 rounded-xl bg-panel p-1 ring-1 ring-line"
+              >
+                {SEARCH_LISTING_TYPES.map((option) => {
+                  const selected = option.value === mode;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      // Pressing the chosen one again clears it, so "any"
+                      // stays reachable without a third button.
+                      onClick={() => chooseMode(selected ? "" : option.value)}
+                      aria-pressed={selected}
+                      className={`flex h-9 items-center rounded-lg px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                         selected
-                          ? "bg-accent-soft text-ink ring-accent"
-                          : "bg-panel text-ink ring-line hover:ring-accent/50"
+                          ? "bg-accent-soft text-accent ring-1 ring-accent"
+                          : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
                       }`}
                     >
-                      <span
-                        aria-hidden="true"
-                        style={{ background: TYPE_COLOUR[type.value] }}
-                        className="h-[7px] w-[7px] shrink-0 rounded-full"
-                      />
-                      {type.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                      {option.value === "SALE" ? "Buy" : "Rent"}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="min-w-[10rem]">
+              <label htmlFor="hero-type" className={BAR_LABEL}>
+                Property type
+              </label>
+              <select
+                id="hero-type"
+                value={kind}
+                onChange={(event) => setKind(event.target.value)}
+                className={BAR_SELECT}
+                suppressHydrationWarning
+              >
+                <option value="">Any type</option>
+                {propertyTypeOptions(mode, SEARCH_PROPERTY_TYPES).map(
+                  (option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+
+            <div className="min-w-[8rem]">
+              <label htmlFor="hero-radius" className={BAR_LABEL}>
+                Distance
+              </label>
+              <select
+                id="hero-radius"
+                value={km}
+                onChange={(event) => setKm(event.target.value)}
+                className={BAR_SELECT}
+                suppressHydrationWarning
+              >
+                <option value="">Within 10 km</option>
+                {RADIUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    Within {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-2.5 max-w-2xl">
+            {/* compact renders none of the three above, so they are passed:
+                without them the form submits an empty mode, type and distance
+                and the choices made right above are dropped on the way to the
+                results page. */}
+            <SearchBar
+              // Keyed on the restored place: SearchBar seeds its own location
+              // state once at mount, and the memory arrives after it.
+              key={place}
+              variant="compact"
+              initialValues={{
+                listingType: mode,
+                propertyType: kind,
+                radius: km,
+                location: place,
+              }}
+            />
           </div>
         </div>
       </section>
@@ -710,7 +743,7 @@ const HeroStage = () => {
                             // Pressing the chosen one again clears it, so "any"
                             // stays reachable without a third button.
                             onClick={() =>
-                              setMode(selected ? "" : option.value)
+                              chooseMode(selected ? "" : option.value)
                             }
                             aria-pressed={selected}
                             className={`flex h-10 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-9 md:px-4 md:text-[14px] ${
@@ -748,6 +781,12 @@ const HeroStage = () => {
                         value={kind}
                         onChange={(event) => setKind(event.target.value)}
                         className={HERO_SELECT}
+                        // Chrome's autofill stamps __gcruniqueid on every form
+                        // field before React hydrates, which React then reports
+                        // as a mismatch it did not cause. Scoped to these two
+                        // elements' attributes, so a real difference in their
+                        // value is still reported.
+                        suppressHydrationWarning
                       >
                         <option value="">Any type</option>
                         {propertyTypeOptions(mode, SEARCH_PROPERTY_TYPES).map(
@@ -769,6 +808,12 @@ const HeroStage = () => {
                         value={km}
                         onChange={(event) => setKm(event.target.value)}
                         className={HERO_SELECT}
+                        // Chrome's autofill stamps __gcruniqueid on every form
+                        // field before React hydrates, which React then reports
+                        // as a mismatch it did not cause. Scoped to these two
+                        // elements' attributes, so a real difference in their
+                        // value is still reported.
+                        suppressHydrationWarning
                       >
                         {/* Bare numbers: the caption above already says what is
                             being measured, so "Within" on every line was the
@@ -788,11 +833,16 @@ const HeroStage = () => {
                         the form submits the choice instead of dropping it. */}
                   <div>
                     <SearchBar
+                      // Keyed on the restored place: SearchBar seeds its own
+                      // location state once at mount, and the memory arrives
+                      // after it.
+                      key={place}
                       variant="compact"
                       initialValues={{
                         listingType: mode,
                         propertyType: kind,
                         radius: km,
+                        location: place,
                       }}
                     />
                   </div>
