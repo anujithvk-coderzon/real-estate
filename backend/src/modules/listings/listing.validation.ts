@@ -65,6 +65,9 @@ export const listingFields=z.object({
     // Used instead of projectId when the project is not in our records.
     projectNameText: z.string().trim().min(2,"Project name is too short").max(120).optional(),
     projectReraText: z.string().trim().min(4,"RERA number is too short").max(60).optional(),
+    // Instead of a number, when the project never had one. One of the two must
+    // be present on a typed-in project, and the rule below decides which.
+    projectReraAbsence: z.enum(["PRE_RERA","SMALL_PROJECT","UNKNOWN"]).optional(),
     builderNameText: z.string().trim().min(2,"Builder name is too short").max(120).optional(),
   })
 
@@ -156,6 +159,55 @@ export const registeringValidation = listingFields.superRefine((data, ctx) => {
         code: "custom",
         path: ["floorNumber"],
         message: "Floor number cannot exceed total floors",
+      });
+    }
+
+    // ── a typed-in project must answer the RERA question, one way or the other ──
+    //
+    // The answer is required, the number is not. An under-construction unit is
+    // sold off-plan, which is exactly what the Act forbids advertising without
+    // a registration, so there the number itself is compulsory. A ready flat
+    // may sit in a project that never had one — completed before May 2017, or
+    // too small to reach — and forcing a number there only teaches listers to
+    // type "NA" into a field we publish as fact.
+    if (data.projectNameText && !data.projectId) {
+      const stated = Boolean(data.projectReraText);
+      const excused = Boolean(data.projectReraAbsence);
+
+      if (data.propertyStatus === "UNDER_CONSTRUCTION" && !stated) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["projectReraText"],
+          message:
+            "An under-construction project must be registered with RERA, and the advertisement has to carry the number",
+        });
+      }
+      if (data.propertyStatus !== "UNDER_CONSTRUCTION" && !stated && !excused) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["projectReraText"],
+          message:
+            "Give the project's RERA number, or say why it does not have one",
+        });
+      }
+      // Both at once is not a stricter answer, it is two answers: the number
+      // would be published beside a line saying there is no number.
+      if (stated && excused) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["projectReraAbsence"],
+          message:
+            "A number was given, so do not also say the project has none",
+        });
+      }
+    }
+    // Only a typed-in project can carry this. A project of ours holds its own
+    // registration, and this field would quietly contradict it.
+    if (data.projectReraAbsence && (data.projectId || !data.projectNameText)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["projectReraAbsence"],
+        message: "This applies only to a project you typed in yourself",
       });
     }
 

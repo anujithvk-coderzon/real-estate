@@ -48,6 +48,10 @@ const Promotions = () => {
   // in an effect body, which cascades a second render on every load.
   const [attempt, setAttempt] = useState(0);
   const [creating, setCreating] = useState(false);
+  // A banner only shows on the home page while the registration behind it is
+  // verified, and a verification can be revoked mid-run. Without this the
+  // seller reads "live" on a banner nobody can see.
+  const [verified, setVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -64,6 +68,13 @@ const Promotions = () => {
       live = false;
     };
   }, [attempt]);
+
+  useEffect(() => {
+    api
+      .get("/auth/me")
+      .then(({ data }) => setVerified(data.user.agentReraStatus === "VERIFIED"))
+      .catch(() => setVerified(null));
+  }, []);
 
   const reload = () => {
     setFailed(false);
@@ -100,6 +111,18 @@ const Promotions = () => {
           </button>
         )}
       </header>
+
+      {/* Said here rather than on each row: it is one fact about the account,
+          and it explains every listing banner at once. */}
+      {verified === false &&
+        (promotions?.some((promotion) => promotion.listingId) ?? false) && (
+          <p className="mt-5 rounded-xl border border-warn/40 bg-warn/5 px-4 py-3 text-[13.5px] leading-relaxed">
+            Your property banners are not being shown on the home page while
+            your RERA registration is unverified — a banner we place has to have
+            a checked registration behind it. They start showing again by
+            themselves once it is verified.
+          </p>
+        )}
 
       {creating && (
         <NewPromotion

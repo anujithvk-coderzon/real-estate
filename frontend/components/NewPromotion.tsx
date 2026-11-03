@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ImagePreview } from "@/components/FilePreview";
 import { api } from "@/lib/api";
 import { checkImage, IMAGE_TYPES } from "@/lib/media";
@@ -59,6 +60,7 @@ type Project = {
   status: string;
   locality?: string | null;
   city?: string | null;
+  reraStatus?: string | null;
 };
 
 // A page of properties, carrying the question it answers. Holding the key with
@@ -79,6 +81,15 @@ const NewPromotion = ({ onCreated, onCancel }: Props) => {
   const [page, setPage] = useState(1);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [projects, setProjects] = useState<Choice[] | null>(null);
+  // How many of their projects were left out for want of a verified
+  // registration. Counted, because a builder with four projects and an empty
+  // list deserves to know it is a rule and not a bug.
+  const [unverifiedProjects, setUnverifiedProjects] = useState(0);
+  // Whether this account's own RERA registration is verified. null until
+  // /auth/me answers; false blocks the properties side entirely, because the
+  // registration a property promotion rests on is the lister's, not the
+  // property's.
+  const [verified, setVerified] = useState<boolean | null>(null);
   const [failed, setFailed] = useState(false);
   const [target, setTarget] = useState<Choice | null>(null);
   const [banner, setBanner] = useState<File | null>(null);
@@ -104,6 +115,16 @@ const NewPromotion = ({ onCreated, onCancel }: Props) => {
     }, 350);
     return () => clearTimeout(timer);
   }, [typed, search]);
+
+  useEffect(() => {
+    api
+      .get("/auth/me")
+      .then(({ data }) => setVerified(data.user.agentReraStatus === "VERIFIED"))
+      // Unknown is not the same as unverified: the API is what actually
+      // enforces this, and blocking the form over a failed read would stop a
+      // verified seller for no reason.
+      .catch(() => setVerified(null));
+  }, []);
 
   // The properties: searched and paged on the server, because the endpoint
   // sends ten at a time and a broker may have hundreds.
@@ -134,15 +155,23 @@ const NewPromotion = ({ onCreated, onCancel }: Props) => {
   useEffect(() => {
     if (mode !== "project" || projects !== null) return;
     api.get("/project/mine").then(
-      ({ data }) =>
+      ({ data }) => {
+        const all = data.projects as Project[];
+        // Only a checked registration can be advertised by us. An exemption is
+        // not a check: nothing about it was looked up anywhere.
+        const allowed = all.filter(
+          (project) => project.reraStatus === "VERIFIED",
+        );
+        setUnverifiedProjects(all.length - allowed.length);
         setProjects(
-          (data.projects as Project[]).map((project) => ({
+          allowed.map((project) => ({
             id: project.id,
             label: project.name,
             place: place(project),
             status: project.status,
           })),
-        ),
+        );
+      },
       () => setFailed(true),
     );
   }, [mode, projects]);
@@ -262,164 +291,202 @@ const NewPromotion = ({ onCreated, onCancel }: Props) => {
         ))}
       </div>
 
-      {/* ---------- step 2: which one ---------- */}
-      <div className="mt-4 flex gap-2">
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={`Search your ${noun.many}`}
-          aria-label={`Search your ${noun.many}`}
-          aria-controls="promotion-targets"
-          className={`${inputClass} min-w-0 flex-1`}
-        />
-        {typed !== "" && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className={secondaryButton}
+      {/* A property promotion rests on the lister's own registration, so this
+          is an account-level answer, not a per-row one: there is no list worth
+          showing and nothing in it to pick. */}
+      {mode === "listing" && verified === false ? (
+        <div className="mt-5 rounded-xl border border-warn/40 bg-warn/5 px-4 py-4">
+          <p className="text-[14px] font-medium">
+            Your RERA registration has to be verified first
+          </p>
+          <p className="mt-1.5 max-w-prose text-[13.5px] leading-relaxed text-muted">
+            A banner sits on our home page, placed by us — so we only put one
+            behind a registration somebody here has checked against the state
+            register. Add your number, or wait for that check to finish, and
+            your properties appear here.
+          </p>
+          <Link
+            href="/list/settings"
+            className={`mt-3 inline-flex ${secondaryButton}`}
           >
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* The chosen one stays in view even when a later search or page hides
-          its row. Without this, you can pick a property, search for another,
-          and upload a banner for something you can no longer see. */}
-      {target && (
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent/10 px-3 py-2 text-[13.5px]">
-          <span className="text-muted">Selected</span>
-          <span className="font-medium">{target.label}</span>
-          <button
-            type="button"
-            onClick={() => setTarget(null)}
-            className={`ml-auto ${textButton}`}
-          >
-            Clear selection
-          </button>
-        </p>
-      )}
-
-      {failed ? (
-        <p className="mt-4 text-[14px] text-danger">
-          Your {noun.many} could not be loaded. Reload the page and try again.
-        </p>
-      ) : first ? (
-        <div className="mt-3 space-y-1" aria-busy="true" aria-live="polite">
-          <span className="sr-only">Loading your {noun.many}</span>
-          {Array.from({ length: 4 }, (_, index) => (
-            <div
-              key={index}
-              className="h-11 animate-pulse rounded-lg bg-line/60"
-            />
-          ))}
+            Go to RERA registration
+          </Link>
         </div>
       ) : (
         <>
-          {/* The count, announced: a search that narrows the list silently
-              leaves a screen reader with no idea anything happened. */}
-          <p
-            className="mt-3 text-[13px] tabular-nums text-muted"
-            aria-live="polite"
-          >
-            {total === 0
-              ? typed
-                ? `No ${noun.many} match “${typed}”`
-                : `No ${noun.many} yet`
-              : `${total} ${total === 1 ? noun.one : noun.many}${typed ? ` matching “${typed}”` : ""}`}
-          </p>
-
-          {total === 0 ? (
-            typed !== "" && (
+          {/* ---------- step 2: which one ---------- */}
+          <div className="mt-4 flex gap-2">
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={`Search your ${noun.many}`}
+              aria-label={`Search your ${noun.many}`}
+              aria-controls="promotion-targets"
+              className={`${inputClass} min-w-0 flex-1`}
+            />
+            {typed !== "" && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className={`mt-3 ${secondaryButton}`}
+                className={secondaryButton}
               >
-                Clear search
+                Clear
               </button>
-            )
+            )}
+          </div>
+
+          {/* The chosen one stays in view even when a later search or page hides
+          its row. Without this, you can pick a property, search for another,
+          and upload a banner for something you can no longer see. */}
+          {target && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent/10 px-3 py-2 text-[13.5px]">
+              <span className="text-muted">Selected</span>
+              <span className="font-medium">{target.label}</span>
+              <button
+                type="button"
+                onClick={() => setTarget(null)}
+                className={`ml-auto ${textButton}`}
+              >
+                Clear selection
+              </button>
+            </p>
+          )}
+
+          {failed ? (
+            <p className="mt-4 text-[14px] text-danger">
+              Your {noun.many} could not be loaded. Reload the page and try
+              again.
+            </p>
+          ) : first ? (
+            <div className="mt-3 space-y-1" aria-busy="true" aria-live="polite">
+              <span className="sr-only">Loading your {noun.many}</span>
+              {Array.from({ length: 4 }, (_, index) => (
+                <div
+                  key={index}
+                  className="h-11 animate-pulse rounded-lg bg-line/60"
+                />
+              ))}
+            </div>
           ) : (
             <>
-              {/* A radio group, not checkboxes: one name is the whole answer,
-                  and the browser enforces that for us. */}
-              <ul
-                id="promotion-targets"
-                role="radiogroup"
-                aria-label={`Choose a ${noun.one}`}
-                aria-busy={stale}
-                className={`mt-2 space-y-1 rounded-xl border border-line p-1 transition-opacity ${
-                  stale ? "opacity-50" : ""
-                }`}
+              {/* The count, announced: a search that narrows the list silently
+              leaves a screen reader with no idea anything happened. */}
+              <p
+                className="mt-3 text-[13px] tabular-nums text-muted"
+                aria-live="polite"
               >
-                {items.map((choice) => {
-                  // Only properties have a status that rules them out; all
-                  // three project statuses are things a builder advertises.
-                  const reason =
-                    mode === "listing" ? UNPROMOTABLE[choice.status] : undefined;
-                  const selected = target?.id === choice.id;
-                  return (
-                    <li key={choice.id}>
-                      <label
-                        className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-[14px] transition-colors ${
-                          reason
-                            ? "cursor-not-allowed opacity-50"
-                            : `cursor-pointer ${selected ? "bg-accent/10" : "hover:bg-ground"}`
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="promotion-target"
-                          value={choice.id}
-                          checked={selected}
-                          disabled={Boolean(reason) || stale}
-                          onChange={() => setTarget(choice)}
-                          className="size-4 shrink-0 accent-accent"
-                        />
-                        <span className="min-w-0 flex-1 truncate">
-                          {choice.label}
-                          {choice.place && (
-                            <span className="text-muted">
-                              {" · "}
-                              {choice.place}
-                            </span>
-                          )}
-                        </span>
-                        {reason && (
-                          <span className="shrink-0 text-[12px] text-muted">
-                            {reason}
-                          </span>
-                        )}
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
+                {total === 0
+                  ? typed
+                    ? `No ${noun.many} match “${typed}”`
+                    : `No ${noun.many} yet`
+                  : `${total} ${total === 1 ? noun.one : noun.many}${typed ? ` matching “${typed}”` : ""}`}
+              </p>
 
-              {/* ---------- pages ---------- */}
-              {pages > 1 && (
-                <div className="mt-3 flex items-center justify-between gap-3">
+              {/* Why this list is shorter than their own projects page. */}
+              {mode === "project" && unverifiedProjects > 0 && (
+                <p className="mt-1.5 text-[13px] leading-snug text-muted">
+                  {unverifiedProjects}{" "}
+                  {unverifiedProjects === 1 ? "project is" : "projects are"} not
+                  listed here: only a project whose RERA registration we have
+                  checked against the state register can be promoted.
+                </p>
+              )}
+
+              {total === 0 ? (
+                typed !== "" && (
                   <button
                     type="button"
-                    onClick={() => setPage(current - 1)}
-                    disabled={current === 1 || stale}
-                    className={secondaryButton}
+                    onClick={() => setQuery("")}
+                    className={`mt-3 ${secondaryButton}`}
                   >
-                    Previous
+                    Clear search
                   </button>
-                  <p className="text-[13px] tabular-nums text-muted">
-                    Page {current} of {pages}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setPage(current + 1)}
-                    disabled={current >= pages || stale}
-                    className={secondaryButton}
+                )
+              ) : (
+                <>
+                  {/* A radio group, not checkboxes: one name is the whole answer,
+                  and the browser enforces that for us. */}
+                  <ul
+                    id="promotion-targets"
+                    role="radiogroup"
+                    aria-label={`Choose a ${noun.one}`}
+                    aria-busy={stale}
+                    className={`mt-2 space-y-1 rounded-xl border border-line p-1 transition-opacity ${
+                      stale ? "opacity-50" : ""
+                    }`}
                   >
-                    Next
-                  </button>
-                </div>
+                    {items.map((choice) => {
+                      // Only properties have a status that rules them out; all
+                      // three project statuses are things a builder advertises.
+                      const reason =
+                        mode === "listing"
+                          ? UNPROMOTABLE[choice.status]
+                          : undefined;
+                      const selected = target?.id === choice.id;
+                      return (
+                        <li key={choice.id}>
+                          <label
+                            className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-[14px] transition-colors ${
+                              reason
+                                ? "cursor-not-allowed opacity-50"
+                                : `cursor-pointer ${selected ? "bg-accent/10" : "hover:bg-ground"}`
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="promotion-target"
+                              value={choice.id}
+                              checked={selected}
+                              disabled={Boolean(reason) || stale}
+                              onChange={() => setTarget(choice)}
+                              className="size-4 shrink-0 accent-accent"
+                            />
+                            <span className="min-w-0 flex-1 truncate">
+                              {choice.label}
+                              {choice.place && (
+                                <span className="text-muted">
+                                  {" · "}
+                                  {choice.place}
+                                </span>
+                              )}
+                            </span>
+                            {reason && (
+                              <span className="shrink-0 text-[12px] text-muted">
+                                {reason}
+                              </span>
+                            )}
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* ---------- pages ---------- */}
+                  {pages > 1 && (
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPage(current - 1)}
+                        disabled={current === 1 || stale}
+                        className={secondaryButton}
+                      >
+                        Previous
+                      </button>
+                      <p className="text-[13px] tabular-nums text-muted">
+                        Page {current} of {pages}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setPage(current + 1)}
+                        disabled={current >= pages || stale}
+                        className={secondaryButton}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

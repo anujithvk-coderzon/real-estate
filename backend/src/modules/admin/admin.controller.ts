@@ -6,10 +6,16 @@ import {
   interestsFetchingService,
   rejectReraService,
   reraVerficationRequestService,
+  revokeReraService,
+  approveProjectReraService,
+  projectReraExemptionsService,
+  projectReraRequestService,
+  rejectProjectReraService,
+  revokeProjectReraService,
 } from "./admin.service.js";
 import { BadRequestError } from "../../errors/Errors.js";
 import { prisma } from "../../lib/prisma.js";
-import { adminCreationValidation,} from "./admin.validation.js";
+import { adminCreationValidation, reraDecisionValidation,} from "./admin.validation.js";
 import { VerificationStatus } from "../../generated/prisma/enums.js";
 
 export const createAdmin=async(req:Request,res:Response)=>{
@@ -44,12 +50,63 @@ export const reraVerificationRequest=async(req:Request,res:Response)=>{
 
 export const approveRearaVerificationRequest=async(req:Request,res:Response)=>{
     const id=req.params.id as string
-    const response=await approveRearaService(id)
+    const validated=reraDecisionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const response=await approveRearaService(id,validated.data.reason)
     return res.status(200).json({message:response})
 }
 
 export const rejectReraVerificationRequest=async(req:Request,res:Response)=>{
     const id=req.params.id as string;
-    const response=await rejectReraService(id);
+    const validated=reraDecisionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const response=await rejectReraService(id,validated.data.reason);
     return res.status(200).json({message:response})
 }
+
+export const revokeReraVerificationRequest=async(req:Request,res:Response)=>{
+    const id=req.params.id as string;
+    const validated=reraDecisionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const response=await revokeReraService(id,validated.data.reason);
+    return res.status(200).json({message:response})
+}
+
+// ---------- the same queue, for projects ----------
+
+export const projectReraVerificationRequest=async(req:Request,res:Response)=>{
+    const type=req.query.type
+    // EXEMPT is not a VerificationStatus; it is "listing on a stated exemption
+    // instead of a number", which is a different column entirely.
+    if(type==='EXEMPT'){
+        const requests=await projectReraExemptionsService()
+        return res.status(200).json({message:"Fetched successfully",requests})
+    }
+    const requests=await projectReraRequestService((type ?? VerificationStatus.PENDING) as VerificationStatus)
+    return res.status(200).json({message:"Fetched successfully",requests})
+}
+
+export const approveProjectReraVerificationRequest=async(req:Request,res:Response)=>{
+    const id=req.params.id as string
+    const validated=reraDecisionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const response=await approveProjectReraService(id,validated.data.reason)
+    return res.status(200).json({message:response})
+}
+
+export const rejectProjectReraVerificationRequest=async(req:Request,res:Response)=>{
+    const id=req.params.id as string
+    const validated=reraDecisionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const response=await rejectProjectReraService(id,validated.data.reason)
+    return res.status(200).json({message:response})
+}
+
+export const revokeProjectReraVerificationRequest=async(req:Request,res:Response)=>{
+    const id=req.params.id as string
+    const validated=reraDecisionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const response=await revokeProjectReraService(id,validated.data.reason)
+    return res.status(200).json({message:response})
+}
+

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { AlreadyExistError, BadRequestError, NotFoundError } from "../../errors/Errors.js";
-import { PropertyType, type ListingType, type PostedBy, type Prisma, type VerificationStatus } from "../../generated/prisma/client.js";
+import { PropertyType, type ListingType, type PostedBy, type Prisma, type ProjectReraAbsence, type VerificationStatus } from "../../generated/prisma/client.js";
 import { toSQFT } from "../../lib/area.js";
 import { avatarPublicUrl, cdnUrl, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
@@ -30,12 +30,23 @@ if(data.projectId){
     throw new BadRequestError("This project has no RERA registration number. Add it to the project before advertising a unit under construction.")
   }
 }
-if(data.projectNameText && user.accountType==="BUILDER"){
-  throw new BadRequestError("Add the project to your profile, then choose it here")
-}
+// A builder typing a project instead of choosing one used to be refused here.
+// The form now offers it to them on purpose — a builder listing a flat in a
+// project they have not registered on this site yet had nowhere to go, and
+// refusing the listing does not get the project registered, it just loses the
+// listing. They are told, in the form, that registering it gives the project
+// its own page and one number against every unit in it.
+//
+// What is not relaxed: the rules below. A builder states a number or says why
+// there is none, exactly like anybody else, and off-plan still needs the number.
 
-if(data.projectNameText && !data.projectReraText){
-  throw new BadRequestError("Give the project's RERA registration number, or say the unit is not part of a project")
+if(data.projectNameText && !data.projectReraText && !data.projectReraAbsence){
+  throw new BadRequestError("Give the project's RERA registration number, or say why it does not have one")
+}
+// Off-plan is the case the Act forbids advertising without a registration, so
+// here a stated reason is not an answer — only the number is.
+if(offPlan && data.projectNameText && !data.projectReraText){
+  throw new BadRequestError("An under-construction project must be registered with RERA, and the advertisement has to carry its number")
 }
 if(data.projectNameText && !data.builderNameText){
   throw new BadRequestError("Give the name of the builder of this project")
@@ -71,6 +82,8 @@ const post=await prisma.listing.create({data:{
     projectId:data.projectId??null,
     projectNameText:data.projectId ? null : (data.projectNameText??null),
     projectReraText:data.projectId ? null : (data.projectReraText??null),
+    // Cleared when a number was given, so the two can never disagree on the page.
+    projectReraAbsence:data.projectId||data.projectReraText ? null : (data.projectReraAbsence??null),
     builderNameText:data.projectId ? null : (data.builderNameText??null),
     addressLine:data.addressLine,
     landmark:data.landmark??null,
@@ -320,9 +333,11 @@ const projectClaim=(listing:{
   postedBy:PostedBy
   projectNameText:string|null
   projectReraText:string|null
+  projectReraAbsence:ProjectReraAbsence|null
   builderNameText:string|null
   project:{name:string,slug:string|null,reraNumber:string|null,reraStatus:VerificationStatus,
-           isReraExempt:boolean,builder:{name:string,slug:string|null}}|null
+           isReraExempt:boolean,reraVerifiedReason:string|null,reraVerifiedAt:Date|null,
+           builder:{name:string,slug:string|null}}|null
 })=>{
   if(listing.project){
     const {project}=listing
@@ -332,6 +347,10 @@ const projectClaim=(listing:{
       reraNumber:project.reraNumber,
       reraStatus:project.reraStatus,
       isReraExempt:project.isReraExempt,
+      // As with the agent's: only an approval is public, and the column holds
+      // whichever decision came last.
+      reraVerifiedReason:project.reraStatus==='VERIFIED'?project.reraVerifiedReason:null,
+      reraVerifiedAt:project.reraStatus==='VERIFIED'?project.reraVerifiedAt:null,
       builderName:project.builder.name,
       builderSlug:project.builder.slug,
       statedBy:"BUILDER" as const,
@@ -345,6 +364,9 @@ const projectClaim=(listing:{
     reraNumber:listing.projectReraText,
     reraStatus:"NONE" as VerificationStatus,
     isReraExempt:false,
+    // Why there is no number, in the lister's own answer. The page says it in
+    // words; a blank where a registration should be says nothing at all.
+    reraAbsence:listing.projectReraAbsence,
     builderName:listing.builderNameText,
     builderSlug:null,
     // The agent or owner who posted it typed this name; the builder never confirmed it.
@@ -364,11 +386,12 @@ const listing=await prisma.listing.findUnique({
         amenities:{select:{name:true,category:true}},
         // The registered project, when the unit is in one of our records.
         project:{select:{name:true,slug:true,reraNumber:true,reraStatus:true,isReraExempt:true,
+                         reraVerifiedReason:true,reraVerifiedAt:true,
                          builder:{select:{name:true,slug:true}}}},
         listingImages:{orderBy:{position:"asc"},select:{path:true,position:true}},
         listingVideo:{select:{videoId:true}},
         // Enough for the "Listed by" line and a link to their public profile.
-        owner:{select:{name:true,slug:true,avatarUrl:true,accountType:true,agentReraNumber:true,agentReraStatus:true}},
+        owner:{select:{name:true,slug:true,avatarUrl:true,accountType:true,agentReraNumber:true,agentReraStatus:true,agentReraVerifiedReason:true,agentReraVerifiedAt:true}},
     },
 })
 if(!listing) throw new NotFoundError("Listing not found")
@@ -376,6 +399,7 @@ if(!listing) throw new NotFoundError("Listing not found")
 // name and a registered one the same way.
 const {contactName,contactPhone,ownerId,
   project:_project,projectNameText:_name,projectReraText:_rera,builderNameText:_builder,
+  projectReraAbsence:_absence,
   ...publicFields}=listing
 // Whether the person reading this is the one who posted it. The page needs to
 // know because the contact panel is useless to an owner — it would offer them
@@ -392,7 +416,15 @@ return {
     })),
     listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null,
     // The stored avatar may be a Bunny path; send the URL the browser can load.
-    owner:{...listing.owner,avatarUrl:avatarPublicUrl(listing.owner.avatarUrl)},
+    owner:{
+      ...listing.owner,
+      avatarUrl:avatarPublicUrl(listing.owner.avatarUrl),
+      // Only the approval note is public. A rejection's reason belongs to the
+      // agent alone, and the raw column holds whichever came last — so it is
+      // the status, not the column, that decides whether this goes out.
+      agentReraVerifiedReason:listing.owner.agentReraStatus==='VERIFIED'?listing.owner.agentReraVerifiedReason:null,
+      agentReraVerifiedAt:listing.owner.agentReraStatus==='VERIFIED'?listing.owner.agentReraVerifiedAt:null,
+    },
 }
 }
 export const OwnerSpecificListFetchingService=async(userId:string,listingId:string)=>{

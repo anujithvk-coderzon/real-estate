@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Field, Select } from "@/components/form/Field";
 import { amountInput } from "@/lib/amount";
 import { api } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import { PROPERTY_TYPES } from "@/lib/listing";
 import {
   buildProjectPayload,
@@ -33,13 +34,24 @@ const MAX_DESCRIPTION = 2000;
 
 // Add a project: one building or layout the builder is selling units in.
 // The RERA number lives here, so every flat listed in the project inherits it.
+// Where this project stands with us, when it is being edited rather than added.
+// It belongs beside the number field and nowhere else: a builder who was told
+// "not verified" has one thing to do about it, and it is to change what is in
+// that box.
+type Decision = {
+  status: string;
+  reason?: string | null;
+  at?: string | null;
+};
+
 type Props = {
   // Editing an existing project; adding a new one when absent.
   projectId?: string;
   initial?: ProjectFormData;
+  decision?: Decision;
 };
 
-const ProjectForm = ({ projectId, initial }: Props) => {
+const ProjectForm = ({ projectId, initial, decision }: Props) => {
   const router = useRouter();
   const [data, setData] = useState<ProjectFormData>(initial ?? emptyProject);
   const [saving, setSaving] = useState(false);
@@ -292,6 +304,49 @@ const ProjectForm = ({ projectId, initial }: Props) => {
             <p className="rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
               With more than {RERA_EXEMPT_MAX_UNITS} units, registration is
               compulsory, so the registration number is required here.
+            </p>
+          )}
+
+          {/* What happened last time, and what saving will do this time. */}
+          {(decision?.status === "REJECTED" ||
+            decision?.status === "REVOKED") && (
+            <div className="rounded-lg border border-danger/30 px-3.5 py-3">
+              <p className="text-[13px] font-medium text-danger">
+                {decision.status === "REJECTED"
+                  ? "We could not verify this registration"
+                  : "This verification was revoked"}
+                {decision.at && (
+                  <span className="font-normal text-muted">
+                    {" · "}
+                    {formatDate(decision.at)}
+                  </span>
+                )}
+              </p>
+              {decision.reason && (
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">
+                  {decision.reason}
+                </p>
+              )}
+              <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+                Correct the number below and save — it goes back in the queue to
+                be checked again.
+              </p>
+            </div>
+          )}
+
+          {decision?.status === "PENDING" && (
+            <p className="rounded-lg border border-line px-3.5 py-3 text-[13px] leading-snug text-muted">
+              This number is waiting to be checked against the state
+              authority&apos;s register. Until then it is shown on your listings
+              as your own claim.
+            </p>
+          )}
+
+          {decision?.status === "VERIFIED" && (
+            <p className="rounded-lg border border-warn/40 bg-warn/5 px-3.5 py-3 text-[13px] leading-snug">
+              This registration is verified. Changing the number takes the
+              verified badge off this project and every listing in it, until
+              somebody checks the new one.
             </p>
           )}
 

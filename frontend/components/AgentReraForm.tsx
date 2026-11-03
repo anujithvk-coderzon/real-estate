@@ -5,6 +5,7 @@ import { Field } from "@/components/form/Field";
 import { api } from "@/lib/api";
 import { errorToast, successToast } from "@/lib/toast";
 import { inputClass, primaryButton, secondaryButton } from "@/lib/ui";
+import type { VerificationStatus } from "@/lib/types";
 import { apiMessage } from "@/lib/validation/apiError";
 
 // Every state runs its own RERA, so the number belongs to one of them.
@@ -58,7 +59,11 @@ const UNION_TERRITORIES = [
 ];
 
 type Props = {
-  revoked?: boolean; // their previous registration was removed by the registry
+  // Where they stand before this form is submitted. It decides the opening
+  // line, and a rejection and a withdrawal need different ones: one is "the
+  // number you typed is wrong", the other is "the registration you had is no
+  // longer good".
+  priorStatus?: VerificationStatus | null;
   onSaved: () => void; // the number is stored; carry on
   onBack: () => void;
   // "page": its own screen in the create flow. "inline": inside a settings card.
@@ -79,7 +84,7 @@ type Props = {
 // registered with their state RERA to handle a sale; rentals are exempt, so this
 // never appears for rent or PG.
 const AgentReraForm = ({
-  revoked = false,
+  priorStatus = null,
   onSaved,
   onBack,
   variant = "page",
@@ -225,9 +230,11 @@ const AgentReraForm = ({
         Your RERA registration
       </h1>
       <p className="mt-2 text-[15px] leading-relaxed text-muted">
-        {revoked
-          ? "Your previous registration was removed by the registry. Add a current one to list a property for sale."
-          : "Agents must be registered with their state RERA to handle a sale. We show the number on your listings so buyers can check it."}
+        {priorStatus === "REJECTED"
+          ? "We checked the number you gave and could not confirm it on your state's register. Check it against your certificate and send it again — the reason we gave is in your settings."
+          : priorStatus === "REVOKED"
+            ? "The registration we had verified for you is no longer in good standing. Add a current one to list a property for sale."
+            : "Agents must be registered with their state RERA to handle a sale. We show the number on your listings so buyers can check it."}
       </p>
 
       {form}

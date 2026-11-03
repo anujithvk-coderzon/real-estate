@@ -72,15 +72,22 @@ export const projectProblems = (data: ProjectFormData) => {
   // explicitly exempt with a reason.
   if (mustRegisterWithRera(data.totalUnits)) {
     if (data.reraNumber.trim().length < 5) {
-      problems.push(`RERA registration number (required above ${RERA_EXEMPT_MAX_UNITS} units)`);
+      problems.push(
+        `RERA registration number (required above ${RERA_EXEMPT_MAX_UNITS} units)`,
+      );
     }
   } else if (data.isReraExempt) {
-    if (data.exemptReason.trim().length < 5) problems.push("Reason for the exemption");
+    if (data.exemptReason.trim().length < 5)
+      problems.push("Reason for the exemption");
   } else if (data.reraNumber.trim().length < 5) {
     problems.push("RERA registration number");
   }
 
-  if (data.minPrice && data.maxPrice && Number(data.maxPrice) < Number(data.minPrice)) {
+  if (
+    data.minPrice &&
+    data.maxPrice &&
+    Number(data.maxPrice) < Number(data.minPrice)
+  ) {
     problems.push("Price range (the highest must not be below the lowest)");
   }
   if (data.startedAt && data.handoverAt && data.handoverAt < data.startedAt) {
@@ -134,13 +141,19 @@ export type ProjectDetail = {
   reraStatus: string;
   isReraExempt: boolean;
   exemptReason?: string | null;
+  // The note whoever checked the registration wrote, and when. On a verified
+  // project the note is public; on a rejection it is the builder's to read and
+  // act on. Either way they see it on their own project page.
+  reraVerifiedReason?: string | null;
+  reraVerifiedAt?: string | null;
   images: { id: string; path: string; position: number }[];
   listingCount: number;
   createdAt: string;
 };
 
 // Dates arrive as timestamps; a date input wants "2026-03-01".
-const asDateInput = (value?: string | null) => (value ? value.slice(0, 10) : "");
+const asDateInput = (value?: string | null) =>
+  value ? value.slice(0, 10) : "";
 
 export const projectToFormData = (project: ProjectDetail): ProjectFormData => ({
   name: project.name,

@@ -346,7 +346,21 @@ if (claimed && claimed.id !== userId) {
 }
 // Nobody has checked this number yet, so it stays PENDING. The account's role is
 // chosen by the user and must not change here.
-await prisma.user.update({where:{id:userId},data:{agentReraState,agentReraNumber,agentReraStatus:"PENDING"}})
+//
+// The note from the last decision goes with it: a rejection's reason is about
+// the old number and would sit in their settings contradicting "Awaiting
+// check", and an approval's note is about a registration they no longer claim.
+const wasVerified=existingUser.agentReraStatus==="VERIFIED"
+const numberChanged=existingUser.agentReraNumber!==agentReraNumber
+await prisma.$transaction([
+  prisma.user.update({where:{id:userId},data:{agentReraState,agentReraNumber,agentReraStatus:"PENDING",agentReraVerifiedReason:null,agentReraVerifiedAt:null}}),
+  // Only worth saying when something was taken away. Submitting a number for
+  // the first time needs no notification: they are looking at the form that
+  // did it.
+  ...(wasVerified && numberChanged
+    ? [prisma.notification.create({data:{userId,title:"RERA Verification",body:"Your RERA number was changed, so the verified badge has come off your listings until somebody checks the new one.",type:"RERA_VERIFICATION"}})]
+    : []),
+])
 return "Agent RERA registration updated successfully."
 }
 
@@ -355,7 +369,7 @@ export const publicProfileService=async(slug:string)=>{
   where:{slug},
   select:{
     name:true,slug:true,avatarUrl:true,description:true,accountType:true,
-    agentReraNumber:true,agentReraState:true,agentReraStatus:true,createdAt:true,
+    agentReraNumber:true,agentReraState:true,agentReraStatus:true,agentReraVerifiedReason:true,agentReraVerifiedAt:true,createdAt:true,
     _count:{select:{listings:{where:{status:"ACTIVE"}}}},
     projects:{
       orderBy:{createdAt:"desc"},
@@ -378,6 +392,11 @@ export const publicProfileService=async(slug:string)=>{
   agentReraNumber:user.agentReraNumber,
   agentReraState:user.agentReraState,
   agentReraStatus:user.agentReraStatus,
+  // Only the approval note is public. The reason behind a rejection is between
+  // us and the agent: published here it would be an accusation sitting under
+  // their own name, for a number they may be in the middle of correcting.
+  agentReraVerifiedReason:user.agentReraStatus==='VERIFIED'?user.agentReraVerifiedReason:null,
+  agentReraVerifiedAt:user.agentReraStatus==='VERIFIED'?user.agentReraVerifiedAt:null,
   memberSince:user.createdAt,
   listingCount:user._count.listings,
   // Only builders have projects, so an empty list simply hides the section.
@@ -386,4 +405,12 @@ export const publicProfileService=async(slug:string)=>{
     images:project.images.map((image)=>({path:cdnUrl(image.path)})),
   })),
  }
+}
+
+export const getNotificationsService=async(userId:string)=>{
+  return await prisma.$transaction(async(tx)=>{
+    const notifications=await tx.notification.findMany({where:{userId},orderBy:{createdAt:'desc'}});
+    await tx.notification.updateMany({where:{userId,isRead:false},data:{isRead:true}})
+    return notifications;
+  })
 }

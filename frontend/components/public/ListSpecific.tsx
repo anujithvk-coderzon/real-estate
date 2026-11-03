@@ -22,7 +22,15 @@ import {
   PinIcon,
   SofaIcon,
 } from "@/components/public/icons";
-import { BADGE_TONE, reraBadge } from "@/lib/rera";
+import {
+  BADGE_TONE,
+  PROJECT_RERA_SCOPE,
+  projectReraBadge,
+  RERA_CAUTION,
+  RERA_CAUTION_HEADING,
+  reraBadge,
+  RERA_SCOPE,
+} from "@/lib/rera";
 import { authHref, rememberReturn } from "@/lib/returnTo";
 import { api, authReady } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
@@ -435,10 +443,41 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
             </div>
           )}
           {agentRera && (
-            <p className="mt-1 text-[12px] leading-snug text-muted">
-              {agentRera.detail}
-            </p>
+            <>
+              {/* The note whoever checked it wrote, where there is one. The
+                  badge's own sentence is a stand-in for a person's words, and
+                  a stand-in should give way the moment the words exist. */}
+              {listing.owner.agentReraVerifiedReason ? (
+                <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+                  {listing.owner.agentReraVerifiedAt && (
+                    <span className="font-medium text-ink">
+                      {formatDate(listing.owner.agentReraVerifiedAt)} ·{" "}
+                    </span>
+                  )}
+                  {listing.owner.agentReraVerifiedReason}
+                </p>
+              ) : (
+                <p className="mt-1 text-[12px] leading-snug text-muted">
+                  {agentRera.detail}
+                </p>
+              )}
+              <p className="mt-1 text-[12px] leading-snug text-muted">
+                {RERA_SCOPE}
+              </p>
+            </>
           )}
+
+          {/* Shown on every listing, including an owner's own, where there is
+              no badge at all: the warning is about the transaction, not about
+              the registration. */}
+          <div className="mt-3 border-t border-line pt-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink">
+              {RERA_CAUTION_HEADING}
+            </p>
+            <p className="mt-1 text-[12px] leading-relaxed text-muted">
+              {RERA_CAUTION}
+            </p>
+          </div>
 
           {listing.owner.slug && (
             <Link
@@ -468,6 +507,16 @@ const ProjectBlock = ({
   project: NonNullable<PublicListing["project"]>;
 }) => {
   const registered = project.inRecords;
+  // One helper for the project's registration, so this panel, the seller's
+  // profile and the builder's own pages cannot describe the same project three
+  // different ways.
+  const rera = projectReraBadge({
+    reraStatus: project.reraStatus,
+    isReraExempt: project.isReraExempt,
+    reraNumber: project.reraNumber,
+    reraAbsence: project.reraAbsence,
+    inRecords: registered,
+  });
   const tone = registered
     ? { box: "bg-accent-soft", heading: "text-accent", rule: "ring-accent/20" }
     : { box: "bg-warn/10", heading: "text-warn", rule: "ring-warn/20" };
@@ -506,29 +555,49 @@ const ProjectBlock = ({
             </dd>
           </div>
 
-          {/* The number, or plainly why there is none. Never a badge: nobody checked it. */}
+          {/* The number and what was done about it. A badge only where one was
+              earned — the tones carry that, and the sentence under it says in
+              words what the badge says in two. */}
           <div>
             <dt className="text-[13px] text-muted">RERA registration</dt>
             <dd className="mt-0.5">
               {project.reraNumber ? (
-                <>
-                  <span className="tabular-nums font-medium">
-                    {project.reraNumber}
-                  </span>
-                  <span className="text-muted">
-                    {project.reraStatus === "VERIFIED"
-                      ? " · checked against the state register"
-                      : registered
-                        ? " · as given by the builder"
-                        : ""}
-                  </span>
-                </>
-              ) : project.isReraExempt ? (
-                <span className="text-muted">
-                  Exempt: the builder states the project has 8 units or fewer
+                <span className="tabular-nums font-medium">
+                  {project.reraNumber}
                 </span>
               ) : (
-                <span className="text-muted">Not given</span>
+                !project.isReraExempt && (
+                  <span className="text-muted">No number given</span>
+                )
+              )}
+              <span
+                className={`ml-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-[0.04em] ${BADGE_TONE[rera.tone]}`}
+              >
+                {rera.tick && <span aria-hidden="true">✓</span>}
+                {rera.label}
+              </span>
+
+              {/* The operator's own words, where the project was checked. */}
+              {project.reraStatus === "VERIFIED" &&
+              project.reraVerifiedReason ? (
+                <span className="mt-1 block text-[12.5px] leading-relaxed text-muted">
+                  {project.reraVerifiedAt && (
+                    <span className="font-medium text-ink">
+                      {formatDate(project.reraVerifiedAt)} ·{" "}
+                    </span>
+                  )}
+                  {project.reraVerifiedReason}
+                </span>
+              ) : (
+                <span className="mt-1 block text-[12.5px] leading-relaxed text-muted">
+                  {rera.detail}
+                </span>
+              )}
+
+              {project.reraStatus === "VERIFIED" && (
+                <span className="mt-1 block text-[12.5px] leading-relaxed text-muted">
+                  {PROJECT_RERA_SCOPE}
+                </span>
               )}
             </dd>
           </div>

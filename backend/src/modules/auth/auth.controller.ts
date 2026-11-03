@@ -14,6 +14,7 @@ import {
   publicProfileService,
   setPasswordService,
   updateProfileService,
+  getNotificationsService,
 } from "./auth.service.js";
 import { BadRequestError, UnauthorizedError } from "../../errors/Errors.js";
 import redis from "../../lib/redis.js";
@@ -142,7 +143,7 @@ export const change_password=async(req:Request,res:Response,_next:NextFunction)=
 export const me = async (req: Request, res: Response) => {
   const result = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    select: { id: true, name: true, email: true, avatarUrl: true, description: true, password: true,agentReraStatus:true,agentReraNumber:true,agentReraState:true,accountType:true,role:true},
+    select: { id: true, name: true, email: true, avatarUrl: true, description: true, password: true,agentReraStatus:true,agentReraNumber:true,agentReraState:true,agentReraVerifiedReason:true,agentReraVerifiedAt:true,accountType:true,role:true,_count:{select:{notifications:{where:{isRead:false,}}}} },
   });
   if (!result) throw new UnauthorizedError("Unauthorized");
   const user={
@@ -153,11 +154,15 @@ export const me = async (req: Request, res: Response) => {
    description:result.description,
    hasPassword:!!result.password,
    accountType:result.accountType,
-   // The admin app reads this to tell an operator from an ordinary user.
+   notificationsCount:result._count.notifications,
    role:result.role,
    agentReraStatus:result.agentReraStatus,
    agentReraNumber:result.agentReraNumber,
-   agentReraState:result.agentReraState
+   agentReraState:result.agentReraState,
+   // Their own copy of the decision. On a VERIFIED account this note is public,
+   // and nobody should be surprised by words published under their own name.
+   agentReraVerifiedReason:result.agentReraVerifiedReason,
+   agentReraVerifiedAt:result.agentReraVerifiedAt
   }
   res.status(200).json({ message: "User fetched", user });
 };
@@ -226,12 +231,15 @@ export const agentRera=async(req:Request,res:Response)=>{
  return res.status(200).json({message:response})
 }
 
-
-
-// GET /auth/public/:slug — no login needed; this is what buyers see.
 export const publicProfile=async(req:Request,res:Response)=>{
   const slug=req.params?.slug as string
   if(!slug) throw new BadRequestError("Profile not found")
   const profile=await publicProfileService(slug)
   return res.status(200).json({message:"Profile fetched successfully",profile})
+}
+
+export const getNotifications=async(req:Request,res:Response)=>{
+  const userId=req.user?.id as string
+  const notifications=await getNotificationsService(userId)
+  return res.status(200).json({message:"Notifications fetched successfully",notifications})
 }

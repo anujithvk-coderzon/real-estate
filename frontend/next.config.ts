@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "displayed-concerts-andrea-mpegs.trycloudflare.com",
+    "ingredients-commission-modifications-workers.trycloudflare.com",
   ],
 };
 

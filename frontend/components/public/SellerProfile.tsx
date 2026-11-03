@@ -9,6 +9,13 @@ import BackLink from "@/components/public/BackLink";
 import PublicListingCard from "@/components/listing/PublicListingCard";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import {
+  BADGE_TONE,
+  projectReraBadge,
+  RERA_CAUTION,
+  RERA_CAUTION_HEADING,
+  RERA_SCOPE,
+} from "@/lib/rera";
 import { labelOf } from "@/lib/listing";
 import { PROJECT_STATUS } from "@/lib/project";
 import type { PublicListingSummary, VerificationStatus } from "@/lib/types";
@@ -38,6 +45,12 @@ type Profile = {
   agentReraNumber?: string | null;
   agentReraState?: string | null;
   agentReraStatus: VerificationStatus;
+  // Only sent, and only shown, when the status is VERIFIED: it is the note
+  // whoever checked the registration wrote for buyers. A rejection's reason is
+  // between us and the agent, and printing it here would be an accusation
+  // published under their name.
+  agentReraVerifiedReason?: string | null;
+  agentReraVerifiedAt?: string | null;
   memberSince: string;
   listingCount: number;
   projects: Project[];
@@ -51,7 +64,9 @@ const initialsOf = (name: string) =>
     .map((part) => part[0]!.toUpperCase())
     .join("");
 
-// Only a checked registration says "verified"; the rest say what they are.
+// Only a checked registration says "verified". Everything else says "not
+// verified" and stops there: a rejection or a withdrawal is the agent's to know
+// about, and the distinction changes nothing a buyer would do differently.
 const RERA_BADGE: Record<
   VerificationStatus,
   { text: string; className: string } | null
@@ -59,10 +74,8 @@ const RERA_BADGE: Record<
   NONE: null,
   PENDING: { text: "RERA number provided", className: "bg-ground text-muted" },
   VERIFIED: { text: "RERA verified", className: "bg-accent-soft text-accent" },
-  REVOKED: {
-    text: "Registration removed by the registry",
-    className: "bg-danger/10 text-danger",
-  },
+  REJECTED: { text: "RERA not verified", className: "bg-ground text-muted" },
+  REVOKED: { text: "RERA not verified", className: "bg-ground text-muted" },
 };
 
 const SellerProfile = ({ slug }: { slug: string }) => {
@@ -187,6 +200,40 @@ const SellerProfile = ({ slug }: { slug: string }) => {
                 )}
               </div>
             )}
+
+            {/* The badge says a person checked this; this says what they
+                checked and what it does not cover. A tick on its own invites a
+                buyer to skip the rest of their own diligence. */}
+            {profile.agentReraStatus === "VERIFIED" &&
+              profile.agentReraVerifiedReason && (
+                <div className="mx-auto mt-4 max-w-prose rounded-xl border border-line bg-panel px-4 py-3 text-left">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
+                    What we checked
+                    {profile.agentReraVerifiedAt && (
+                      <span className="ml-1.5 font-medium normal-case tracking-normal">
+                        · {formatDate(profile.agentReraVerifiedAt)}
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-1.5 whitespace-pre-line text-[13.5px] leading-relaxed text-muted">
+                    {profile.agentReraVerifiedReason}
+                  </p>
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">
+                    {RERA_SCOPE}
+                  </p>
+                </div>
+              )}
+
+            {/* Under every profile, verified or not. The badge above is the
+                narrow thing we checked; this is the wide thing we did not. */}
+            <div className="mx-auto mt-4 max-w-prose rounded-xl border border-line bg-ground px-4 py-3 text-left">
+              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-ink">
+                {RERA_CAUTION_HEADING}
+              </p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
+                {RERA_CAUTION}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center" aria-busy="true">
@@ -237,17 +284,34 @@ const SellerProfile = ({ slug }: { slug: string }) => {
                     {typeof project.totalUnits === "number" &&
                       ` · ${project.totalUnits} units`}
                   </p>
-                  {project.isReraExempt ? (
-                    <p className="mt-2 text-[12px] text-muted">
-                      Stated as exempt from RERA registration
-                    </p>
-                  ) : (
-                    project.reraNumber && (
-                      <p className="mt-2 tabular-nums text-[12px] text-muted">
-                        RERA {project.reraNumber}
-                      </p>
-                    )
-                  )}
+                  {/* Through the same helper as the listing page: a project
+                      that reads "verified" there must not read "RERA
+                      <number>" here, as if the number were the claim. These
+                      are the builder's own projects, so inRecords is true by
+                      definition. */}
+                  {(() => {
+                    const rera = projectReraBadge({
+                      reraStatus: project.reraStatus,
+                      isReraExempt: project.isReraExempt,
+                      reraNumber: project.reraNumber,
+                      inRecords: true,
+                    });
+                    return (
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] ${BADGE_TONE[rera.tone]}`}
+                        >
+                          {rera.tick && <span aria-hidden="true">✓ </span>}
+                          {rera.label}
+                        </span>
+                        {project.reraNumber && (
+                          <span className="tabular-nums text-[12px] text-muted">
+                            {project.reraNumber}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </li>
             ))}

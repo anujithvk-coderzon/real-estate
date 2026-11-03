@@ -52,7 +52,10 @@ const project=await prisma.project.create({data:{
     pincode:data.pincode,
     latitude:data.latitude??null,
     longitude:data.longitude??null,
-    // reraStatus stays NONE: the builder states the number, nobody has checked it.
+    // A declared number is PENDING, not NONE: it is a claim waiting for somebody
+    // to check it against the state register, and that is what puts the project
+    // in the admin queue. An exempt project has nothing to check, so it stays NONE.
+    reraStatus:isReraExempt ? "NONE" : "PENDING",
     reraNumber:isReraExempt ? null : (data.reraNumber??null),
     reraState:isReraExempt ? null : (data.reraState??null),
     isReraExempt,
@@ -86,19 +89,52 @@ export const updateProjectService=async(userId:string,projectId:string,newData:U
   Object.entries(newData).filter(([,value])=>value!==undefined),
  ) as Prisma.ProjectUpdateInput
 
- const updated=await prisma.project.update({
-  where:{id:projectId},
-  data:{
-    ...fields,
-    isReraExempt,
-    ...(isReraExempt
-      ? {reraNumber:null,reraState:null}
-      : {exemptReason:null}),
-    // A changed number has to be checked again.
-    ...(newData.reraNumber && newData.reraNumber!==project.reraNumber
-      ? {reraStatus:"NONE",reraVerifiedAt:null}:{}),
-  },
- })
+ // What this edit does to the verification, which is not always what the
+ // builder thinks they are doing. Both of these throw away a decision an
+ // operator made and a note that is on the public page.
+ const numberChanged=Boolean(newData.reraNumber) && newData.reraNumber!==project.reraNumber
+ const becameExempt=isReraExempt && !project.isReraExempt
+ const wasVerified=project.reraStatus==="VERIFIED"
+
+ // A changed number goes back in the queue. Turning exempt leaves nothing to
+ // check at all, so it goes back to NONE. Either way the note that was
+ // published about the old number must not survive it: it describes a
+ // registration this project no longer claims.
+ const verification=becameExempt
+  ? {reraStatus:"NONE" as const,reraVerifiedReason:null,reraVerifiedAt:null}
+  : numberChanged
+    ? {reraStatus:"PENDING" as const,reraVerifiedReason:null,reraVerifiedAt:null}
+    : {}
+
+ // Told, not left to be noticed. Losing a verified badge is the kind of thing
+ // a builder discovers weeks later by looking at their own listing, and the
+ // cause — an edit they made themselves — is the last thing they would suspect.
+ const told=becameExempt
+  ? (wasVerified
+      ? `${project.name} is now listed as exempt from RERA registration, so its verified badge has been taken off the project and its listings.`
+      : null)
+  : numberChanged
+    ? (wasVerified
+        ? `The RERA number for ${project.name} was changed, so its verified badge has come off the project and its listings until somebody checks the new number.`
+        : `The new RERA number for ${project.name} is waiting to be checked against the state authority's register.`)
+    : null
+
+ const [updated]=await prisma.$transaction([
+  prisma.project.update({
+   where:{id:projectId},
+   data:{
+     ...fields,
+     isReraExempt,
+     ...(isReraExempt
+       ? {reraNumber:null,reraState:null}
+       : {exemptReason:null}),
+     ...verification,
+   },
+  }),
+  ...(told
+    ? [prisma.notification.create({data:{userId,title:"Project RERA Verification",body:told,type:"PROJECT_RERA_VERIFICATION"}})]
+    : []),
+ ])
  return updated
 }
 

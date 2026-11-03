@@ -5,6 +5,7 @@ import {
   change_password,
   changeAvatar,
   forgot_password,
+  getNotifications,
   googleCallback,
   googleLogin,
   login,
@@ -40,4 +41,5 @@ router.get("/google",googleLogin)
 router.get("/google/callback",googleCallback)
 router.patch("/change/avatar",isAuthorized,upload.single("avatar"),changeAvatar)
 router.patch('/agent-rera',isAuthorized,agentRera)
+router.get('/notifications',isAuthorized,getNotifications)
 export default router;

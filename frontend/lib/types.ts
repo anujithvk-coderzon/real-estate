@@ -234,6 +234,12 @@ export type PublicListing = Omit<
     reraNumber?: string | null;
     reraStatus: VerificationStatus;
     isReraExempt: boolean;
+    // The note whoever checked the registration wrote. Sent only on a VERIFIED
+    // project — see projectClaim in listing.service.ts.
+    reraVerifiedReason?: string | null;
+    reraVerifiedAt?: string | null;
+    // Only on a typed-in project (inRecords false): why it has no number.
+    reraAbsence?: string | null;
     builderName?: string | null;
     builderSlug?: string | null;
     statedBy: PostedBy;
@@ -247,6 +253,10 @@ export type PublicListing = Omit<
     accountType?: PostedBy | null;
     agentReraNumber?: string | null;
     agentReraStatus?: VerificationStatus | null;
+    // The note whoever checked the registration wrote. Sent only on a VERIFIED
+    // account — see the owner block in listing.service.ts.
+    agentReraVerifiedReason?: string | null;
+    agentReraVerifiedAt?: string | null;
   };
   // True when the person reading the page is the one who posted it. The server
   // works this out from the token, so the owner's id never reaches the browser.
@@ -266,7 +276,12 @@ export type PublicListing = Omit<
 /* ---------- the signed-in user ---------- */
 
 // Whether a RERA registration has been checked. Matches the backend enum.
-export type VerificationStatus = "NONE" | "PENDING" | "VERIFIED" | "REVOKED";
+// REJECTED and REVOKED are not the same thing, and telling an agent the wrong
+// one is telling them to do the wrong thing about it: REJECTED means we looked
+// and could not confirm the number they gave, so they should correct it;
+// REVOKED means a number we had confirmed has since been taken back.
+export type VerificationStatus =
+  "NONE" | "PENDING" | "VERIFIED" | "REJECTED" | "REVOKED";
 
 // What GET /auth/me returns. Shared by the sidebar, settings and the create flow,
 // so they can't drift apart.
@@ -282,4 +297,24 @@ export type AuthUser = {
   agentReraStatus: VerificationStatus;
   agentReraNumber?: string | null;
   agentReraState?: string | null;
+  // The note whoever checked the registration wrote. On a VERIFIED account it
+  // is public — buyers read it on the profile — so the agent has to be able to
+  // see it too. On a rejection it is the reason, and only they see it.
+  agentReraVerifiedReason?: string | null;
+  // When that decision was made. ISO, as every date on the wire here is.
+  agentReraVerifiedAt?: string | null;
+  // Unread only, so the badge can hide itself once they have been looked at.
+  notificationsCount?: number;
+};
+
+// A row as GET /auth/notifications sends it. `type` is a free-text tag the
+// backend sets (RERA_VERIFICATION today), kept as string rather than a union
+// so an unknown one still renders instead of breaking the list.
+export type Notification = {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
 };

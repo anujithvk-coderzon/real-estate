@@ -76,6 +76,7 @@ const CreateListing = () => {
     manualName: "",
     manualRera: "",
     manualBuilder: "",
+    manualAbsence: "",
   });
   const [reraStatus, setReraStatus] = useState<VerificationStatus | null>(null);
 
@@ -165,16 +166,23 @@ const CreateListing = () => {
     projectId && projectId !== NONE && projectId !== MANUAL ? projectId : "";
   const typedName = projectId === MANUAL ? manual.manualName.trim() : "";
   const typedRera = projectId === MANUAL ? manual.manualRera.trim() : "";
+  // Only an answer while there is no number: the two are one answer between
+  // them, and the API rejects both at once.
+  const typedAbsence =
+    projectId === MANUAL && !typedRera ? manual.manualAbsence : "";
   const typedBuilder = projectId === MANUAL ? manual.manualBuilder.trim() : "";
 
-  // The question is answered when a project is chosen, a name and its registration
-  // number are typed, or the lister says there is no project. Off-plan has no
-  // "no project" answer, because such a sale needs a registered project.
+  // The question is answered when a project is chosen, a typed project says
+  // what its registration is — a number, or why there is none — or the lister
+  // says there is no project at all. Off-plan has neither of the last two: such
+  // a sale may not be advertised without a registered project.
   const projectAnswered =
     projectId === NONE
       ? !needsProject
       : projectId === MANUAL
-        ? Boolean(typedName) && Boolean(typedRera) && Boolean(typedBuilder)
+        ? Boolean(typedName) &&
+          Boolean(typedBuilder) &&
+          (Boolean(typedRera) || (!needsProject && Boolean(typedAbsence)))
         : Boolean(chosenProject);
   const missing = [
     ...getMissingFields(data, location),
@@ -189,6 +197,7 @@ const CreateListing = () => {
         ...(chosenProject && { projectId: chosenProject }),
         ...(typedName && { projectNameText: typedName }),
         ...(typedRera && { projectReraText: typedRera }),
+        ...(typedAbsence && { projectReraAbsence: typedAbsence }),
         ...(typedBuilder && { builderNameText: typedBuilder }),
       });
       successToast(response.data.message);
@@ -224,7 +233,7 @@ const CreateListing = () => {
   if (needsRera) {
     return (
       <AgentReraForm
-        revoked={reraStatus === "REVOKED"}
+        priorStatus={reraStatus}
         currentState={user?.agentReraState ?? null}
         onSkip={() => setReraSkipped(true)}
         onSaved={() => setReraStatus("PENDING")} // saved, not checked yet: let them carry on
@@ -285,8 +294,21 @@ const CreateListing = () => {
               manualName={manual.manualName}
               manualRera={manual.manualRera}
               manualBuilder={manual.manualBuilder}
+              manualAbsence={manual.manualAbsence}
               onManualChange={(field, value) =>
-                setManual((previous) => ({ ...previous, [field]: value }))
+                setManual((previous) => ({
+                  ...previous,
+                  [field]: value,
+                  // Typing a number withdraws the "it has none" answer, and
+                  // picking a reason clears the number. Leaving both set would
+                  // publish a number beside a line saying there is none.
+                  ...(field === "manualRera" && value
+                    ? { manualAbsence: "" }
+                    : {}),
+                  ...(field === "manualAbsence" && value
+                    ? { manualRera: "" }
+                    : {}),
+                }))
               }
               mustHaveProject={needsProject}
             />

@@ -9,6 +9,7 @@ import PasswordRules, {
 } from "@/components/form/PasswordRules";
 import { api, setAccessToken } from "@/lib/api";
 import { PROFILE_UPDATED } from "@/lib/events";
+import { formatDate } from "@/lib/format";
 import { labelOf, POSTED_BY } from "@/lib/listing";
 import { checkImage, IMAGE_TYPES } from "@/lib/media";
 import { errorToast, successToast } from "@/lib/toast";
@@ -446,12 +447,20 @@ const STATUS_DISPLAY: Record<
   VERIFIED: {
     text: "Verified",
     className: "bg-accent-soft text-accent",
-    help: "Checked against the state register. Your listings show a verified badge.",
+    help: "We checked this number against your state's register. Your listings show a verified badge, and buyers see the note below on your profile.",
+  },
+  // Two different outcomes, and the difference decides what the agent should
+  // do next, so they must not share one word. We rejected what they gave us;
+  // the registry withdrew something we had already confirmed.
+  REJECTED: {
+    text: "Could not be verified",
+    className: "bg-danger/10 text-danger",
+    help: "We checked the number you gave and could not confirm it on your state's register. The reason is below — correct the number and submit it again.",
   },
   REVOKED: {
-    text: "Removed by the registry",
+    text: "Verification withdrawn",
     className: "bg-danger/10 text-danger",
-    help: "This registration is no longer valid. Add a current one to keep listing properties for sale.",
+    help: "This number was verified earlier and is no longer in good standing, so the badge has been taken off your listings. Add a current registration to keep listing properties for sale.",
   },
 };
 
@@ -487,7 +496,7 @@ const ReraCard = ({
       {editing ? (
         <AgentReraForm
           variant="inline"
-          revoked={user.agentReraStatus === "REVOKED"}
+          priorStatus={user.agentReraStatus}
           current={user.agentReraNumber ?? null}
           currentState={user.agentReraState ?? null}
           onSaved={() => {
@@ -518,6 +527,33 @@ const ReraCard = ({
           )}
           {user.agentReraState && (
             <Row label="State" value={user.agentReraState} />
+          )}
+          {user.agentReraVerifiedAt && (
+            <Row
+              label={
+                user.agentReraStatus === "VERIFIED"
+                  ? "Verified on"
+                  : "Checked on"
+              }
+              value={formatDate(user.agentReraVerifiedAt)}
+            />
+          )}
+          {user.agentReraVerifiedReason && (
+            <Row
+              // On a verified account this note is on the public profile, and
+              // an agent should never be surprised by words written under
+              // their own name. On a rejection it is only for them.
+              label={
+                user.agentReraStatus === "VERIFIED"
+                  ? "What buyers are told"
+                  : "Reason"
+              }
+              value={
+                <span className="block max-w-prose whitespace-pre-line text-[13.5px] leading-relaxed">
+                  {user.agentReraVerifiedReason}
+                </span>
+              }
+            />
           )}
           <div className="pt-3 text-[13px] leading-snug text-muted">
             {status.help}

@@ -5,13 +5,22 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ChatsDrawer from "@/components/layout/ChatsDrawer";
+import NotificationsDrawer from "@/components/layout/NotificationsDrawer";
 import { api, authReady, getAccessToken, setAccessToken } from "@/lib/api";
-import { CHAT_UNREAD_CHANGED, PROFILE_UPDATED } from "@/lib/events";
+import {
+  CHAT_UNREAD_CHANGED,
+  NOTIFICATIONS_READ,
+  PROFILE_UPDATED,
+} from "@/lib/events";
 import type { AuthUser } from "@/lib/types";
 
 // accountType joins the three the panel shows, because one nav item is
-// builders-only and /auth/me already sends it.
-type User = Pick<AuthUser, "name" | "email" | "avatarUrl" | "accountType">;
+// builders-only and /auth/me already sends it; notificationsCount is what the
+// bell's badge starts from.
+type User = Pick<
+  AuthUser,
+  "name" | "email" | "avatarUrl" | "accountType" | "notificationsCount"
+>;
 
 /* ---------- icons (24px grid, drawn with the current text colour) ---------- */
 
@@ -91,6 +100,13 @@ const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
   </svg>
 );
 
+const BellIcon = () => (
+  <svg {...iconProps}>
+    <path d="M12 4.5a5 5 0 0 0-5 5v3l-1.5 3h13L17 12.5v-3a5 5 0 0 0-5-5Z" />
+    <path d="M10 18a2 2 0 0 0 4 0" />
+  </svg>
+);
+
 const ProjectsIcon = () => (
   <svg {...iconProps}>
     <rect x="3.5" y="9.5" width="7" height="10" rx="1.5" />
@@ -164,7 +180,11 @@ const Sidebar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatsOpen, setChatsOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const [unread, setUnread] = useState(0); // phones
+  // Kept apart from `user` so reading them can empty the badge without
+  // touching the name and avatar the panel is also drawn from.
+  const [alerts, setAlerts] = useState(0);
   const [collapsed, setCollapsed] = useState(false); // desktop
   const [loggingOut, setLoggingOut] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false); // falls back to initials
@@ -174,7 +194,10 @@ const Sidebar = () => {
     const loadUser = () =>
       api
         .get("/auth/me")
-        .then((response) => setUser(response.data.user))
+        .then((response) => {
+          setUser(response.data.user);
+          setAlerts(response.data.user.notificationsCount ?? 0);
+        })
         .catch(() => {
           // The sidebar still works without the name.
         });
@@ -182,6 +205,14 @@ const Sidebar = () => {
     // Settings fires this after the name is edited, so the sidebar shows the new one.
     window.addEventListener(PROFILE_UPDATED, loadUser);
     return () => window.removeEventListener(PROFILE_UPDATED, loadUser);
+  }, []);
+
+  // The panel's GET marks everything read, so the badge is emptied here rather
+  // than by asking /auth/me what it already knows the answer to.
+  useEffect(() => {
+    const clear = () => setAlerts(0);
+    window.addEventListener(NOTIFICATIONS_READ, clear);
+    return () => window.removeEventListener(NOTIFICATIONS_READ, clear);
   }, []);
 
   useEffect(() => {
@@ -332,6 +363,44 @@ const Sidebar = () => {
     </li>
   );
 
+  // Same shape as the chats button, for the same reason: it opens a panel, not
+  // a page, so it cannot be a Link.
+  const alertsButton = (
+    <li>
+      <button
+        type="button"
+        onClick={() => {
+          setAlertsOpen(true);
+          setMenuOpen(false);
+        }}
+        aria-haspopup="dialog"
+        aria-expanded={alertsOpen}
+        aria-label={collapsed ? "Notifications" : undefined}
+        title={collapsed ? "Notifications" : undefined}
+        className={`relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium transition-colors ${focusRing} ${
+          collapsed ? "lg:justify-center" : ""
+        } ${alertsOpen ? "bg-accent-soft text-ink" : "text-muted hover:bg-accent-soft/60 hover:text-ink"}`}
+      >
+        <span className={alertsOpen ? "text-accent" : ""}>
+          <BellIcon />
+        </span>
+        <span className={`flex-1 ${hideWhenCollapsed}`}>Notifications</span>
+        {alerts > 0 && (
+          <span
+            aria-label={`${alerts} unread`}
+            className={`flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums ${
+              collapsed
+                ? "lg:absolute lg:right-2 lg:top-2 lg:h-2.5 lg:min-w-2.5 lg:px-0 lg:text-transparent"
+                : ""
+            }`}
+          >
+            {alerts > 99 ? "99+" : alerts}
+          </span>
+        )}
+      </button>
+    </li>
+  );
+
   return (
     <>
       <aside
@@ -404,6 +473,29 @@ const Sidebar = () => {
             )}
           </button>
 
+          {/* Unlike chats, this one appears only when it has something to
+            report. An always-present third button costs the name and email
+            beside it room they need on a 360px screen, and an empty bell is
+            reachable through Menu anyway. */}
+          {alerts > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setAlertsOpen(true);
+                setMenuOpen(false);
+              }}
+              aria-haspopup="dialog"
+              aria-expanded={alertsOpen}
+              aria-label={`Notifications, ${alerts} unread`}
+              className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-muted lg:hidden ${focusRing}`}
+            >
+              <BellIcon />
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
+                {alerts > 9 ? "9+" : alerts}
+              </span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -427,6 +519,7 @@ const Sidebar = () => {
                   !("builderOnly" in item) || user?.accountType === "BUILDER",
               ).map((item) => navLink(item))}
               {chatsButton}
+              {alertsButton}
             </ul>
           </nav>
 
@@ -476,6 +569,10 @@ const Sidebar = () => {
       {/* A sibling of the rail, not a child: the panel is fixed to the viewport,
         and nesting it inside the rail would tie it to the rail's own box. */}
       <ChatsDrawer open={chatsOpen} onClose={() => setChatsOpen(false)} />
+      <NotificationsDrawer
+        open={alertsOpen}
+        onClose={() => setAlertsOpen(false)}
+      />
     </>
   );
 };

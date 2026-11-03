@@ -12,17 +12,37 @@ import { errorToast, successToast } from "@/lib/toast";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
-// Only a checked registration earns the word "verified".
-const RERA_TEXT: Record<string, { text: string; className: string }> = {
+// Only a checked registration earns the word "verified". REJECTED and REVOKED
+// are two different things to be told: we could not confirm the number you
+// gave, versus a registration we had confirmed that no longer stands.
+const RERA_TEXT: Record<
+  string,
+  { text: string; className: string; help: string }
+> = {
   NONE: {
     text: "Number as provided by you",
     className: "bg-ground text-muted",
+    help: "Your listings show this number as your own claim until somebody checks it.",
   },
-  PENDING: { text: "Awaiting check", className: "bg-warn/10 text-warn" },
-  VERIFIED: { text: "Verified", className: "bg-accent-soft text-accent" },
-  REVOKED: {
-    text: "Removed by the registry",
+  PENDING: {
+    text: "Awaiting check",
+    className: "bg-warn/10 text-warn",
+    help: "We will look this number up on your state authority's register. Until then your listings show it as your own claim.",
+  },
+  VERIFIED: {
+    text: "Verified",
+    className: "bg-accent-soft text-accent",
+    help: "Found on the state authority's register. This project and every listing in it show a verified badge, and buyers see the note below.",
+  },
+  REJECTED: {
+    text: "Could not be verified",
     className: "bg-danger/10 text-danger",
+    help: "We could not confirm this number on your state authority's register. The reason is below — correct it and it goes back in the queue.",
+  },
+  REVOKED: {
+    text: "Verification revoked",
+    className: "bg-danger/10 text-danger",
+    help: "This registration was verified earlier and no longer stands, so the badge has come off this project and every listing in it.",
   },
 };
 
@@ -247,6 +267,30 @@ const ProjectDetail = ({ projectId }: { projectId: string }) => {
             >
               {rera.text}
             </span>
+          </div>
+        )}
+
+        {!project.isReraExempt && (
+          <p className="mt-2 max-w-prose text-[13px] leading-relaxed text-muted">
+            {rera.help}
+          </p>
+        )}
+
+        {project.reraVerifiedReason && (
+          <div className="mt-3 max-w-prose rounded-xl border border-line bg-ground px-4 py-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
+              {project.reraStatus === "VERIFIED"
+                ? "What buyers are told"
+                : "Reason"}
+              {project.reraVerifiedAt && (
+                <span className="ml-1.5 font-medium normal-case tracking-normal">
+                  · {formatDate(project.reraVerifiedAt)}
+                </span>
+              )}
+            </p>
+            <p className="mt-1.5 whitespace-pre-line text-[13.5px] leading-relaxed text-muted">
+              {project.reraVerifiedReason}
+            </p>
           </div>
         )}
       </section>

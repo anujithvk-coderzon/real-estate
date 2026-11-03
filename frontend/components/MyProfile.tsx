@@ -46,8 +46,12 @@ const RERA_BADGE: Record<
   NONE: null,
   PENDING: { text: "RERA number on file", className: "bg-warn/10 text-warn" },
   VERIFIED: { text: "RERA verified", className: "bg-accent-soft text-accent" },
+  REJECTED: {
+    text: "RERA number not verified",
+    className: "bg-danger/10 text-danger",
+  },
   REVOKED: {
-    text: "Registration removed by the registry",
+    text: "RERA verification withdrawn",
     className: "bg-danger/10 text-danger",
   },
 };

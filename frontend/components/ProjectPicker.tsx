@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Field, Select } from "@/components/form/Field";
 import { api } from "@/lib/api";
+import { RERA_ABSENCE_OPTIONS } from "@/lib/rera";
 import { inputClass, labelClass } from "@/lib/ui";
 
 type Found = {
@@ -33,8 +34,12 @@ type Props = {
   manualName: string;
   manualRera: string;
   manualBuilder: string;
+  // Chosen instead of a number, when the project never had one. Empty unless
+  // that is the answer; writing a number clears it, and choosing it clears the
+  // number — the two are one answer, not two fields.
+  manualAbsence: string;
   onManualChange: (
-    field: "manualName" | "manualRera" | "manualBuilder",
+    field: "manualName" | "manualRera" | "manualBuilder" | "manualAbsence",
     value: string,
   ) => void;
   // Under construction: the advertisement needs a registration number, so
@@ -51,6 +56,7 @@ type ManualProps = Pick<
   | "manualName"
   | "manualRera"
   | "manualBuilder"
+  | "manualAbsence"
   | "onManualChange"
   | "mustHaveProject"
 > & {
@@ -64,6 +70,7 @@ const ManualFields = ({
   manualName,
   manualRera,
   manualBuilder,
+  manualAbsence,
   onManualChange,
   mustHaveProject,
   self,
@@ -101,15 +108,20 @@ const ManualFields = ({
       />
     </Field>
 
-    <div>
-      {/* Always required on this answer: an unregistered project with no
-                    number is a name a buyer cannot check anywhere. */}
+    <div className="sm:col-span-2">
+      {/* Off-plan, the number is the law's own requirement for the
+          advertisement, so nothing else will do. On a finished building it may
+          genuinely not exist — anything completed before May 2017 was never
+          registered — and a required field there is answered with "NA", which
+          we would then publish as though it were a registration. */}
       <label htmlFor="manualRera" className={labelClass}>
         Project RERA number
-        <span className="text-danger" aria-hidden="true">
-          {" "}
-          *
-        </span>
+        {mustHaveProject && (
+          <span className="text-danger" aria-hidden="true">
+            {" "}
+            *
+          </span>
+        )}
       </label>
       <input
         id="manualRera"
@@ -124,12 +136,49 @@ const ManualFields = ({
         {self
           ? "This project is not registered here yet, so this number is the only way a buyer can check it on the state RERA site."
           : "The builder has not registered this project here, so this number is the only way a buyer can check it on the state RERA site."}
-        {mustHaveProject
-          ? " A unit under construction is sold off-plan, so the advertisement cannot go out without it."
-          : self
-            ? " If the building is old or exempt and has no number, choose \u201cNot part of a project\u201d in the list above instead."
-            : " If the building is old or exempt and has no number, choose \u201cNot part of a project\u201d below."}
+        {mustHaveProject &&
+          " A unit under construction is sold off-plan, so the advertisement cannot go out without it."}
       </p>
+
+      {!mustHaveProject && (
+        <fieldset className="mt-3 rounded-xl border border-line px-4 py-3">
+          <legend className="px-1 text-[13px] font-medium">
+            Or, if the project has no number
+          </legend>
+          <p className="text-[13px] leading-snug text-muted">
+            Pick the reason instead of typing one in. Buyers are told which of
+            these it is, in these words — so never invent a number to fill the
+            box above.
+          </p>
+          <div className="mt-2 space-y-1.5">
+            {RERA_ABSENCE_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className="flex items-start gap-2.5 text-[14px]"
+              >
+                <input
+                  type="radio"
+                  name="manualAbsence"
+                  value={option.value}
+                  checked={manualAbsence === option.value}
+                  onChange={() => onManualChange("manualAbsence", option.value)}
+                  className="mt-1 h-4 w-4 accent-[var(--accent)]"
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+            {manualAbsence && (
+              <button
+                type="button"
+                onClick={() => onManualChange("manualAbsence", "")}
+                className="text-[13px] font-medium text-accent hover:underline"
+              >
+                Clear this — I have the number
+              </button>
+            )}
+          </div>
+        </fieldset>
+      )}
     </div>
 
     <p className="text-[13px] leading-snug text-muted sm:col-span-2">
@@ -147,6 +196,7 @@ const ProjectPicker = ({
   manualName,
   manualRera,
   manualBuilder,
+  manualAbsence,
   onManualChange,
   mustHaveProject,
 }: Props) => {
@@ -246,6 +296,7 @@ const ProjectPicker = ({
               manualName={manualName}
               manualRera={manualRera}
               manualBuilder={manualBuilder}
+              manualAbsence={manualAbsence}
               onManualChange={onManualChange}
               mustHaveProject={mustHaveProject}
               self
@@ -407,6 +458,7 @@ const ProjectPicker = ({
                 manualName={manualName}
                 manualRera={manualRera}
                 manualBuilder={manualBuilder}
+                manualAbsence={manualAbsence}
                 onManualChange={onManualChange}
                 mustHaveProject={mustHaveProject}
                 self={false}

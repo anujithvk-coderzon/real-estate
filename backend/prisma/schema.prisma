@@ -65,11 +65,22 @@ enum ListingStatus {
   EXPIRED
 }
 
+enum ProjectReraAbsence {
+  // Completed before the Act came into force on 1 May 2017.
+  PRE_RERA
+  // Under the size the Act reaches: 8 units or fewer, under 500 sq m.
+  SMALL_PROJECT
+  // The lister does not know it. Said plainly on the listing, because a buyer
+  // who knows nobody has the number will go and look for it.
+  UNKNOWN
+}
+
 enum VerificationStatus {
   NONE
   PENDING
   VERIFIED
   REVOKED
+  REJECTED  
 }
 
 enum ProjectStatus {
@@ -106,7 +117,7 @@ model User {
   messagesSent        Message[]
   propertyViews       PropertyView[]
   promotions          Promotions[]
-
+  notifications        Notification[]
   @@map("users")
 }
 
@@ -167,6 +178,12 @@ model Listing {
   project                  Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectNameText          String?
   projectReraText          String?
+  // Why a typed-in project carries no RERA number. Not every project has one to
+  // give: anything completed before the Act, and anything under the size the
+  // Act reaches, was never registered. Without this the only way to answer a
+  // required number field is to invent one, and an invented number is worse
+  // than none — it is indistinguishable from a real one.
+  projectReraAbsence       ProjectReraAbsence?
   builderNameText          String?
   title                    String
   description              String
@@ -337,15 +354,22 @@ model Promotions {
   path      String
   createdAt DateTime @default(now())
   isActive  Boolean  @default(false)
-
-  // One banner per property and per project at a time. Postgres allows
-  // unlimited NULLs in a unique index, so the project rows do not collide on
-  // listingId, nor the property rows on projectId.
   @@unique([listingId])
   @@unique([projectId])
   @@index([isActive])
-  // A foreign key indexes the column it points AT, never the column doing the
-  // pointing: without this, "this seller's banners" scans the whole table.
   @@index([userId])
   @@map("promotions")
+}
+
+model Notification {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title String
+  body String
+  type String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([userId,isRead,createdAt])
+  @@map("notifications")
 }

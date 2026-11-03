@@ -1,5 +1,5 @@
 import express from 'express';
-import { approveRearaVerificationRequest, createAdmin, fetchUserInterests, rejectReraVerificationRequest, reraVerificationRequest, userInterestCreate } from './admin.controller.js';
+import { approveProjectReraVerificationRequest, approveRearaVerificationRequest, createAdmin, fetchUserInterests, projectReraVerificationRequest, rejectProjectReraVerificationRequest, rejectReraVerificationRequest, reraVerificationRequest, revokeProjectReraVerificationRequest, revokeReraVerificationRequest, userInterestCreate } from './admin.controller.js';
 import { isAuthorized } from '../../middlewares/jwtTokens.js';
 import { requireAdmin } from '../../middlewares/requireAdmin.js';
 
@@ -11,5 +11,10 @@ route.post('/create',createAdmin)
 route.get('/rera/all',isAuthorized,requireAdmin,reraVerificationRequest)
 route.patch('/rera/approve/:id',isAuthorized,requireAdmin,approveRearaVerificationRequest)
 route.patch('/rera/reject/:id',isAuthorized,requireAdmin,rejectReraVerificationRequest)
+route.patch('/rera/revoke/:id',isAuthorized,requireAdmin,revokeReraVerificationRequest)
+route.get('/project-rera/all',isAuthorized,requireAdmin,projectReraVerificationRequest)
+route.patch('/project-rera/approve/:id',isAuthorized,requireAdmin,approveProjectReraVerificationRequest)
+route.patch('/project-rera/reject/:id',isAuthorized,requireAdmin,rejectProjectReraVerificationRequest)
+route.patch('/project-rera/revoke/:id',isAuthorized,requireAdmin,revokeProjectReraVerificationRequest)
 
 export default route

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { PROJECT_STATUS } from "@/lib/project";
+import { BADGE_TONE, projectReraBadge } from "@/lib/rera";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 
 // Only what this page shows. The full project lives on its own page, and the
@@ -16,6 +17,8 @@ type ProjectSummary = {
   city: string;
   totalUnits?: number | null;
   reraNumber?: string | null;
+  reraStatus?: string | null;
+  isReraExempt?: boolean | null;
 };
 
 const statusLabel = (status: string) =>
@@ -142,11 +145,30 @@ const MyProjects = () => {
                     ` · ${project.totalUnits} units`}
                 </p>
               </div>
-              {project.reraNumber && (
-                <p className="text-[12.5px] tabular-nums text-muted">
-                  RERA {project.reraNumber}
-                </p>
-              )}
+              {/* The number alone told a builder nothing about whether it had
+                  been checked, which is the only part of it they can act on. */}
+              <div className="shrink-0 text-right">
+                {project.reraNumber && (
+                  <p className="text-[12.5px] tabular-nums text-muted">
+                    RERA {project.reraNumber}
+                  </p>
+                )}
+                {(() => {
+                  const rera = projectReraBadge({
+                    reraStatus: project.reraStatus,
+                    isReraExempt: project.isReraExempt,
+                    reraNumber: project.reraNumber,
+                    inRecords: true,
+                  });
+                  return (
+                    <span
+                      className={`mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] ${BADGE_TONE[rera.tone]}`}
+                    >
+                      {rera.label}
+                    </span>
+                  );
+                })()}
+              </div>
             </li>
           ))}
         </ul>

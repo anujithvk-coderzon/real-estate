@@ -16,14 +16,27 @@ import { apiMessage } from "@/lib/validation/apiError";
 // Loads the project, then hands its values to the same form used for adding.
 const ProjectEdit = ({ projectId }: { projectId: string }) => {
   const [initial, setInitial] = useState<ProjectFormData | null>(null);
+  // Kept beside the form values because the form needs what the values cannot
+  // carry: where this project stands with us, and why.
+  const [decision, setDecision] = useState<{
+    status: string;
+    reason?: string | null;
+    at?: string | null;
+  }>();
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     api
       .get(`/project/single/${projectId}`)
-      .then((response) =>
-        setInitial(projectToFormData(response.data.project as ProjectDetail)),
-      )
+      .then((response) => {
+        const project = response.data.project as ProjectDetail;
+        setInitial(projectToFormData(project));
+        setDecision({
+          status: project.reraStatus,
+          reason: project.reraVerifiedReason,
+          at: project.reraVerifiedAt,
+        });
+      })
       .catch((error) => {
         setFailed(true);
         errorToast(apiMessage(error));
@@ -58,7 +71,9 @@ const ProjectEdit = ({ projectId }: { projectId: string }) => {
     );
   }
 
-  return <ProjectForm projectId={projectId} initial={initial} />;
+  return (
+    <ProjectForm projectId={projectId} initial={initial} decision={decision} />
+  );
 };
 
 export default ProjectEdit;

@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ReraDecision, {
+  type Action,
+  actionCopy,
+  type Subject,
+} from "@/components/ReraDecision";
 import { api } from "@/lib/api";
+import { apiMessage, onDate, outlineButton, solidButton } from "@/lib/ui";
 
-// One row of GET /admin/rera/all. Exactly the select the service makes: an
-// agent, and the three things printed on the certificate they are claiming.
+// One row of GET /admin/rera/all. The first six fields are the agent and the
+// three things printed on the certificate they are claiming; the last two are
+// the decision somebody already made, which the Verified, Not verified and
+// Revoked tabs exist to show.
 type Request = {
   id: string;
   name: string;
@@ -13,15 +21,23 @@ type Request = {
   agentReraName: string | null;
   agentReraState: string | null;
   agentReraNumber: string | null;
+  agentReraVerifiedReason?: string | null;
+  agentReraVerifiedAt?: string | null;
 };
 
-// The real VerificationStatus values, which are NOT approved/rejected:
-// approving writes VERIFIED, revoking writes REVOKED. NONE is left out — it
-// means "never applied", so filtering by it lists every account that has not
-// asked for anything, which is not a queue.
+// The real VerificationStatus values. NONE is left out — it means "never
+// applied", so filtering by it lists every account that has not asked for
+// anything, which is not a queue.
+//
+// REJECTED and REVOKED are deliberately two tabs, because they are two
+// different facts: we looked at what was submitted and could not confirm it,
+// versus a registration we had confirmed that is no longer good. An agent is
+// told to do different things about each, so an operator has to choose between
+// them rather than have one word cover both.
 const TABS = [
   { key: "PENDING", label: "Waiting" },
   { key: "VERIFIED", label: "Verified" },
+  { key: "REJECTED", label: "Not verified" },
   { key: "REVOKED", label: "Revoked" },
 ] as const;
 
@@ -33,25 +49,8 @@ const ACCOUNT: Record<string, string> = {
   BUILDER: "Builder",
 };
 
-const focusable =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
-
-const button = `inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-[14px] font-medium transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
-
-const solidButton = `inline-flex min-h-11 items-center rounded-lg bg-accent px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
-
-const dangerButton = `inline-flex min-h-11 items-center rounded-lg bg-danger px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
-
-const quietButton = `inline-flex min-h-11 items-center rounded-lg px-3 text-[13px] font-medium text-muted transition-colors hover:text-ink ${focusable}`;
-
 type Result =
   { key: string; requests: Request[] } | { key: string; error: true };
-
-const reason = (error: unknown, fallback: string) => {
-  const message = (error as { response?: { data?: { message?: unknown } } })
-    ?.response?.data?.message;
-  return typeof message === "string" ? message : fallback;
-};
 
 // The one check an operator cannot make from the row itself is whether the
 // name on the certificate is the person who owns the account. Saying so beats
@@ -63,13 +62,35 @@ const nameMismatch = (request: Request) =>
       request.name.trim().toLowerCase(),
   );
 
+const subjectOf = (request: Request): Subject => ({
+  id: request.id,
+  title: request.name,
+  subtitle: request.email,
+  state: request.agentReraState,
+  facts: [
+    {
+      label: "Number",
+      value: request.agentReraNumber ?? "None on the account",
+    },
+    { label: "State", value: request.agentReraState ?? "Not given" },
+    {
+      label: "Name on certificate",
+      value: request.agentReraName ?? "Not given",
+      warn: nameMismatch(request),
+    },
+  ],
+});
+
 const Page = () => {
   const [tab, setTab] = useState<TabKey>("PENDING");
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  // Which row is being asked about, and which is in flight. Ids, because both
+  // Which row is being decided, and which is in flight. Ids, because both
   // questions are about one row out of many.
-  const [asking, setAsking] = useState<string | null>(null);
+  const [asking, setAsking] = useState<{
+    request: Request;
+    action: Action;
+  } | null>(null);
   const [working, setWorking] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(
     null,
@@ -100,23 +121,19 @@ const Page = () => {
     };
   }, [tab, attempt]);
 
-  const decide = async (request: Request, approve: boolean) => {
+  const decide = async (request: Request, action: Action, note: string) => {
+    const copy = actionCopy("agent", action);
     // Which list the row came from. Without it, an operator who approves and
     // switches tabs before the answer lands has the row cut out of whichever
     // list is on screen instead.
     const from = key;
-    setAsking(null);
     setWorking(request.id);
     try {
-      const { data } = await api.patch(
-        `/admin/rera/${approve ? "approve" : "reject"}/${request.id}`,
-      );
-      setNotice({
-        ok: true,
-        text:
-          data.message ??
-          (approve ? "Registration verified" : "Verification revoked"),
+      const { data } = await api.patch(`/admin/rera/${action}/${request.id}`, {
+        reason: note,
       });
+      setAsking(null);
+      setNotice({ ok: true, text: data.message ?? copy.done });
       // Its status is now the opposite of this tab's filter, so it belongs in
       // another one. Dropping it here beats refetching: the operator watches
       // the queue get shorter.
@@ -129,67 +146,54 @@ const Page = () => {
           : state,
       );
     } catch (error) {
-      setNotice({
-        ok: false,
-        text: reason(
-          error,
-          approve ? "Could not verify it" : "Could not revoke it",
-        ),
-      });
+      // The box stays open, with the note still in it: the decision was not
+      // made, and retyping it is the last thing anybody wants to do.
+      setNotice({ ok: false, text: apiMessage(error, copy.failed) });
     } finally {
       setWorking(null);
     }
   };
 
-  // Approving is a single tap: it is the queue's whole job, done many times in
-  // a row, and it is undone from the Verified tab in one more. Revoking takes
-  // something away from somebody who is already listing with it, and their
-  // listings say "verified" until it lands, so that one asks first.
+  // Every decision goes through the box, approvals included. A one-tap approve
+  // was faster, but it published a verified badge with nothing beside it
+  // explaining what had been checked.
   const controls = (request: Request) => {
     if (working === request.id)
       return <span className="text-[13px] text-muted">Saving…</span>;
 
-    if (asking === request.id)
-      return (
-        <span className="flex flex-wrap items-center gap-1">
-          <button
-            type="button"
-            onClick={() => decide(request, false)}
-            className={dangerButton}
-          >
-            Yes, revoke
-          </button>
-          <button
-            type="button"
-            onClick={() => setAsking(null)}
-            className={quietButton}
-          >
-            Cancel
-          </button>
-        </span>
-      );
+    const open = (action: Action) => () => {
+      setNotice(null);
+      setAsking({ request, action });
+    };
 
     return (
       <span className="flex flex-wrap items-center gap-1">
         {tab !== "VERIFIED" && (
           <button
             type="button"
-            onClick={() => decide(request, true)}
-            // One at a time: the queue is a sequence of decisions, and two
-            // requests in flight makes it unclear which answer belongs to
-            // which row.
+            onClick={open("approve")}
             disabled={working !== null}
             className={solidButton}
           >
-            Approve
+            {tab === "PENDING" ? "Approve" : "Approve now"}
           </button>
         )}
-        {tab !== "REVOKED" && (
+        {tab === "PENDING" && (
           <button
             type="button"
-            onClick={() => setAsking(request.id)}
+            onClick={open("reject")}
             disabled={working !== null}
-            className={button}
+            className={outlineButton}
+          >
+            Not verified
+          </button>
+        )}
+        {tab === "VERIFIED" && (
+          <button
+            type="button"
+            onClick={open("revoke")}
+            disabled={working !== null}
+            className={outlineButton}
           >
             Revoke
           </button>
@@ -218,6 +222,18 @@ const Page = () => {
           Certificate name differs from the account name
         </p>
       )}
+      {/* On a decided row, the note that went out with it. An operator
+          reconsidering a rejection needs to know what the agent was told. */}
+      {request.agentReraVerifiedReason && (
+        <p className="mt-1.5 border-l-2 border-line pl-2 text-[12.5px] leading-snug text-muted">
+          {request.agentReraVerifiedAt && (
+            <span className="font-medium">
+              {onDate(request.agentReraVerifiedAt)} ·{" "}
+            </span>
+          )}
+          {request.agentReraVerifiedReason}
+        </p>
+      )}
     </>
   );
 
@@ -227,19 +243,49 @@ const Page = () => {
         Admin
       </p>
       <h1 className="mt-2 font-display text-[26px] leading-tight sm:text-[32px]">
-        RERA verification
+        Agent RERA verification
       </h1>
       <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-muted">
         Agents must be registered with their state RERA to list a property for
         sale. Check each number on that state&apos;s register before approving
         it — the listing pages show it as the agent&apos;s own claim until you
-        do.
+        do. Projects have their own queue.
       </p>
+
+      {/* The rule, stated once, where it cannot be missed. */}
+      <div className="mt-4 max-w-2xl rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
+        <p className="text-[13.5px] font-medium">
+          Every decision needs a written note, and on an approval that note is
+          published.
+        </p>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+          Buyers read it on the agent&apos;s public profile. It is the only
+          place we say what &ldquo;verified&rdquo; means here — that a person
+          matched a registration number against a state register, and nothing
+          more. A tick with no words behind it reads as our word that the agent
+          is safe to pay, which is not something we are in a position to say.
+          Each decision below opens a box that shows you exactly how your words
+          will appear before you commit them. A rejection or a revocation is
+          written for the agent alone: buyers only ever see verified or not
+          verified, never which of the two it was.
+        </p>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted">
+          Under every note we publish, the site adds the same fixed paragraph:{" "}
+          <span className="font-medium text-ink">
+            visit the property, have the title and approval documents read by
+            the buyer&apos;s own lawyer, keep payments traceable, and never pay
+            an advance on the strength of a badge.
+          </span>{" "}
+          You do not type it and you cannot edit it — so write only what you
+          actually checked, and never repeat or soften that warning in your own
+          words.
+        </p>
+      </div>
 
       <div
         role="group"
         aria-label="Which requests to show"
-        className="mt-6 flex gap-1"
+        className="mt-6 flex flex-wrap gap-1"
       >
         {TABS.map((option) => (
           <button
@@ -308,7 +354,7 @@ const Page = () => {
           <button
             type="button"
             onClick={() => setAttempt((n) => n + 1)}
-            className={`mt-4 ${button}`}
+            className={`mt-4 ${outlineButton}`}
           >
             Try again
           </button>
@@ -322,14 +368,18 @@ const Page = () => {
               ? "Nothing waiting"
               : tab === "VERIFIED"
                 ? "No verified agents"
-                : "Nothing revoked"}
+                : tab === "REJECTED"
+                  ? "Nothing rejected"
+                  : "Nothing revoked"}
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-[13.5px] leading-relaxed text-muted">
             {tab === "PENDING"
               ? "Every registration an agent has submitted has been dealt with."
               : tab === "VERIFIED"
                 ? "Approved registrations appear here."
-                : "Registrations you have taken back appear here, and can be approved again."}
+                : tab === "REJECTED"
+                  ? "Registrations you could not confirm appear here, with the reason the agent was given. They can be approved later if the agent sorts it out."
+                  : "Verifications you have taken back appear here, and can be approved again."}
           </p>
         </div>
       )}
@@ -364,16 +414,16 @@ const Page = () => {
               </caption>
               <thead>
                 <tr className="border-b border-line text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
-                  <th scope="col" className="w-[28%] px-4 py-2.5">
+                  <th scope="col" className="w-[26%] px-4 py-2.5">
                     Agent
                   </th>
-                  <th scope="col" className="w-[18%] px-4 py-2.5">
+                  <th scope="col" className="w-[16%] px-4 py-2.5">
                     Account
                   </th>
-                  <th scope="col" className="w-[30%] px-4 py-2.5">
+                  <th scope="col" className="w-[33%] px-4 py-2.5">
                     Registration
                   </th>
-                  <th scope="col" className="w-[24%] px-4 py-2.5">
+                  <th scope="col" className="w-[25%] px-4 py-2.5">
                     Action
                   </th>
                 </tr>
@@ -409,6 +459,21 @@ const Page = () => {
             </table>
           </div>
         </>
+      )}
+
+      {asking && (
+        <ReraDecision
+          // A fresh box per row and per action: a note typed for one agent must
+          // never be left sitting in the box for the next one.
+          key={`${asking.request.id}:${asking.action}`}
+          kind="agent"
+          subject={subjectOf(asking.request)}
+          action={asking.action}
+          saving={working === asking.request.id}
+          failure={notice && !notice.ok ? notice.text : null}
+          onCancel={() => setAsking(null)}
+          onConfirm={(note) => decide(asking.request, asking.action, note)}
+        />
       )}
     </div>
   );

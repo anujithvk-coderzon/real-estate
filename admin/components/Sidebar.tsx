@@ -17,6 +17,8 @@ const icon = {
   // A certificate with a tick: what the operator is checking and what they do
   // to it.
   rera: "M6 3h9l4 4v14H6Zm3 10 2 2 4-4",
+  // Two towers: the project queue, beside the certificate above it.
+  projects: "M4 20V9h6v11M14 20V4h6v16M6 12h2M6 15h2M16 7h2M16 10h2M16 13h2",
 } as const;
 
 const Glyph = ({ d }: { d: string }) => (
@@ -38,7 +40,11 @@ const NAV = [
   { href: "/home", label: "Home", d: icon.home },
   { href: "/interests", label: "User interests", d: icon.interests },
   { href: "/promotions", label: "Promotions", d: icon.promotions },
-  { href: "/rera", label: "RERA verification", d: icon.rera },
+  { href: "/rera", label: "Agent RERA", d: icon.rera },
+  // Its own queue, not a tab of the agents' one: a project's registration is
+  // compulsory before it may be advertised at all, the register is a different
+  // one, and the person told about the decision is the builder, not the lister.
+  { href: "/project-rera", label: "Project RERA", d: icon.projects },
 ] as const;
 
 // Shown but not linked — a staff tool should say what it will hold, and a link
