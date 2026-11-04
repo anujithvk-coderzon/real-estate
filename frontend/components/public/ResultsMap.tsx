@@ -464,12 +464,20 @@ const ResultsMap = ({
     if (current.isStyleLoaded()) draw();
     else current.once("load", draw);
 
-    // The middle of the ring: the place the distances were measured from.
-    const anchor = new maplibregl.Marker({
-      element: mapDot(centerLabel || "Where you searched", false),
-    })
-      .setLngLat(center)
-      .addTo(current);
+    // The middle of the ring, drawn only when there is a device fix to compare
+    // it against. On a typed search that point is wherever the geocoder puts
+    // the name — the centroid of a city the visitor never picked and cannot do
+    // anything with — and a dot sitting there reads as "something is here".
+    // The ring alone says what was searched, which is all a typed search has
+    // to say. When the visitor's own position IS on the map, the pair of dots
+    // is the explanation for the gap between them.
+    const anchor = me
+      ? new maplibregl.Marker({
+          element: mapDot(centerLabel || "Where you searched", false),
+        })
+          .setLngLat(center)
+          .addTo(current)
+      : null;
 
     // And the visitor, where the phone says they are. Both are shown when they
     // differ, because that difference is the explanation for everything the
@@ -483,7 +491,7 @@ const ResultsMap = ({
 
     return () => {
       current.off("load", draw);
-      anchor.remove();
+      anchor?.remove();
       here?.remove();
       // The layers are left in place and only re-fed above: a new search moves
       // the ring, it does not need a new source. They go with the map itself.

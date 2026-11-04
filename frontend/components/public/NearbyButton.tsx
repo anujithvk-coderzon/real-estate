@@ -11,6 +11,23 @@ import { errorToast } from "@/lib/toast";
 // visitor is standing in, and the whole existing search path is reused.
 const NEARBY_RADIUS = 10;
 
+// How coarse a fix we will still search from, in metres.
+//
+// The device is never asked what it is. A laptop on a known wifi network is
+// often placed to within 30 m, while a phone indoors with GPS switched off
+// falls back to the mobile network and can be out by 20 km — so "is this a
+// phone?" is the wrong question, and screen width answers an even more
+// different one (a tablet in landscape and a small laptop are the same width).
+// What the browser does hand us is coords.accuracy: the radius, in metres, it
+// is 95% confident the person is inside. That is the only honest test, and it
+// works the same on every device.
+//
+// 5 km, against a 10 km search: beyond that the circle we draw has more slack
+// in it than area, and an IP-derived fix — which lands on the ISP's exchange —
+// would produce a search that looks exactly like a working one while answering
+// a question nobody asked.
+const WORST_FIX_METRES = 5000;
+
 const NearbyButton = () => {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -24,6 +41,16 @@ const NearbyButton = () => {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
+        // Said in kilometres because that is the unit the search is in, and it
+        // makes the reason obvious: "within 38 km" next to a 10 km search
+        // explains itself.
+        if (coords.accuracy > WORST_FIX_METRES) {
+          errorToast(
+            `Your location is only known to within ${Math.round(coords.accuracy / 1000)} km, which is too rough for a ${NEARBY_RADIUS} km search. Try searching by area name.`,
+          );
+          setBusy(false);
+          return;
+        }
         try {
           const address = await addressFromPin([
             coords.longitude,
