@@ -1,3 +1,10 @@
+// Where somebody writes to us: a seller whose listing was taken down, and
+// anybody with a grievance. Read once here so every page that needs it cannot
+// drift, and typed as possibly-absent because an env var always is: a page must
+// still read sensibly when it is not set, rather than printing "undefined".
+export const ADMIN_CONTACT_MAIL =
+  process.env.NEXT_PUBLIC_ADMIN_CONTACT_MAIL || "";
+
 // Shared class names, so inputs and buttons look the same on every page.
 
 const focusRing =

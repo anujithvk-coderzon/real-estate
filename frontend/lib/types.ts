@@ -12,7 +12,12 @@ export type PostedBy = "OWNER" | "BROKER" | "BUILDER";
 export type Furnishing = "UNFURNISHED" | "SEMI_FURNISHED" | "FULLY_FURNISHED";
 export type PropertyStatus = "READY_TO_MOVE" | "UNDER_CONSTRUCTION";
 export type AreaUnit = "SQFT" | "SQM" | "CENT" | "ACRE";
-export type ListingStatus = "DRAFT" | "ACTIVE" | "SOLD" | "RENTED" | "EXPIRED";
+// TAKEN_DOWN is set by an operator from the admin app, never by the seller.
+// It was missing here while the database enum already had it, which is why
+// every Record<ListingStatus, …> map in the app looked complete to TypeScript
+// and then crashed the moment a real one arrived.
+export type ListingStatus =
+  "DRAFT" | "ACTIVE" | "SOLD" | "RENTED" | "EXPIRED" | "TAKEN_DOWN";
 
 // [longitude, latitude] — the order MapLibre uses.
 export type LngLat = [number, number];

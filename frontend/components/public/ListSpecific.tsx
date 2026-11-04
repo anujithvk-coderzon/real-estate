@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import BackLink from "@/components/public/BackLink";
+import ReportListing from "@/components/public/ReportListing";
 import Gallery from "@/components/listing/Gallery";
 import SimilarListings from "@/components/public/SimilarListings";
 import {
@@ -135,11 +136,10 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
 
 // Price, the running costs for rentals, and how to reach the seller.
 const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
-  // The same four answers the card gave, so a buyer who clicked a card saying
-  // "No RERA number" is not met by a page that declines to mention it.
+  // The same answer the card gave, so a card and the page it opens never
+  // disagree about the one registration we publish.
   const agentRera = reraBadge({
     postedBy: listing.postedBy,
-    listingType: listing.listingType,
     status: listing.owner.agentReraStatus,
   });
   // The page's own address, which is what they should come back to. Taken from
@@ -478,6 +478,19 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
               {RERA_CAUTION}
             </p>
           </div>
+
+          {/* Directly under the warning about checking things yourself, which
+              is where somebody who just found a problem is already looking.
+              Never on their own listing: the owner edits or unpublishes it. */}
+          {!listing.isOwner && listing.slug && (
+            <div className="mt-3">
+              <ReportListing
+                slug={listing.slug}
+                signedIn={signedIn}
+                here={here ?? "/"}
+              />
+            </div>
+          )}
 
           {listing.owner.slug && (
             <Link

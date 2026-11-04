@@ -117,6 +117,21 @@ const SearchResults = () => {
   const propertyType = searchParams.get("propertyType") ?? "";
   // How far out to look. Empty means the API's default of 10 km.
   const radius = searchParams.get("radius") ?? "";
+  // Set by "Find nearby properties" as me=lat,lon: the phone's own fix, which
+  // the map marks with the device-location dot. An older link carrying a bare
+  // me=1 simply has no point to mark, and the search behaves as a typed one.
+  const fix = searchParams.get("me");
+  const device = useMemo(() => {
+    const parts = (fix ?? "").split(",").map(Number);
+    // Validated because it arrives in a URL anyone can type. A longitude of
+    // 900 would send the camera into the void.
+    return parts.length === 2 &&
+      parts.every((part) => Number.isFinite(part)) &&
+      Math.abs(parts[0]) <= 90 &&
+      Math.abs(parts[1]) <= 180
+      ? ([parts[1], parts[0]] as [number, number]) // MapLibre wants lon first
+      : null;
+  }, [fix]);
   // Refinements, applied in the browser.
   const sort = searchParams.get("sort") ?? "";
   const postedBy = searchParams.get("postedBy") ?? "";
@@ -185,9 +200,18 @@ const SearchResults = () => {
     () => (loading || !result ? [] : result.listings),
     [loading, result],
   );
-  // Held on the result rather than in its own state, so the reference is stable
-  // between renders and the map's framing effect runs once per search.
-  const center = loading || !result ? null : result.center;
+  // What the ring is drawn around: the point the API geocoded the place name
+  // to, because that is the point it measured every distanceKm from. The
+  // device's own fix is NOT it — see the `me` prop below.
+  //
+  // Kept WHILE the next search is in flight rather than nulled by `loading`.
+  // That null is what made the dot and the ring disappear the moment the
+  // distance changed from 10 km to 50: the area being searched had not moved,
+  // only how far out it reached, so taking it off the map for the length of a
+  // request was wrong twice over — and if the geocode then failed, it never
+  // came back. The device fix is the last resort, for the first paint of a
+  // nearby search and for a geocode that fails outright.
+  const center = result?.center ?? device;
   // Empty means the API's own default, which is 10 km.
   const radiusKm = Number(radius) || 10;
 
@@ -215,6 +239,19 @@ const SearchResults = () => {
   const clearFilters = () => {
     const next = new URLSearchParams(searchParams.toString());
     for (const name of ["postedBy", "maxPrice", "beds"]) next.delete(name);
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  };
+
+  // The filter bar owns the distance, but that bar lives in the results column
+  // — which is a whole screen away when the map is full screen on a phone. So
+  // the map carries its own copy of the one control that cannot be judged
+  // without looking at the area it measures.
+  const applyRadius = (value: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (value) next.set("radius", value);
+    else next.delete("radius");
+    next.delete("page");
+    next.set("view", "map"); // a refresh or a shared link stays on the map
     router.replace(`${pathname}?${next}`, { scroll: false });
   };
 
@@ -255,6 +292,9 @@ const SearchResults = () => {
   const broaden = (drop: string) => {
     const next = new URLSearchParams(serverQuery);
     next.delete(drop);
+    // serverQuery holds only what the API is asked for; this is where the
+    // search came from, and loosening it does not move the visitor.
+    if (fix) next.set("me", fix);
     return `${pathname}?${next}`;
   };
   // The next distance up, or nothing at 50 km. Offered when a search comes back
@@ -265,6 +305,9 @@ const SearchResults = () => {
   const widen = (value: string) => {
     const next = new URLSearchParams(serverQuery);
     next.set("radius", value);
+    if (fix) next.set("me", fix);
+    // Widening from the map's own message keeps the visitor on the map.
+    if (view === "map") next.set("view", "map");
     return `${pathname}?${next}`;
   };
 
@@ -276,11 +319,14 @@ const SearchResults = () => {
           scroll. It follows the reader only once it fits on one line. */}
       <div className="relative z-20 border-b border-line bg-panel/95 backdrop-blur supports-[backdrop-filter]:bg-panel/80 lg:sticky lg:top-0">
         <div className="px-4 py-3 lg:px-6">
-          {/* key: a new search (or Back) rebuilds the bar, so its fields match the URL. */}
+          {/* Keyed on the place alone. The mode, the type and the distance are
+              read from the URL by the bar itself, so they need no remount to
+              stay in step — and keying on them would throw away a half-typed
+              place every time one was changed. */}
           {/* radius has no control here — the filter bar below owns it — but it is
               passed so editing the search keeps the distance already chosen. */}
           <SearchBar
-            key={serverQuery}
+            key={location}
             variant="toolbar"
             initialValues={{ location, listingType, propertyType, radius }}
           />
@@ -476,10 +522,97 @@ const SearchResults = () => {
             frame={all}
             center={center}
             radiusKm={radiusKm}
+            centerLabel={titleCase(location)}
+            me={device}
             activeSlug={activeSlug}
             onActiveChange={setActiveSlug}
             onSelect={selectFromMap}
           />
+          {/* On a phone the map is the whole screen, so every word the results
+              column was going to say is a screen away behind the List button.
+              Without this, a nearby search with nothing in range looked like a
+              page that had failed to load: an empty map, no pins, no message.
+              lg:hidden throughout, because the column beside the map already
+              carries all of it on a wide screen. */}
+          {view === "map" && !failed && (
+            <div className="absolute inset-x-3 top-3 z-10 space-y-2 lg:hidden">
+              {/* How far out the ring reaches. 16px text: anything smaller and
+                  iOS zooms the page in when the select takes focus. */}
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-panel/95 px-3 py-2 ring-1 ring-line backdrop-blur">
+                <label
+                  htmlFor="map-radius"
+                  className="text-[13px] font-medium text-muted"
+                >
+                  {`Around ${place}`}
+                </label>
+                <select
+                  id="map-radius"
+                  value={radius}
+                  onChange={(event) => applyRadius(event.target.value)}
+                  className="h-9 rounded-lg border border-line bg-panel px-2 text-[16px] font-medium text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                >
+                  <option value="">Within 10 km</option>
+                  {RADIUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      Within {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {loading ? (
+                <p className="mx-auto w-fit rounded-full bg-panel/95 px-3.5 py-2 text-[13px] font-medium text-muted ring-1 ring-line backdrop-blur">
+                  Searching {area}…
+                </p>
+              ) : shown.length === 0 ? (
+                <div className="rounded-xl bg-panel/95 px-4 py-3.5 ring-1 ring-line backdrop-blur">
+                  <p className="font-display text-[15px]">
+                    {all.length === 0
+                      ? `Nothing listed ${area} yet`
+                      : `None of the ${all.length} results match your filters`}
+                  </p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted">
+                    {all.length === 0
+                      ? "The dotted circle is the area that was searched."
+                      : "Loosen a filter to see the properties around you."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {all.length === 0 ? (
+                      <>
+                        {wider && (
+                          <button
+                            type="button"
+                            onClick={() => applyRadius(wider.value)}
+                            className={`h-10 !py-0 ${primaryButton}`}
+                          >
+                            Look within {wider.label}
+                          </button>
+                        )}
+                        {/* The search itself is edited in the toolbar, which is
+                            on the list screen. */}
+                        <button
+                          type="button"
+                          onClick={() => setView("list")}
+                          className={`h-10 !py-0 ${secondaryButton}`}
+                        >
+                          Change search
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className={`h-10 !py-0 ${primaryButton}`}
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+
           {/* What the pin colours mean, over the map's own corner. pointer-events
               none so it never swallows a drag that starts on top of it. */}
           {shown.length > 1 && (

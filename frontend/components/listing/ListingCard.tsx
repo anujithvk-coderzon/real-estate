@@ -10,6 +10,9 @@ const STATUS_BADGE: Record<ListingStatus, { text: string; className: string }> =
     SOLD: { text: "Sold", className: "bg-panel/95 text-muted" },
     RENTED: { text: "Rented", className: "bg-panel/95 text-muted" },
     EXPIRED: { text: "Expired", className: "bg-panel/95 text-muted" },
+    // Loud on purpose. Every other status here is something the seller did;
+    // this one was done to them, and it is the one they have to notice.
+    TAKEN_DOWN: { text: "Taken down", className: "bg-danger text-white" },
   };
 
 const HouseOutline = () => (
@@ -27,7 +30,13 @@ const HouseOutline = () => (
 
 const ListingCard = ({ listing }: { listing: ListingSummary }) => {
   const cover = listing.listingImages?.[0]?.path;
-  const badge = STATUS_BADGE[listing.status];
+  // Falls back rather than throwing. The status comes from a database enum
+  // that can grow at any time, and a missing key used to white-screen the
+  // seller's whole listings page over one unknown word.
+  const badge = STATUS_BADGE[listing.status] ?? {
+    text: listing.status,
+    className: "bg-panel/95 text-muted",
+  };
 
   const facts = [
     typeof listing.bedrooms === "number" && `${listing.bedrooms} bed`,

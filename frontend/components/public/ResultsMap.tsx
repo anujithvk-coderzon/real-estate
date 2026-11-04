@@ -13,12 +13,22 @@ type Props = {
   // What the map frames: the whole search. Filters then only add or remove pins,
   // so the view stays put instead of jumping (or flying off to all of India at 0 matches).
   frame?: PublicListingSummary[];
-  // Where the search was aimed, as the API geocoded it. Used only when nothing
-  // matched: the map shows that place instead of falling back to all of India.
+  // THE point the API measured every distanceKm from: the place name, as
+  // Nominatim geocoded it. The ring has to be drawn around this and nothing
+  // else, because `distanceKm <= km` is the filter that decided what came back.
   center?: [number, number] | null;
   // The radius the search used, so an empty result frames the area that was
-  // actually looked at rather than an arbitrary zoom.
+  // actually looked at rather than an arbitrary zoom. Also what the ring on the
+  // map measures.
   radiusKm?: number;
+  // What to call that point: the name of the place the search was aimed at.
+  centerLabel?: string;
+  // The device's own position, when "Find nearby properties" supplied it. A
+  // SEPARATE point, deliberately: the search is anchored on a place name, and
+  // the point Nominatim returns for a suburb can be a kilometre or two from
+  // where the visitor is standing. Drawing the ring around the visitor instead
+  // was what put a property the API called 9.8 km away outside a 10 km circle.
+  me?: [number, number] | null;
   activeSlug?: string | null;
   onActiveChange?: (slug: string | null) => void;
   onSelect?: (slug: string) => void;
@@ -40,6 +50,68 @@ const boxAround = ([lon, lat]: [number, number], km: number) => {
     [lon - lonDelta, lat - latDelta],
     [lon + lonDelta, lat + latDelta],
   );
+};
+
+// The searched area as a ring. 64 points is smooth at every zoom this map
+// reaches, and the two deltas are the same ones boxAround uses — which makes
+// this an ellipse in degrees and a circle on the ground. It has to be a circle,
+// because the API's last filter is `distanceKm <= km`: a box would draw a
+// promise the search does not keep at the corners.
+const RING_POINTS = 64;
+const circleAround = ([lon, lat]: [number, number], km: number) => {
+  const latDelta = km / 111.32;
+  const lonDelta = km / (111.32 * Math.cos((lat * Math.PI) / 180));
+  const ring: [number, number][] = [];
+  for (let step = 0; step <= RING_POINTS; step += 1) {
+    const angle = (step / RING_POINTS) * 2 * Math.PI;
+    ring.push([
+      lon + lonDelta * Math.cos(angle),
+      lat + latDelta * Math.sin(angle),
+    ]);
+  }
+  return {
+    type: "Feature" as const,
+    geometry: { type: "Polygon" as const, coordinates: [ring] },
+    properties: {},
+  };
+};
+
+// One source, two layers drawn from it: a tint for the area and a dashed edge
+// for the limit.
+const AREA_SOURCE = "search-area";
+const AREA_FILL = "search-area-fill";
+const AREA_EDGE = "search-area-edge";
+
+// The device-location blue of every map people already use. The one place on
+// this site that deliberately steps outside the palette: here the colour is
+// not decoration, it is the meaning.
+const DEVICE_BLUE = "#1a73e8";
+
+// A dot on the map. Built as elements rather than innerHTML because the label
+// comes from the URL, i.e. from a stranger.
+const mapDot = (label: string, fromDevice: boolean) => {
+  const host = document.createElement("div");
+  // 44px so the halo has room; the dot itself is what marks the spot.
+  host.className = "relative flex h-11 w-11 items-center justify-center";
+  host.setAttribute("role", "img");
+  host.setAttribute("aria-label", label);
+  host.setAttribute("title", label);
+  // Under the listing pins: these say where you looked from, which matters less
+  // than what was found.
+  host.style.zIndex = "0";
+
+  const halo = document.createElement("span");
+  halo.className = "absolute inset-0 rounded-full";
+  halo.style.background = fromDevice
+    ? "rgba(26,115,232,0.18)"
+    : "var(--color-accent-soft)";
+
+  const dot = document.createElement("span");
+  dot.className = "h-3.5 w-3.5 rounded-full shadow-md ring-2 ring-white";
+  dot.style.background = fromDevice ? DEVICE_BLUE : "var(--color-ink)";
+
+  host.append(halo, dot);
+  return host;
 };
 
 // MapLibre positions a marker by setting `transform` on the element it is given,
@@ -133,6 +205,8 @@ const ResultsMap = ({
   frame,
   center = null,
   radiusKm = 10,
+  centerLabel = "",
+  me = null,
   activeSlug = null,
   onActiveChange,
   onSelect,
@@ -286,33 +360,135 @@ const ResultsMap = ({
   // Frame the whole search once per result set. Filter changes don't touch the
   // camera, so a map the user has panned stays where they left it.
   const target = frame ?? listings;
+  // What the camera was last pointed at. Moving to a new place is a jump;
+  // staying in the same place and changing the distance is a zoom you should be
+  // able to watch, because the whole point is to see the area grow.
+  const framed = useRef<string | null>(null);
   useEffect(() => {
     const current = map.current;
     if (!current) return;
+
+    const key = center ? center.join(",") : "pins";
+    const sameSpot = framed.current === key;
+    framed.current = key;
+    const duration =
+      sameSpot && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? 450
+        : 0;
+
+    // The searched area, whenever there is one — not the pins inside it. Every
+    // result is within the radius (the API's last filter is distanceKm <= km),
+    // so this frame can never cut a pin off, and it is the only frame that
+    // answers the question the visitor actually asked: what is within 10 km of
+    // me. Fitting the pins instead meant one property 2 km away filled the
+    // screen at street level, the dot and the ring were off the edges, and
+    // changing 10 km to 20 km moved nothing at all — the pins had not moved,
+    // so the camera did not either.
+    if (center) {
+      current.fitBounds(boxAround(center, radiusKm), {
+        // Room for the ring's edge to stay inside the frame, and on a phone
+        // for the chrome sitting over the top of the map.
+        padding: 36,
+        duration,
+      });
+      return;
+    }
+
+    // No centre: the place could not be geocoded, so the pins are all there is
+    // to aim at.
     const located = target.filter(
       (listing) =>
         typeof listing.latitude === "number" &&
         typeof listing.longitude === "number",
     );
+    if (located.length === 0) return;
+    const bounds = new maplibregl.LngLatBounds();
+    for (const listing of located)
+      bounds.extend([listing.longitude!, listing.latitude!]);
+    current.fitBounds(bounds, { padding: 56, maxZoom: 14, duration });
+  }, [target, center, radiusKm]);
 
-    if (located.length > 0) {
-      const bounds = new maplibregl.LngLatBounds();
-      for (const listing of located)
-        bounds.extend([listing.longitude!, listing.latitude!]);
-      current.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 0 });
+  // The area that was searched: a dot where the search was aimed and a ring at
+  // the distance it reached. This is what makes an empty result readable — the
+  // visitor can see that the search happened, where from, and how far out it
+  // went, instead of looking at a map that appears to have simply failed. On a
+  // phone, where the list and its "nothing found" message are a screen away,
+  // it is the only thing on screen that says anything at all.
+  useEffect(() => {
+    const current = map.current;
+    if (!current) return;
+
+    // A place the geocoder could not find has no area to draw, and a ring left
+    // over from the previous search would be pointing at the wrong town.
+    if (!center) {
+      for (const id of [AREA_FILL, AREA_EDGE])
+        if (current.getLayer(id)) current.removeLayer(id);
+      if (current.getSource(AREA_SOURCE)) current.removeSource(AREA_SOURCE);
       return;
     }
 
-    // Nothing to pin. Showing the whole country answers a question nobody
-    // asked; showing the searched place framed to its radius says "this is
-    // where you looked, and it is empty", which is the actual answer.
-    if (!center) return;
-    current.fitBounds(boxAround(center, radiusKm), {
-      padding: 24,
-      maxZoom: 13,
-      duration: 0,
-    });
-  }, [target, center, radiusKm]);
+    const data = circleAround(center, radiusKm);
+
+    const draw = () => {
+      const existing = current.getSource(AREA_SOURCE);
+      if (existing) {
+        (existing as maplibregl.GeoJSONSource).setData(data);
+        return;
+      }
+      current.addSource(AREA_SOURCE, { type: "geojson", data });
+      current.addLayer({
+        id: AREA_FILL,
+        type: "fill",
+        source: AREA_SOURCE,
+        // Faint: the tint is there to bound the area, not to tint the town.
+        paint: { "fill-color": "#7947c6", "fill-opacity": 0.06 },
+      });
+      current.addLayer({
+        id: AREA_EDGE,
+        type: "line",
+        source: AREA_SOURCE,
+        // Dashed, because the edge is approximate in the way every radius is:
+        // a listing 10.1 km away is not in it, and nobody should read the line
+        // as a boundary on the ground.
+        paint: {
+          "line-color": "#7947c6",
+          "line-width": 1.5,
+          "line-opacity": 0.65,
+          "line-dasharray": [2, 2],
+        },
+      });
+    };
+
+    // Layers can only be added once the style is in. The map is created in the
+    // effect above, so on a first paint the style is usually still arriving.
+    if (current.isStyleLoaded()) draw();
+    else current.once("load", draw);
+
+    // The middle of the ring: the place the distances were measured from.
+    const anchor = new maplibregl.Marker({
+      element: mapDot(centerLabel || "Where you searched", false),
+    })
+      .setLngLat(center)
+      .addTo(current);
+
+    // And the visitor, where the phone says they are. Both are shown when they
+    // differ, because that difference is the explanation for everything the
+    // ring does: the circle is the area that was searched, the blue dot is you,
+    // and a property can be near the one without being near the other.
+    const here = me
+      ? new maplibregl.Marker({ element: mapDot("You are here", true) })
+          .setLngLat(me)
+          .addTo(current)
+      : null;
+
+    return () => {
+      current.off("load", draw);
+      anchor.remove();
+      here?.remove();
+      // The layers are left in place and only re-fed above: a new search moves
+      // the ring, it does not need a new source. They go with the map itself.
+    };
+  }, [center, radiusKm, centerLabel, me]);
 
   // Light up the pin of the card being hovered (and bring it above its neighbours).
   useEffect(() => {
@@ -321,7 +497,9 @@ const ResultsMap = ({
       label.classList.toggle("text-accent", !active);
       label.classList.toggle("text-ink", active);
       label.classList.toggle("scale-125", active);
-      marker.getElement().style.zIndex = active ? "2" : "";
+      // "1", not "": every listing pin stays above the centre dot, whose own
+      // z-index is 0, and the hovered one above its neighbours.
+      marker.getElement().style.zIndex = active ? "2" : "1";
     });
   }, [activeSlug, listings]);
 

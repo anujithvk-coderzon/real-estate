@@ -30,15 +30,6 @@ if(data.projectId){
     throw new BadRequestError("This project has no RERA registration number. Add it to the project before advertising a unit under construction.")
   }
 }
-// A builder typing a project instead of choosing one used to be refused here.
-// The form now offers it to them on purpose — a builder listing a flat in a
-// project they have not registered on this site yet had nowhere to go, and
-// refusing the listing does not get the project registered, it just loses the
-// listing. They are told, in the form, that registering it gives the project
-// its own page and one number against every unit in it.
-//
-// What is not relaxed: the rules below. A builder states a number or says why
-// there is none, exactly like anybody else, and off-plan still needs the number.
 
 if(data.projectNameText && !data.projectReraText && !data.projectReraAbsence){
   throw new BadRequestError("Give the project's RERA registration number, or say why it does not have one")
@@ -112,10 +103,6 @@ export const listingPublishingService=async(userId:string,listingId:string)=>{
   const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId}})
   if(!listing) throw new NotFoundError("Listing not found")
   if(listing.status==='ACTIVE') throw new BadRequestError("Already Published")
-  // A published listing without contact details is a dead end: the panel has
-  // nothing to show, and the account email is never given to visitors. Both
-  // fields stay optional on the model so a draft can be half-finished; they
-  // are required here, which is the moment they start to matter.
   if(!listing.contactPhone || !listing.contactName){
     throw new BadRequestError("Add a contact name and phone number before publishing \u2014 buyers have no other way to reach you")
   }
@@ -390,20 +377,14 @@ const listing=await prisma.listing.findUnique({
                          builder:{select:{name:true,slug:true}}}},
         listingImages:{orderBy:{position:"asc"},select:{path:true,position:true}},
         listingVideo:{select:{videoId:true}},
-        // Enough for the "Listed by" line and a link to their public profile.
         owner:{select:{name:true,slug:true,avatarUrl:true,accountType:true,agentReraNumber:true,agentReraStatus:true,agentReraVerifiedReason:true,agentReraVerifiedAt:true}},
     },
 })
 if(!listing) throw new NotFoundError("Listing not found")
-// The raw columns are replaced by one answer, so the page cannot read a typed
-// name and a registered one the same way.
 const {contactName,contactPhone,ownerId,
   project:_project,projectNameText:_name,projectReraText:_rera,builderNameText:_builder,
   projectReraAbsence:_absence,
   ...publicFields}=listing
-// Whether the person reading this is the one who posted it. The page needs to
-// know because the contact panel is useless to an owner — it would offer them
-// a button to ring their own phone.
 const isOwner=Boolean(userId) && userId===ownerId
 return {
     ...publicFields,
@@ -415,13 +396,9 @@ return {
         path:cdnUrl(img.path),
     })),
     listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null,
-    // The stored avatar may be a Bunny path; send the URL the browser can load.
     owner:{
       ...listing.owner,
       avatarUrl:avatarPublicUrl(listing.owner.avatarUrl),
-      // Only the approval note is public. A rejection's reason belongs to the
-      // agent alone, and the raw column holds whichever came last — so it is
-      // the status, not the column, that decides whether this goes out.
       agentReraVerifiedReason:listing.owner.agentReraStatus==='VERIFIED'?listing.owner.agentReraVerifiedReason:null,
       agentReraVerifiedAt:listing.owner.agentReraStatus==='VERIFIED'?listing.owner.agentReraVerifiedAt:null,
     },
@@ -537,9 +514,6 @@ export const reverseGeoCodingService=async(lat:number,lon:number)=>{
     return JSON.parse(cached)
   }
   const response=await axios.get(process.env.NOMINATIM_REVERSE_API!,{
-    // Accept-Language: Nominatim answers in each place's own language unless asked
-    // otherwise. Without it this address object comes back in Malayalam, or in
-    // Cyrillic for a pin that landed abroad, and those words go into the listing.
     headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
     params:{
       lat:lat,
@@ -560,8 +534,6 @@ const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
     format:"jsonv2"
 }})
 const result = response.data[0];
-// No such place. A null centre is how the page tells "we could not find that
-// place" apart from "we found it and nothing is for sale there".
 if (!result) return {center:null,listings:[]};
 const lat = Number(result.lat);
 const long = Number(result.lon);
@@ -597,7 +569,6 @@ const listings=await prisma.listing.findMany({where,select: {
   areaUnit: true,
   latitude: true,
   longitude: true,
-  // The card says who listed it and when.
   postedBy: true,
   createdAt: true,
   updatedAt: true,
@@ -610,9 +581,6 @@ const final_result=listings.map((list)=>({
   listingImages: list.listingImages.map((image) => ({ path: cdnUrl(image.path) })),
 })).filter((list)=>list.distanceKm<=km)
    .sort((a,b)=>a.distanceKm - b.distanceKm)
-// The centre was geocoded above to build the search box, so sending it costs
-// nothing — and it is what the map frames when no listing matched, instead of
-// falling back to the whole country.
 return {center:{lat,lon:long},listings:final_result}
 }
 
@@ -693,3 +661,16 @@ await redis.set(`related/${slug}/${skip}`,JSON.stringify({result,count}),{
 })
 return {result,count}
 }
+
+export const complaintListingService=async(userId:string,slug:string,title:string,body:string)=>{
+  const user=await prisma.user.findUnique({where:{id:userId}})
+  if(!user) throw new BadRequestError("Invalid Token")
+  const listing=await prisma.listing.findUnique({where:{slug},select:{id:true,ownerId:true}})
+  if(!listing) throw new NotFoundError("Listing not found")
+  if(listing.ownerId===userId) throw new BadRequestError("This is your own listing — edit or unpublish it instead")
+  const open=await prisma.complaints.findFirst({where:{listingId:listing.id,userId},select:{id:true}})
+  if(open) throw new BadRequestError("You have already reported this listing. We are looking at it.")
+  await prisma.complaints.create({data:{listingId:listing.id,userId,title,body}})
+  return 'Thank you — we have your report'
+}
+

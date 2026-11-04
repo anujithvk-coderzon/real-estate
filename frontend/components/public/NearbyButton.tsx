@@ -39,9 +39,20 @@ const NearbyButton = () => {
             setBusy(false);
             return;
           }
+          // The fix itself travels too, as me=lat,lon. The place name is what
+          // the API searches by, but it is a SUBURB — the point Nominatim
+          // returns for it can be a kilometre from where the visitor is
+          // standing, and it is looked up again on every request, so a slow or
+          // failed geocode would take the dot off the map with it. These
+          // coordinates are the visitor's own and need nothing from the server.
+          //
+          // Four decimal places, about 11 m: enough to mark a spot inside a
+          // 10 km circle, and no more of someone's position than that written
+          // into a URL they might send to a friend.
+          const me = `${coords.latitude.toFixed(4)},${coords.longitude.toFixed(4)}`;
           // view=map so the page opens on the pins, not the list.
           router.push(
-            `/property/search?location=${encodeURIComponent(place)}&radius=${NEARBY_RADIUS}&view=map`,
+            `/property/search?location=${encodeURIComponent(place)}&radius=${NEARBY_RADIUS}&view=map&me=${me}`,
           );
         } catch {
           errorToast("Could not look up your area. Please try again.");

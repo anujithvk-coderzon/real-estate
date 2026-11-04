@@ -83,6 +83,11 @@ export const deleteProjectImage=async(req:Request,res:Response)=>{
 
 export const searchProjects=async(req:Request,res:Response)=>{
   const query=String(req.query.q ?? "")
-  const {projects,more}=await projectSearchService(query)
-  return res.status(200).json({message:"Projects fetched successfully",projects,more})
+  // How many are already on the agent's screen. Clamped and floored, because it
+  // arrives from a query string: a negative skip makes Prisma throw, and a huge
+  // one is a cheap way to ask the database for nothing at all.
+  const asked=Number(req.query.skip)
+  const skip=Number.isFinite(asked) ? Math.min(Math.max(Math.trunc(asked),0),500) : 0
+  const {projects,total,more}=await projectSearchService(query,skip)
+  return res.status(200).json({message:"Projects fetched successfully",projects,total,more})
 }

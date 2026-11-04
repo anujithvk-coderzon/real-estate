@@ -63,15 +63,12 @@ enum ListingStatus {
   SOLD
   RENTED
   EXPIRED
+  TAKEN_DOWN
 }
 
 enum ProjectReraAbsence {
-  // Completed before the Act came into force on 1 May 2017.
   PRE_RERA
-  // Under the size the Act reaches: 8 units or fewer, under 500 sq m.
   SMALL_PROJECT
-  // The lister does not know it. Said plainly on the listing, because a buyer
-  // who knows nobody has the number will go and look for it.
   UNKNOWN
 }
 
@@ -118,6 +115,7 @@ model User {
   propertyViews       PropertyView[]
   promotions          Promotions[]
   notifications        Notification[]
+  complaints           Complaints[]
   @@map("users")
 }
 
@@ -241,7 +239,7 @@ model Listing {
   conversations            Conversation[]
   propertyViews            PropertyView[]
   promotions               Promotions[]
-
+  complaints                Complaints[]
   @@index([city, listingType, status])
   @@index([status, createdAt])
   @@index([price])
@@ -372,4 +370,18 @@ model Notification {
   createdAt DateTime @default(now())
   @@index([userId,isRead,createdAt])
   @@map("notifications")
+}
+
+model Complaints{
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  title String
+  body String
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  @@unique([userId,listingId,createdAt])
+  @@map("complaints")
 }

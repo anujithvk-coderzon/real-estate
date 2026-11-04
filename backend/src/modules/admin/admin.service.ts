@@ -1,6 +1,7 @@
-import { BadRequestError, UnauthorizedError } from "../../errors/Errors.js"
+import { BadRequestError, NotFoundError, UnauthorizedError } from "../../errors/Errors.js"
 import type { VerificationStatus } from "../../generated/prisma/enums.js"
 import { prisma } from "../../lib/prisma.js"
+import { avatarPublicUrl, cdnUrl, videoEmbedUrl } from "../../lib/bunny.js"
 import {hash} from 'bcrypt'
 
 export const adminRegisterService=async(name:string,email:string,pass:string)=>{
@@ -163,4 +164,78 @@ return 'Verification withdrawn'
 }
 
 
+export const getListingComplaintsService=async(type?:string)=>{
+  // Two different questions, so two different filters. PENDING and RESOLVED ask
+  // about the complaint; TAKEN_DOWN asks about the listing, because once a
+  // listing is down its complaints are settled and the thing the operator is
+  // looking for is "what did we remove, and why".
+  const where=type==='TAKEN_DOWN'
+    ? {listing:{status:'TAKEN_DOWN' as const}}
+    : type ? {status:type} : {}
+  const complaints=await prisma.complaints.findMany({
+    where,
+    orderBy:{createdAt:'desc'},
+    select:{
+      id:true,
+      createdAt:true,
+      title:true,
+      body:true,
+      status:true,
+      listing:{select:{id:true,slug:true,title:true,locality:true,city:true,price:true,listingType:true,status:true,contactName:true,contactPhone:true,owner:{select:{name:true,email:true,}}}},
+      user:{select:{id:true,name:true,email:true}}
+    }
+  })
+  return complaints
+}
 
+
+export const adminListingService=async(slug:string)=>{
+  const listing=await prisma.listing.findUnique({
+    where:{slug,OR:[{status:'ACTIVE'},{status:'TAKEN_DOWN'}]},
+    include:{
+      amenities:{select:{name:true,category:true}},
+      project:{select:{name:true,slug:true,reraNumber:true,reraStatus:true,isReraExempt:true,exemptReason:true,
+                       builder:{select:{name:true,slug:true}}}},
+      listingImages:{orderBy:{position:"asc"},select:{path:true,position:true}},
+      listingVideo:{select:{videoId:true}},
+      owner:{select:{id:true,name:true,email:true,slug:true,avatarUrl:true,accountType:true,
+                     agentReraNumber:true,agentReraState:true,agentReraStatus:true}},
+      complaints:{orderBy:{createdAt:"desc"},
+                  select:{id:true,title:true,body:true,status:true,createdAt:true,
+                          user:{select:{id:true,name:true,email:true}}}},
+    },
+  })
+  if(!listing) throw new NotFoundError("Listing not found")
+  return {
+    ...listing,
+    listingImages:listing.listingImages.map((image)=>({position:image.position,path:cdnUrl(image.path)})),
+    listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null,
+    owner:{...listing.owner,avatarUrl:avatarPublicUrl(listing.owner.avatarUrl)},
+  }
+}
+
+export const takeDownListingService=async(listingId:string,reason:string)=>{
+  const listing=await prisma.listing.findUnique({where:{id:listingId}})
+  if(!listing) throw new BadRequestError("Listing not found")
+  await prisma.$transaction([
+    prisma.listing.update({where:{id:listingId},data:{status:'TAKEN_DOWN'}}),
+    prisma.complaints.updateMany({where:{listingId,status:'PENDING'},data:{status:'RESOLVED'}}),
+    prisma.notification.create({data:{userId:listing.ownerId,title:"Listing Taken Down",body:`Your listing ${listing.title} has been taken down by the admin. ${reason}`,type:"LISTING_TAKEN_DOWN"}})
+  ])
+  return 'Listing taken down successfully'
+}
+
+export const activateTakenDownListingService=async(listingId:string)=>{
+  const listing=await prisma.listing.findUnique({where:{id:listingId}})
+  if(!listing) throw new BadRequestError("Listing not found")
+  if(listing.status!=='TAKEN_DOWN') throw new BadRequestError("Listing is not taken down")
+  await prisma.$transaction([
+    prisma.listing.update({where:{id:listingId},data:{status:'ACTIVE'}}),
+    // Told, the same way the take-down was. Removing a listing sends a
+    // notification and putting it back did not, so a seller who fixed what we
+    // asked them to fix had no way to know it had worked — they would write
+    // again, or quietly give up on the account.
+    prisma.notification.create({data:{userId:listing.ownerId,title:"Listing Back Up",body:`Your listing ${listing.title} is live again and buyers can see it.`,type:"LISTING_RESTORED"}}),
+  ])
+  return 'Listing activated successfully'
+}

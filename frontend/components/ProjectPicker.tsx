@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Field, Select } from "@/components/form/Field";
 import { api } from "@/lib/api";
 import { RERA_ABSENCE_OPTIONS } from "@/lib/rera";
-import { inputClass, labelClass } from "@/lib/ui";
+import { inputClass, labelClass, secondaryButton } from "@/lib/ui";
 
 type Found = {
   id: string;
@@ -205,8 +205,10 @@ const ProjectPicker = ({
   >(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Found[] | null>(null);
-  const [more, setMore] = useState(false); // the server had matches it did not send
+  const [more, setMore] = useState(false); // the server has matches it did not send
+  const [total, setTotal] = useState(0); // how many match, not how many are shown
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [chosen, setChosen] = useState<Found | null>(null);
   const requestId = useRef(0);
 
@@ -218,35 +220,66 @@ const ProjectPicker = ({
       .catch(() => setOwn([]));
   }, [mode]);
 
-  // Search as they type, but only after a pause, so every keystroke is not a request.
+  // Search as they type, but only after a pause, so every keystroke is not a
+  // request. An empty box is not a dead end: the API answers it with the newest
+  // projects, which is what the list shows before anybody types.
   useEffect(() => {
+    if (mode !== "search") return;
     const text = query.trim();
     const id = ++requestId.current; // a slow answer to an older query is ignored
-    const timer = setTimeout(() => {
-      // One letter is enough: the pause above and the result cap below are what
-      // keep the search cheap, not a minimum length.
-      if (mode !== "search" || text === "") {
-        setResults(null);
-        setSearching(false);
-        return;
-      }
-      setSearching(true);
-      api
-        .get("/project/search", { params: { q: text } })
-        .then((response) => {
-          if (id !== requestId.current) return;
-          setResults(response.data.projects ?? []);
-          setMore(Boolean(response.data.more));
-        })
-        .catch(() => {
-          if (id === requestId.current) setResults([]);
-        })
-        .finally(() => {
-          if (id === requestId.current) setSearching(false);
-        });
-    }, 400);
+    const timer = setTimeout(
+      () => {
+        setSearching(true);
+        api
+          .get("/project/search", { params: { q: text || undefined } })
+          .then((response) => {
+            if (id !== requestId.current) return;
+            setResults(response.data.projects ?? []);
+            setTotal(response.data.total ?? 0);
+            setMore(Boolean(response.data.more));
+          })
+          .catch(() => {
+            if (id === requestId.current) {
+              setResults([]);
+              setTotal(0);
+              setMore(false);
+            }
+          })
+          .finally(() => {
+            if (id === requestId.current) setSearching(false);
+          });
+        // No pause on the first load: there is nothing typed to wait for.
+      },
+      query === "" && results === null ? 0 : 400,
+    );
     return () => clearTimeout(timer);
+    // results is read only to decide that first-load timing, and adding it to
+    // the deps would re-run this effect on every answer it stores.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, mode]);
+
+  // The next ten, appended. Not a page: paging a list that is being filtered
+  // means a page number to reset on every keystroke, and the rows already read
+  // disappearing underneath the person reading them.
+  const showMore = () => {
+    const id = requestId.current; // still answering the same question
+    setLoadingMore(true);
+    api
+      .get("/project/search", {
+        params: { q: query.trim() || undefined, skip: results?.length ?? 0 },
+      })
+      .then((response) => {
+        if (id !== requestId.current) return; // they typed while this was away
+        setResults((shown) => [
+          ...(shown ?? []),
+          ...(response.data.projects ?? []),
+        ]);
+        setTotal(response.data.total ?? 0);
+        setMore(Boolean(response.data.more));
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  };
 
   // Said plainly, because a buyer reads it: the registry number, or why there is none.
   const reraNote = (project: Found) =>
@@ -383,12 +416,30 @@ const ProjectPicker = ({
             />
           </Field>
 
-          {searching && (
-            <p className="mt-2 text-[14px] text-muted">Searching…</p>
+          {searching && results === null && (
+            <p className="mt-2 text-[14px] text-muted">Loading projects…</p>
           )}
 
-          {results !== null && !searching && results.length > 0 && (
-            <ul className="mt-3 divide-y divide-line rounded-lg ring-1 ring-line">
+          {/* What the list is, and how much of it this is. "12 match sky" is
+              the number that decides whether to type another letter or start
+              reading; a grand total would not be. */}
+          {results !== null && results.length > 0 && (
+            <p className="mt-3 flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted">
+              <span className="font-medium text-ink">
+                {query.trim()
+                  ? `${total} ${total === 1 ? "project matches" : "projects match"} “${query.trim()}”`
+                  : "Recently added projects"}
+              </span>
+              {total > results.length && (
+                <span className="tabular-nums">
+                  showing {results.length} of {total}
+                </span>
+              )}
+            </p>
+          )}
+
+          {results !== null && results.length > 0 && (
+            <ul className="mt-2 divide-y divide-line rounded-lg ring-1 ring-line">
               {results.map((project) => (
                 <li key={project.id}>
                   <button
@@ -415,18 +466,29 @@ const ProjectPicker = ({
             </ul>
           )}
 
-          {more && !searching && (
-            <p className="mt-2 text-[13px] text-muted">
-              More projects match this. Add the locality or city to narrow the
-              list.
-            </p>
+          {more && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <button
+                type="button"
+                onClick={showMore}
+                disabled={loadingMore}
+                className={secondaryButton}
+              >
+                {loadingMore ? "Loading…" : "Show more"}
+              </button>
+              {query.trim() !== "" && (
+                <span className="text-[13px] text-muted">
+                  or add the locality or city to narrow the list
+                </span>
+              )}
+            </div>
           )}
 
           {results !== null && !searching && results.length === 0 && (
             <p className="mt-3 text-[14px] text-muted">
-              No registered project matches “{query.trim()}”. Check the spelling
-              of the builder&apos;s name, or type the project name below
-              instead.
+              {query.trim()
+                ? `No registered project matches “${query.trim()}”. Check the spelling of the builder’s name, or type the project name below instead.`
+                : "No projects have been registered here yet. Type the project name below instead."}
             </p>
           )}
         </>

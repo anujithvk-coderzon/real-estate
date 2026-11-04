@@ -19,6 +19,8 @@ const icon = {
   rera: "M6 3h9l4 4v14H6Zm3 10 2 2 4-4",
   // Two towers: the project queue, beside the certificate above it.
   projects: "M4 20V9h6v11M14 20V4h6v16M6 12h2M6 15h2M16 7h2M16 10h2M16 13h2",
+  // A flag on a pole: what a visitor raises against a listing.
+  flag: "M6 21V4m0 1h10l-1.5 3.5L16 12H6",
 } as const;
 
 const Glyph = ({ d }: { d: string }) => (
@@ -45,6 +47,10 @@ const NAV = [
   // compulsory before it may be advertised at all, the register is a different
   // one, and the person told about the decision is the builder, not the lister.
   { href: "/project-rera", label: "Project RERA", d: icon.projects },
+  // What visitors have reported. Named for what it holds rather than for the
+  // table behind it: an operator looks for the flagged thing, not for a row in
+  // "complaints".
+  { href: "/flagged", label: "Flagged content", d: icon.flag },
 ] as const;
 
 // Shown but not linked — a staff tool should say what it will hold, and a link

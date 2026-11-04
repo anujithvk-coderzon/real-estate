@@ -241,34 +241,46 @@ export const projectImageDeleteService=async(userId:string,imageId:string)=>{
 // type another word, not to scroll: "sobha" narrows to "sobha kakkanad".
 const MAX_PROJECT_RESULTS=10
 
-export const projectSearchService=async(query:string)=>{
+export const projectSearchService=async(query:string,skip=0)=>{
  const words=query.trim().split(/\s+/).filter(Boolean)
- if(!words.length) return {projects:[],more:false}
 
  // Every word must appear somewhere in the project, so each word the agent adds
- // narrows the list instead of widening it.
- const where={AND:words.map((word)=>({OR:[
-   {name:{contains:word,mode:"insensitive" as const}},
-   {locality:{contains:word,mode:"insensitive" as const}},
-   {city:{contains:word,mode:"insensitive" as const}},
- ]}))}
+ // narrows the list instead of widening it. No words at all is not an error and
+ // not an empty list: it is "show me what is here", answered with the newest
+ // ones, because a picker that does nothing until you guess a word teaches
+ // nobody what it holds.
+ const where=words.length
+   ? {AND:words.map((word)=>({OR:[
+       {name:{contains:word,mode:"insensitive" as const}},
+       {locality:{contains:word,mode:"insensitive" as const}},
+       {city:{contains:word,mode:"insensitive" as const}},
+     ]}))}
+   : {}
 
- // One extra row answers "is there more?" without a second counting query.
- const found=await prisma.project.findMany({
-  where,
-  orderBy:{name:"asc"},
-  take:MAX_PROJECT_RESULTS+1,
-  select:{
-    id:true,name:true,status:true,locality:true,city:true,
-    reraNumber:true,reraStatus:true,isReraExempt:true,
-    builder:{select:{name:true}},
-  },
- })
+ // The count comes back with the page, because "12 projects match sky" is the
+ // number that tells an agent whether to type another letter or start reading.
+ // Browsing the newest is alphabetical nonsense, so that case orders by date.
+ const [found,total]=await Promise.all([
+   prisma.project.findMany({
+     where,
+     orderBy:words.length ? {name:"asc"} : {createdAt:"desc"},
+     skip,
+     take:MAX_PROJECT_RESULTS,
+     select:{
+       id:true,name:true,status:true,locality:true,city:true,
+       reraNumber:true,reraStatus:true,isReraExempt:true,
+       builder:{select:{name:true}},
+     },
+   }),
+   prisma.project.count({where}),
+ ])
 
- const projects=found.slice(0,MAX_PROJECT_RESULTS).map(({builder,...project})=>({
+ const projects=found.map(({builder,...project})=>({
   ...project,
   builderName:builder.name,
  }))
- return {projects,more:found.length>MAX_PROJECT_RESULTS}
+ // more is derived from the count now, so it stays true while the list is being
+ // appended to rather than being about one page in isolation.
+ return {projects,total,more:skip+projects.length<total}
 }
 

@@ -64,18 +64,26 @@ const initialsOf = (name: string) =>
     .map((part) => part[0]!.toUpperCase())
     .join("");
 
-// Only a checked registration says "verified". Everything else says "not
-// verified" and stops there: a rejection or a withdrawal is the agent's to know
-// about, and the distinction changes nothing a buyer would do differently.
+// Only a checked registration is published. Every other state is silent here
+// — a queue position, a number we rejected, one we withdrew, or none ever given
+// are all the same absence of a tick to a buyer, and a grey "not verified"
+// chip under a stranger's photograph reads as a finding against them. The
+// states are still spelled out rather than collapsed into `status ===
+// "VERIFIED"`, so what this page publishes stays visible in one place, and so
+// turning one of them back on is a one-line change. The agent sees their real
+// status on their own profile; the admin panel sees all of it.
+//
+// The number goes with the badge: an unchecked registration printed on a
+// profile is the claim being made, not a fact we can stand behind.
 const RERA_BADGE: Record<
   VerificationStatus,
   { text: string; className: string } | null
 > = {
   NONE: null,
-  PENDING: { text: "RERA number provided", className: "bg-ground text-muted" },
+  PENDING: null,
   VERIFIED: { text: "RERA verified", className: "bg-accent-soft text-accent" },
-  REJECTED: { text: "RERA not verified", className: "bg-ground text-muted" },
-  REVOKED: { text: "RERA not verified", className: "bg-ground text-muted" },
+  REJECTED: null,
+  REVOKED: null,
 };
 
 const SellerProfile = ({ slug }: { slug: string }) => {
@@ -184,7 +192,7 @@ const SellerProfile = ({ slug }: { slug: string }) => {
               </p>
             )}
 
-            {(badge || profile.agentReraNumber) && (
+            {badge && (
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[13px]">
                 {badge && (
                   <span

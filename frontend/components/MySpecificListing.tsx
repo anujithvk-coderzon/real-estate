@@ -23,14 +23,17 @@ import {
 } from "@/lib/listingDisplay";
 import { errorToast, successToast } from "@/lib/toast";
 import type { Listing, ListingStatus } from "@/lib/types";
-import { primaryButton, secondaryButton } from "@/lib/ui";
+import { ADMIN_CONTACT_MAIL, primaryButton, secondaryButton } from "@/lib/ui";
 import { apiMessage } from "@/lib/validation/apiError";
 
 type Props = { id: string };
 
+// note is a node, not a string: one of these has to carry a mailto link, and
+// an address a seller has to retype by hand is an address most of them will not
+// write to at all.
 const STATUS_DISPLAY: Record<
   ListingStatus,
-  { text: string; badge: string; note: string }
+  { text: string; badge: string; note: React.ReactNode }
 > = {
   DRAFT: {
     text: "Draft",
@@ -56,6 +59,35 @@ const STATUS_DISPLAY: Record<
     text: "Expired",
     badge: "border-line bg-ground text-muted",
     note: "This listing has expired and is hidden from search.",
+  },
+  // Done to them, not by them — so the note says what happened, where the
+  // reason is, and who to write to. A dead end here reads as a ban; the
+  // address is what makes it a step.
+  TAKEN_DOWN: {
+    text: "Taken down",
+    badge: "border-danger/30 bg-danger/10 text-danger",
+    note: (
+      <>
+        Our team removed this listing after it was reported. The reason was sent
+        to you in a notification. Correct what was wrong and{" "}
+        {ADMIN_CONTACT_MAIL ? (
+          <>
+            write to{" "}
+            <a
+              href={`mailto:${ADMIN_CONTACT_MAIL}?subject=${encodeURIComponent(
+                "Taken-down listing — fixed and asking for a review",
+              )}`}
+              className="font-medium text-ink underline decoration-line decoration-1 underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
+            >
+              {ADMIN_CONTACT_MAIL}
+            </a>
+          </>
+        ) : (
+          "tell us"
+        )}
+        , and it can go back up.
+      </>
+    ),
   },
 };
 
@@ -125,7 +157,13 @@ const MySpecificListing = ({ id }: Props) => {
     );
   }
 
-  const status = STATUS_DISPLAY[listing.status];
+  // Falls back rather than throwing: the status is a database enum that can
+  // grow, and one unknown word should not take down the whole page.
+  const status = STATUS_DISPLAY[listing.status] ?? {
+    text: listing.status,
+    badge: "border-line bg-ground text-muted",
+    note: "",
+  };
   const location = listingLocation(listing);
   const editHref = `/list/my/listings/edit/${listing.id}`;
 

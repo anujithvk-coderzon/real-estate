@@ -1,22 +1,28 @@
-import type { ListingType, PostedBy, VerificationStatus } from "@/lib/types";
+import type { PostedBy, VerificationStatus } from "@/lib/types";
 
 // What a listing may say about its lister's RERA registration.
 //
-// Three rules decide this, and getting any of them wrong misleads a buyer:
+// One state is published and the rest are silent:
 //
-// 1. An OWNER selling their own home needs no registration at all. A badge
-//    reading "not verified" on their listing would be an accusation about a
-//    requirement that does not apply to them.
-// 2. Agents need registration to handle a SALE. Rentals and PG do not need
-//    one, so "no RERA number" on a rental is true but irrelevant, and
-//    irrelevant warnings train people to ignore the relevant ones.
-// 3. VERIFIED is worth saying wherever it is true, because it is the one
-//    claim here that somebody checked against a state register.
-// 4. Everything that is not verified reads the same way to a buyer: not
-//    verified. Whether we rejected the number they gave, withdrew one we had
-//    confirmed, or never got one at all is between us and the agent — for the
-//    buyer the decision is identical, and publishing which of the three it was
-//    is an accusation we have no business making under somebody's name.
+// 1. An OWNER selling their own home needs no registration at all, so there is
+//    nothing to say about one.
+// 2. VERIFIED is said wherever it is true. It is the only claim on this page
+//    that a person checked against a state register, which is the only reason
+//    it is worth a badge.
+// 3. Nothing else is published AT ALL — not PENDING, not a number we rejected,
+//    not one we withdrew, not the absence of one. Three reasons:
+//      · A grey "not checked yet" beside a stranger's name is read as a
+//        finding against them, and the only thing it actually records is how
+//        far our own queue has got.
+//      · Agents need registration for a SALE and not for a rental, so the
+//        label was wrong on most listings it appeared on, and a warning that
+//        is usually irrelevant teaches people to ignore the relevant ones.
+//      · Which of rejected, withdrawn or never-given it is stays between us
+//        and the agent. Publishing that distinction under somebody's name is
+//        an accusation we have no business making.
+//    The absence of the tick is the whole of what a buyer can act on, and the
+//    "Before you pay anything" block under every listing — badge or no badge —
+//    is where the protection actually lives.
 export type ReraBadge = {
   label: string;
   // A tick for the one state that was actually checked by a person. The other
@@ -30,44 +36,23 @@ export type ReraBadge = {
 
 export const reraBadge = ({
   postedBy,
-  listingType,
   status,
 }: {
   postedBy?: PostedBy | null;
-  listingType?: ListingType | null;
   status?: VerificationStatus | null;
 }): ReraBadge | null => {
   if (postedBy !== "BROKER" && postedBy !== "BUILDER") return null;
+  if (status !== "VERIFIED") return null;
 
-  if (status === "VERIFIED")
-    return {
-      label: "RERA verified",
-      tone: "good",
-      tick: true,
-      detail:
-        "We checked this registration number against the state register it belongs to.",
-    };
-
-  // Everything below is only material on a sale, which is the transaction the
-  // law requires an agent to be registered for.
-  if (listingType !== "SALE") return null;
-
-  if (status === "PENDING")
-    return {
-      label: "RERA not checked yet",
-      tone: "quiet",
-      detail:
-        "A registration number was given and is waiting to be checked against the state register.",
-    };
-
-  // NONE, REJECTED and REVOKED all land here, with one wording between them.
-  // The agent is told which of the three it is, in their own settings; a buyer
-  // is told the only part that bears on their decision.
+  // The listing type is not consulted any more. It was here to keep an
+  // irrelevant warning off rentals; with no warning left to place, a checked
+  // registration is worth saying on whatever the agent is listing.
   return {
-    label: "RERA not verified",
-    tone: "quiet",
+    label: "RERA verified",
+    tone: "good",
+    tick: true,
     detail:
-      "We have not been able to confirm a RERA registration for this agent. Agents need a valid one to handle a sale.",
+      "We checked this registration number against the state register it belongs to.",
   };
 };
 

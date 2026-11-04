@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { isAuthorized } from "../../middlewares/jwtTokens.js";
-import { fetchSellerListings, createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch, similarListings } from "./listing.controller.js";
+import { fetchSellerListings, createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch, similarListings, complaintListing } from "./listing.controller.js";
 import { upload } from "../../lib/multer.js";
 
 const router=Router()
@@ -27,4 +27,5 @@ router.patch('/update/:listingId',isAuthorized,updateListing)
 router.get('/details/geocode',geoCode)
 router.get('/details/reverse',reverseGeoCode)
 router.get('/similar/:slug',similarListings)
+router.post('/complaint/:slug',isAuthorized,complaintListing)
 export default router

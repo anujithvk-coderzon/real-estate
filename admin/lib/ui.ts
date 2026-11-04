@@ -9,6 +9,11 @@ export const outlineButton = `inline-flex min-h-11 items-center rounded-lg borde
 
 export const solidButton = `inline-flex min-h-11 items-center rounded-lg bg-accent px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
 
+// The positive counterpart to dangerButton. Used for an action that undoes a
+// removal, where the brand's purple would read as "primary" rather than as
+// "this is the safe direction".
+export const goodButton = `inline-flex min-h-11 items-center rounded-lg bg-good px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
+
 export const dangerButton = `inline-flex min-h-11 items-center rounded-lg bg-danger px-3.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${focusable}`;
 
 export const quietButton = `inline-flex min-h-11 items-center rounded-lg px-3 text-[13px] font-medium text-muted transition-colors hover:text-ink ${focusable}`;

@@ -12,6 +12,15 @@
   --color-accent-hover: #6a3cb0;
   --color-accent-soft: #f4eefb;
   --color-danger: #c94f45; /* 4.6:1 on white, so it works as text */
+  /* The public site's amber. It was missing here while a dozen classes in the
+     dashboard already referred to it, and Tailwind drops a utility whose token
+     does not exist — so every "careful" box was rendering colourless. */
+  --color-warn: #8a5a00;
+  /* The one colour the public site has no need of: a positive, outward-facing
+     action that is not the brand's primary. Putting a listing back up sits
+     beside a red Take down, and purple beside red reads as two flavours of the
+     same warning. 5.6:1 with white on it. */
+  --color-good: #276b4d;
 
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;

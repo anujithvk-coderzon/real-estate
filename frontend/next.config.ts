@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "ingredients-commission-modifications-workers.trycloudflare.com",
+    "advertisers-jade-baptist-selected.trycloudflare.com",
   ],
 };
 

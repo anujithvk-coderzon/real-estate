@@ -224,11 +224,10 @@ const PublicListingCard = ({
 
   const place = [listing.locality, listing.city].filter(Boolean).join(", ");
 
-  // Only ever set for a broker or a builder, and only where the registration
-  // is actually material — see lib/rera.
+  // Only ever set for a broker or a builder whose number we checked. Every
+  // other state shows nothing at all — see lib/rera.
   const badge = reraBadge({
     postedBy: listing.postedBy,
-    listingType: listing.listingType,
     status: listing.owner?.agentReraStatus,
   });
 

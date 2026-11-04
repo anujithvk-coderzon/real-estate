@@ -1,5 +1,5 @@
 import express from 'express';
-import { approveProjectReraVerificationRequest, approveRearaVerificationRequest, createAdmin, fetchUserInterests, projectReraVerificationRequest, rejectProjectReraVerificationRequest, rejectReraVerificationRequest, reraVerificationRequest, revokeProjectReraVerificationRequest, revokeReraVerificationRequest, userInterestCreate } from './admin.controller.js';
+import { activateTakenDownListing, adminListing, approveProjectReraVerificationRequest, approveRearaVerificationRequest, createAdmin, fetchUserInterests, getListingComplaints, projectReraVerificationRequest, rejectProjectReraVerificationRequest, rejectReraVerificationRequest, reraVerificationRequest, revokeProjectReraVerificationRequest, revokeReraVerificationRequest, takeDownListing, userInterestCreate } from './admin.controller.js';
 import { isAuthorized } from '../../middlewares/jwtTokens.js';
 import { requireAdmin } from '../../middlewares/requireAdmin.js';
 
@@ -16,5 +16,9 @@ route.get('/project-rera/all',isAuthorized,requireAdmin,projectReraVerificationR
 route.patch('/project-rera/approve/:id',isAuthorized,requireAdmin,approveProjectReraVerificationRequest)
 route.patch('/project-rera/reject/:id',isAuthorized,requireAdmin,rejectProjectReraVerificationRequest)
 route.patch('/project-rera/revoke/:id',isAuthorized,requireAdmin,revokeProjectReraVerificationRequest)
+route.get('/listing/complaints',isAuthorized,requireAdmin,getListingComplaints)
+route.patch('/listing/take-down/:id',isAuthorized,requireAdmin,takeDownListing)
+route.get('/listing/single/:slug',isAuthorized,requireAdmin,adminListing)
+route.patch('/listing/activate/:id',isAuthorized,requireAdmin,activateTakenDownListing)
 
 export default route

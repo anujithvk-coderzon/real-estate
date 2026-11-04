@@ -12,6 +12,10 @@ import {
   projectReraRequestService,
   rejectProjectReraService,
   revokeProjectReraService,
+  getListingComplaintsService,
+  takeDownListingService,
+  adminListingService,
+  activateTakenDownListingService,
 } from "./admin.service.js";
 import { BadRequestError } from "../../errors/Errors.js";
 import { prisma } from "../../lib/prisma.js";
@@ -110,3 +114,37 @@ export const revokeProjectReraVerificationRequest=async(req:Request,res:Response
     return res.status(200).json({message:response})
 }
 
+export const getListingComplaints=async(req:Request,res:Response)=>{
+    const type=req.query.type
+    if(type && !['PENDING','RESOLVED','TAKEN_DOWN'].includes(type as string)) throw new BadRequestError("Invalid type")
+    const complaints=await getListingComplaintsService(type as string|undefined)
+    return res.status(200).json({message:"Fetched successfully",complaints})
+}  
+
+export const adminListing=async(req:Request,res:Response)=>{
+    const slug=req.params.slug as string
+    if(!slug) throw new BadRequestError("Listing not found")
+    const listing=await adminListingService(slug)
+    return res.status(200).json({message:"Listing fetched successfully",listing})
+}
+
+export const takeDownListing=async(req:Request,res:Response)=>{
+    const listingId=req.params.id as string
+    const reason=typeof req.body?.reason==="string" ? req.body.reason.trim() : ""
+    if(!listingId) throw new BadRequestError("Invalid listing id")
+    if(reason.length<15) throw new BadRequestError("Say why it is being taken down — the seller is told this")
+    if(reason.length>300) throw new BadRequestError("Keep the reason under 300 characters")
+    const listing=await prisma.listing.findUnique({where:{id:listingId}})
+    if(!listing) throw new BadRequestError("Listing not found")
+    const updated=await takeDownListingService(listingId,reason)
+    if(!updated) throw new BadRequestError("Listing could not be taken down")
+    return res.status(200).json({message:"Listing taken down successfully"})
+}
+
+export const activateTakenDownListing=async(req:Request,res:Response)=>{
+    const listingId=req.params.id as string
+    if(!listingId) throw new BadRequestError("Invalid listing id")
+    const updated=await activateTakenDownListingService(listingId)
+    if(!updated) throw new BadRequestError("Listing could not be activated")
+    return res.status(200).json({message:"Listing activated successfully"})
+}
