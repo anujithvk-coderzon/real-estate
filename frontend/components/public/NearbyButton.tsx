@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PinIcon } from "@/components/public/icons";
+import { LocateIcon, PinIcon } from "@/components/public/icons";
 import { addressFromPin } from "@/lib/geocode";
 import { errorToast } from "@/lib/toast";
 
@@ -43,12 +43,21 @@ type Props = {
   listingType?: string;
   propertyType?: string;
   radius?: string;
+  // Icon only, for a row that already has a field and a submit in it.
+  compact?: boolean;
+  // The search already on screen, so pressing this on the results page keeps
+  // the refinements made there — a budget, a bedroom count, a seller. Someone
+  // who said "under 50 L" has not stopped meaning it by asking what is nearby.
+  // Empty on the home page, where there is nothing yet to keep.
+  keep?: string;
 };
 
 const NearbyButton = ({
   listingType = "",
   propertyType = "",
   radius = "",
+  compact = false,
+  keep = "",
 }: Props) => {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -112,15 +121,22 @@ const NearbyButton = ({
           // place name, which is user text from a geocoder, cannot end a value
           // early — and so an unchosen mode or type is simply absent instead of
           // present and empty.
-          const params = new URLSearchParams({
-            location: place,
-            radius: String(km),
-            // view=map so the page opens on the pins, not the list.
-            view: "map",
-            me,
-          });
+          const params = new URLSearchParams(keep);
+          // Each one overwrites whatever was there: this IS a new place, a new
+          // distance and a new fix, and view=map because the answer to "what is
+          // around me" is a map, not a list of names.
+          params.set("location", place);
+          params.set("radius", String(km));
+          params.set("view", "map");
+          params.set("me", me);
+          // Absent rather than present-and-empty, so the URL says only what was
+          // actually chosen.
           if (listingType) params.set("listingType", listingType);
+          else params.delete("listingType");
           if (propertyType) params.set("propertyType", propertyType);
+          else params.delete("propertyType");
+          // Any page past the first means nothing once the place changes.
+          params.delete("page");
           router.push(`/property/search?${params}`);
         } catch {
           errorToast("Could not look up your area. Please try again.");
@@ -159,6 +175,24 @@ const NearbyButton = ({
       },
     );
   };
+
+  // Beside a location field there is no room for four words, and none needed:
+  // the crosshair on a map control has meant "where I am" for twenty years.
+  // The name is still there for a screen reader and on a long press.
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={find}
+        disabled={busy}
+        aria-label={busy ? "Finding your location" : "Search near me"}
+        title="Search near me"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-panel text-muted ring-1 ring-line transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60 md:h-10 md:w-10 lg:hidden"
+      >
+        <LocateIcon className={`h-5 w-5 ${busy ? "animate-pulse" : ""}`} />
+      </button>
+    );
+  }
 
   return (
     <button

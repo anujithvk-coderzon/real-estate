@@ -612,7 +612,15 @@ const HeroStage = () => {
               chip. Given the same three values as SearchBar above, and for the
               same reason: without them it answers "what is near me" when the
               question set right above it was narrower. */}
-          <div className="mt-2.5 max-w-2xl">
+          {/* Phones and tablets only. A desktop has no GPS chip: its position
+              comes from the wifi networks around it, or failing that from the
+              IP address, which lands on the ISP's exchange and can be in
+              another district. lg rather than md, so a tablet in landscape —
+              which does have GPS — keeps it. The accuracy guard inside the
+              button is still the test that matters, because a phone with
+              location services switched off is just as wrong and no breakpoint
+              can see that; this only stops offering it where it rarely works. */}
+          <div className="mt-2.5 max-w-2xl lg:hidden">
             <NearbyButton listingType={mode} propertyType={kind} radius={km} />
           </div>
         </div>
@@ -857,8 +865,10 @@ const HeroStage = () => {
                   </div>
 
                   {/* The phone is the device that has a GPS chip, so this is
-                        the one control that belongs to it first. */}
-                  <div className="md:flex md:justify-center">
+                        the one control that belongs to it first — and from lg
+                        it goes away entirely, the same rule as the signed-in
+                        bar above, which is the only other place it is set. */}
+                  <div className="md:flex md:justify-center lg:hidden">
                     {/* The same three values SearchBar is given above. Without
                         them the button answers "what is near me" when the
                         question on screen was "what apartments are for sale

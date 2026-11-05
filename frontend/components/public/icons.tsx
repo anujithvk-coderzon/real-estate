@@ -72,6 +72,17 @@ export const PinIcon = (props: IconProps) => (
     <circle cx="12" cy="10" r="2.5" />
   </Svg>
 );
+// "Where I am", not "a place". The crosshair over a ring is the glyph every
+// maps app has used for this for years, and — unlike the pin — it cannot be
+// confused with the pin already sitting inside the location field beside it.
+export const LocateIcon = (props: IconProps) => (
+  <Svg {...props}>
+    <circle cx="12" cy="12" r="6.5" />
+    <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22" />
+  </Svg>
+);
+
 export const CheckIcon = (props: IconProps) => (
   <Svg {...props}>
     <path d="m5 12.5 4.5 4.5L19 7.5" />

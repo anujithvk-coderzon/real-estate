@@ -317,7 +317,19 @@ const SearchResults = () => {
       {/* Static on a phone: stacked, this toolbar is ~215px tall, so pinning it
           would hold 38% of a 568px screen above the results for the whole
           scroll. It follows the reader only once it fits on one line. */}
-      <div className="relative z-20 border-b border-line bg-panel/95 backdrop-blur supports-[backdrop-filter]:bg-panel/80 lg:sticky lg:top-0">
+      {/* In map view on a phone the map is fixed over the whole screen at
+          z-30, which used to bury this bar underneath it: the only way back to
+          the search was the List button. So here it floats above the map
+          instead, and the map's own chrome moves into this same stack — a
+          flow, not an overlay, so a two-line search bar can never sit on top
+          of the distance pill. */}
+      <div
+        className={`relative z-20 border-b border-line bg-panel/95 backdrop-blur supports-[backdrop-filter]:bg-panel/80 lg:sticky lg:top-0 lg:z-20 ${
+          view === "map"
+            ? "max-lg:fixed max-lg:inset-x-0 max-lg:top-0 max-lg:z-40"
+            : ""
+        }`}
+      >
         <div className="px-4 py-3 lg:px-6">
           {/* Keyed on the place alone. The mode, the type and the distance are
               read from the URL by the bar itself, so they need no remount to
@@ -331,6 +343,59 @@ const SearchResults = () => {
             initialValues={{ location, listingType, propertyType, radius }}
           />
         </div>
+        {/* On a phone the map is the whole screen, so every word the results
+            column was going to say is a screen away behind the List button.
+            Without this, a nearby search with nothing in range looked like a
+            page that had failed to load: an empty map, no pins, no message.
+            lg:hidden throughout, because the column beside the map already
+            carries all of it on a wide screen. */}
+        {view === "map" && !failed && (
+          <div className="space-y-2 px-3 pb-3 lg:hidden">
+            {/* How far out the ring reaches. 16px text: anything smaller and
+                iOS zooms the page in when the select takes focus. */}
+            {loading ? (
+              <p className="mx-auto w-fit rounded-full bg-panel/95 px-3.5 py-2 text-[13px] font-medium text-muted ring-1 ring-line backdrop-blur">
+                Searching {area}…
+              </p>
+            ) : shown.length === 0 ? (
+              <div className="rounded-xl bg-panel/95 px-4 py-3.5 ring-1 ring-line backdrop-blur">
+                <p className="font-display text-[15px]">
+                  {all.length === 0
+                    ? `Nothing listed ${area} yet`
+                    : `None of the ${all.length} results match your filters`}
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">
+                  {all.length === 0
+                    ? "The dotted circle is the area that was searched."
+                    : "Loosen a filter to see the properties around you."}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {all.length === 0 ? (
+                    <>
+                      {wider && (
+                        <button
+                          type="button"
+                          onClick={() => applyRadius(wider.value)}
+                          className={`h-10 !py-0 ${primaryButton}`}
+                        >
+                          Look within {wider.label}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className={`h-10 !py-0 ${primaryButton}`}
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div
@@ -374,11 +439,14 @@ const SearchResults = () => {
               toolbar above already asks what and where, hence showTypes={false}. */}
           {!failed && (
             <div className="mt-4">
-              <ListingFilters
-                showTypes={false}
-                showRadius
-                sorts={SEARCH_SORTS}
-              />
+              {/* No showRadius: the distance moved up into the search bar,
+                  beside the mode and the type. It belongs with them — those
+                  three decide what the SERVER returns, while everything in
+                  here only hides some of what already arrived. Leaving a copy
+                  down here as well would be two controls for one question,
+                  which is how they drift apart. The chip and the "3 filters"
+                  badge drop it too, because this prop gates those as well. */}
+              <ListingFilters showTypes={false} sorts={SEARCH_SORTS} />
             </div>
           )}
 
@@ -528,91 +596,6 @@ const SearchResults = () => {
             onActiveChange={setActiveSlug}
             onSelect={selectFromMap}
           />
-          {/* On a phone the map is the whole screen, so every word the results
-              column was going to say is a screen away behind the List button.
-              Without this, a nearby search with nothing in range looked like a
-              page that had failed to load: an empty map, no pins, no message.
-              lg:hidden throughout, because the column beside the map already
-              carries all of it on a wide screen. */}
-          {view === "map" && !failed && (
-            <div className="absolute inset-x-3 top-3 z-10 space-y-2 lg:hidden">
-              {/* How far out the ring reaches. 16px text: anything smaller and
-                  iOS zooms the page in when the select takes focus. */}
-              <div className="flex items-center justify-between gap-2 rounded-xl bg-panel/95 px-3 py-2 ring-1 ring-line backdrop-blur">
-                <label
-                  htmlFor="map-radius"
-                  className="text-[13px] font-medium text-muted"
-                >
-                  {`Around ${place}`}
-                </label>
-                <select
-                  id="map-radius"
-                  value={radius}
-                  onChange={(event) => applyRadius(event.target.value)}
-                  className="h-9 rounded-lg border border-line bg-panel px-2 text-[16px] font-medium text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                >
-                  <option value="">Within 10 km</option>
-                  {RADIUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      Within {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {loading ? (
-                <p className="mx-auto w-fit rounded-full bg-panel/95 px-3.5 py-2 text-[13px] font-medium text-muted ring-1 ring-line backdrop-blur">
-                  Searching {area}…
-                </p>
-              ) : shown.length === 0 ? (
-                <div className="rounded-xl bg-panel/95 px-4 py-3.5 ring-1 ring-line backdrop-blur">
-                  <p className="font-display text-[15px]">
-                    {all.length === 0
-                      ? `Nothing listed ${area} yet`
-                      : `None of the ${all.length} results match your filters`}
-                  </p>
-                  <p className="mt-1 text-[13px] leading-relaxed text-muted">
-                    {all.length === 0
-                      ? "The dotted circle is the area that was searched."
-                      : "Loosen a filter to see the properties around you."}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {all.length === 0 ? (
-                      <>
-                        {wider && (
-                          <button
-                            type="button"
-                            onClick={() => applyRadius(wider.value)}
-                            className={`h-10 !py-0 ${primaryButton}`}
-                          >
-                            Look within {wider.label}
-                          </button>
-                        )}
-                        {/* The search itself is edited in the toolbar, which is
-                            on the list screen. */}
-                        <button
-                          type="button"
-                          onClick={() => setView("list")}
-                          className={`h-10 !py-0 ${secondaryButton}`}
-                        >
-                          Change search
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={clearFilters}
-                        className={`h-10 !py-0 ${primaryButton}`}
-                      >
-                        Clear filters
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          )}
-
           {/* What the pin colours mean, over the map's own corner. It renders
               its own box, because only it knows whether there is anything to
               put in one — see the note in MapLegend. */}

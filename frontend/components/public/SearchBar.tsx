@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import NearbyButton from "@/components/public/NearbyButton";
 import { rememberHomeSearch } from "@/lib/homeSearch";
 import {
   NO_BEDROOMS,
@@ -165,6 +166,52 @@ const ModeGroup = ({
   </div>
 );
 
+// How far around the place to look. This belongs to the search, not to the
+// refinements: it changes which listings the SERVER returns, while a budget or
+// a bedroom count only hides some of what already arrived. It used to sit in
+// the filter bar beside those, which is why it reads better here, in the row
+// that asks the other two questions about the search itself.
+//
+// Two copies render, one per breakpoint, so they need distinct ids: a second
+// <label htmlFor> pointing at the first copy's id would move focus to a
+// control on the other side of the screen.
+const RadiusSelect = ({
+  id,
+  value,
+  onPick,
+  long = false,
+  className = "",
+}: {
+  id: string;
+  value: string;
+  onPick: (value: string) => void;
+  // "Within 20 km" where there is room; bare "20 km" on a phone, where the
+  // caption would be the same word repeated down the list.
+  long?: boolean;
+  className?: string;
+}) => (
+  <>
+    <label htmlFor={id} className="sr-only">
+      Distance
+    </label>
+    <select
+      id={id}
+      value={value}
+      onChange={(event) => onPick(event.target.value)}
+      // 16px: anything smaller and iOS zooms the whole page in when the select
+      // takes focus, and the map underneath is then the wrong size.
+      className={`h-11 rounded-lg border border-line bg-panel px-2 text-[16px] font-medium text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 ${className}`}
+    >
+      <option value="">{long ? "Within 10 km" : "10 km"}</option>
+      {RADIUS_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {long ? `Within ${option.label}` : option.label}
+        </option>
+      ))}
+    </select>
+  </>
+);
+
 const TypeSelect = ({
   id,
   value,
@@ -234,8 +281,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     ? (searchParams.get("propertyType") ?? "")
     : typeDraft;
   const radius = live ? (searchParams.get("radius") ?? "") : radiusDraft;
-
-  const [expanded, setExpanded] = useState(false); // toolbar on phones: form hidden until tapped
 
   // Location is required: without it there is no place to search around.
   const canSearch = location.trim() !== "";
@@ -340,7 +385,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
         radius: km,
       });
     router.push(`/property/search?${params}`);
-    setExpanded(false);
   };
 
   if (variant === "compact") {
@@ -407,44 +451,24 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   }
 
   if (variant === "toolbar") {
-    // Just the place. The mode and the type used to be named here too, because
-    // they were hidden behind this button with everything else — and a control
-    // nobody can see is a control nobody knows exists. They are now a row of
-    // their own below, so this line is only ever about where.
-    const where =
-      location.replace(/\b\p{L}/gu, (letter) => letter.toUpperCase()) ||
-      "Search a location";
-
     return (
       <div className="w-full">
-        {/* Phones: one tappable line for the place. The location field is the
-            one thing worth collapsing — it is a keyboard, a suggestion list and
-            a submit, and on a 568px screen it would hold the first result below
-            the fold for the whole scroll. */}
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          aria-expanded={expanded}
-          aria-controls="search-toolbar"
-          className="flex h-11 w-full items-center gap-2.5 rounded-lg bg-panel px-3.5 text-left text-[15px] ring-1 ring-line md:hidden"
-        >
-          <span className="text-muted">
-            <SearchIcon />
-          </span>
-          <span className="min-w-0 flex-1 truncate font-medium">{where}</span>
-          <span className="text-[13px] font-medium text-accent">
-            {expanded ? "Close" : "Edit"}
-          </span>
-        </button>
-
+        {/* The field itself, at every width. It used to be a summary line that
+            had to be tapped to reveal this form — two taps and a layout shift
+            to reach the one control the bar exists for, and on the map the
+            summary repeated a place name shown directly above it. Collapsing
+            was worth it when this form was a card of four controls; the mode
+            and the type moved to their own row below, so what is left is a
+            field and a button, which is smaller than the summary that hid
+            them. */}
         <form
           id="search-toolbar"
           role="search"
           aria-label="Change search"
           onSubmit={handleSubmit}
-          className={`${expanded ? "mt-2 grid" : "hidden"} gap-2 rounded-lg bg-panel p-3 ring-1 ring-line md:mt-0 md:flex md:items-center md:bg-transparent md:p-0 md:ring-0`}
+          className="flex items-center gap-2"
         >
-          <div className="relative md:min-w-0 md:flex-1">
+          <div className="relative min-w-0 flex-1">
             <label htmlFor="toolbar-location" className="sr-only">
               Location
             </label>
@@ -491,6 +515,26 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             onPick={pickType}
             className="hidden shrink-0 md:block md:w-44"
           />
+          <RadiusSelect
+            id="toolbar-radius"
+            value={radius}
+            onPick={(value) => applyNow({ radius: value })}
+            long
+            className="hidden shrink-0 md:block md:h-10 md:w-36 md:text-[15px]"
+          />
+
+          {/* The home page offers this and the results page did not, which is
+              backwards: someone already looking at a map of Kochi is exactly
+              who wants "and what about where I am standing". It carries the
+              search already on screen, so a budget or a bedroom count set here
+              survives the jump. */}
+          <NearbyButton
+            compact
+            keep={searchParams.toString()}
+            listingType={listingType}
+            propertyType={propertyType}
+            radius={radius}
+          />
 
           {/* The mode and the type apply themselves, so this button is only
               ever about the place — hence "Search here" rather than "Search",
@@ -502,17 +546,25 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             title={canSearch ? undefined : "Enter a location to search"}
             className={`h-11 shrink-0 !py-0 md:h-10 ${primaryButton}`}
           >
-            Search here
+            {/* "Search here" needs ~110px it cannot have beside the field on a
+                360px screen. The short word is the same promise. */}
+            <span className="md:hidden">Search</span>
+            <span className="hidden md:inline">Search here</span>
           </button>
         </form>
 
         {/* Phones: always on screen, never behind Edit. Each one changes the
             results the moment it is touched. */}
+        {/* Phones: always on screen, never behind an Edit. Each one changes
+            the results the moment it is touched. min-w-0 on the selects,
+            because a flex item defaults to min-width:auto and one sized by its
+            longest option would push the row past the screen rather than
+            share it. */}
         <div className="mt-2 flex gap-2 md:hidden">
           <ModeGroup
             value={listingType}
             onToggle={toggleMode}
-            className="flex-1"
+            className="shrink-0"
           />
           <TypeSelect
             id="toolbar-type-narrow"
@@ -520,6 +572,12 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             mode={listingType}
             onPick={pickType}
             className="min-w-0 flex-1"
+          />
+          <RadiusSelect
+            id="toolbar-radius-narrow"
+            value={radius}
+            onPick={(value) => applyNow({ radius: value })}
+            className="min-w-0 shrink-0"
           />
         </div>
       </div>
