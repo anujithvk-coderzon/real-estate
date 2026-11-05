@@ -9,7 +9,11 @@ import { errorToast } from "@/lib/toast";
 // /list/search takes a place name, geocodes it, and searches a radius around
 // that point. So the phone's coordinates become the name of the area the
 // visitor is standing in, and the whole existing search path is reused.
-const NEARBY_RADIUS = 10;
+//
+// Only a fallback. The visitor may have picked a distance in the hero before
+// pressing this, and that choice wins; this is the API's own default, which is
+// also why an empty radius is left meaning "10" everywhere else.
+const DEFAULT_RADIUS = 10;
 
 // How coarse a fix we will still search from, in metres.
 //
@@ -22,15 +26,37 @@ const NEARBY_RADIUS = 10;
 // is 95% confident the person is inside. That is the only honest test, and it
 // works the same on every device.
 //
-// 5 km, against a 10 km search: beyond that the circle we draw has more slack
-// in it than area, and an IP-derived fix — which lands on the ISP's exchange —
-// would produce a search that looks exactly like a working one while answering
-// a question nobody asked.
-const WORST_FIX_METRES = 5000;
+// Half the radius, rather than a fixed number of metres: beyond that the
+// circle we draw has more slack in it than area, and an IP-derived fix — which
+// lands on the ISP's exchange — would produce a search that looks exactly like
+// a working one while answering a question nobody asked. Expressed as a share
+// because the radius is now the visitor's to choose: 5 km of error is useless
+// against a 10 km search and unremarkable against a 50 km one, so a constant
+// in metres would start rejecting fixes that are fine for the wider searches.
+const WORST_FIX_SHARE = 0.5;
 
-const NearbyButton = () => {
+type Props = {
+  // What the visitor already chose in the hero. Those three controls are
+  // HeroStage's own React state, not URL params, so this button cannot read
+  // them for itself — they are handed down here exactly as they are to
+  // SearchBar, and for the same reason.
+  listingType?: string;
+  propertyType?: string;
+  radius?: string;
+};
+
+const NearbyButton = ({
+  listingType = "",
+  propertyType = "",
+  radius = "",
+}: Props) => {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+
+  // Resolved to a number here rather than left blank, because the accuracy
+  // test below has to compare against it and the toast has to name it.
+  const km = Number(radius) || DEFAULT_RADIUS;
+  const worstFixMetres = km * 1000 * WORST_FIX_SHARE;
 
   const find = () => {
     if (!("geolocation" in navigator)) {
@@ -44,9 +70,9 @@ const NearbyButton = () => {
         // Said in kilometres because that is the unit the search is in, and it
         // makes the reason obvious: "within 38 km" next to a 10 km search
         // explains itself.
-        if (coords.accuracy > WORST_FIX_METRES) {
+        if (coords.accuracy > worstFixMetres) {
           errorToast(
-            `Your location is only known to within ${Math.round(coords.accuracy / 1000)} km, which is too rough for a ${NEARBY_RADIUS} km search. Try searching by area name.`,
+            `Your location is only known to within ${Math.round(coords.accuracy / 1000)} km, which is too rough for a ${km} km search. Try searching by area name.`,
           );
           setBusy(false);
           return;
@@ -77,10 +103,25 @@ const NearbyButton = () => {
           // 10 km circle, and no more of someone's position than that written
           // into a URL they might send to a friend.
           const me = `${coords.latitude.toFixed(4)},${coords.longitude.toFixed(4)}`;
-          // view=map so the page opens on the pins, not the list.
-          router.push(
-            `/property/search?location=${encodeURIComponent(place)}&radius=${NEARBY_RADIUS}&view=map&me=${me}`,
-          );
+          // The hero's choices travel with the position. Someone who picked
+          // Buy, an apartment and 20 km before pressing this asked a narrower
+          // question than "what is near me", and arriving at every property
+          // type within 10 km is not an answer to it.
+          //
+          // Built with URLSearchParams rather than a template string so the
+          // place name, which is user text from a geocoder, cannot end a value
+          // early — and so an unchosen mode or type is simply absent instead of
+          // present and empty.
+          const params = new URLSearchParams({
+            location: place,
+            radius: String(km),
+            // view=map so the page opens on the pins, not the list.
+            view: "map",
+            me,
+          });
+          if (listingType) params.set("listingType", listingType);
+          if (propertyType) params.set("propertyType", propertyType);
+          router.push(`/property/search?${params}`);
         } catch {
           errorToast("Could not look up your area. Please try again.");
           setBusy(false);

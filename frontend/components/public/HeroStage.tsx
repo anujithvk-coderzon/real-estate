@@ -606,6 +606,15 @@ const HeroStage = () => {
               }}
             />
           </div>
+
+          {/* This bar had no nearby button at all, so signing in quietly took
+              away the one control that exists because the device has a GPS
+              chip. Given the same three values as SearchBar above, and for the
+              same reason: without them it answers "what is near me" when the
+              question set right above it was narrower. */}
+          <div className="mt-2.5 max-w-2xl">
+            <NearbyButton listingType={mode} propertyType={kind} radius={km} />
+          </div>
         </div>
       </section>
     );
@@ -850,7 +859,15 @@ const HeroStage = () => {
                   {/* The phone is the device that has a GPS chip, so this is
                         the one control that belongs to it first. */}
                   <div className="md:flex md:justify-center">
-                    <NearbyButton />
+                    {/* The same three values SearchBar is given above. Without
+                        them the button answers "what is near me" when the
+                        question on screen was "what apartments are for sale
+                        within 20 km of me". */}
+                    <NearbyButton
+                      listingType={mode}
+                      propertyType={kind}
+                      radius={km}
+                    />
                   </div>
                 </div>
               </div>

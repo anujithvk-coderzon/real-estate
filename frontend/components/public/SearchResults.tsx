@@ -613,13 +613,10 @@ const SearchResults = () => {
             </div>
           )}
 
-          {/* What the pin colours mean, over the map's own corner. pointer-events
-              none so it never swallows a drag that starts on top of it. */}
-          {shown.length > 1 && (
-            <div className="pointer-events-none absolute bottom-20 left-3 right-3 z-10 rounded-xl bg-panel/95 px-3 py-2.5 ring-1 ring-line backdrop-blur-sm lg:bottom-3 lg:right-auto lg:max-w-xs">
-              <MapLegend types={shown.map((listing) => listing.propertyType)} />
-            </div>
-          )}
+          {/* What the pin colours mean, over the map's own corner. It renders
+              its own box, because only it knows whether there is anything to
+              put in one — see the note in MapLegend. */}
+          <MapLegend types={shown.map((listing) => listing.propertyType)} />
         </div>
       </div>
 
