@@ -17,7 +17,7 @@ import MapLegend from "@/components/public/MapLegend";
 import ResultsMap from "@/components/public/ResultsMap";
 import SearchBar from "@/components/public/SearchBar";
 import { api } from "@/lib/api";
-import { RADIUS_OPTIONS, type Option } from "@/lib/listing";
+import { RADIUS_OPTIONS, categoryOf, type Option } from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 
@@ -154,8 +154,18 @@ const SearchResults = () => {
   const [result, setResult] = useState<Result | null>(null);
   // Phones and tablets. "Find nearby properties" sends view=map, because the
   // answer to "what is around me" is a map, not a list of names.
+  // The map is what this site has that a list of names does not — a radius you
+  // can see, your own position inside it, pins you can compare at a glance —
+  // so on a phone it is what you land on. ?view=list is still honoured, for a
+  // link someone shared deliberately.
+  //
+  // Unconditional rather than behind a media query, on purpose: from lg the
+  // grid shows the list and the map side by side, and every class this value
+  // touches is a max-lg: one, so it changes nothing there. A media query would
+  // buy nothing and cost a hydration mismatch, since the server cannot know
+  // the width of the screen it is rendering for.
   const [view, setView] = useState<"list" | "map">(
-    searchParams.get("view") === "map" ? "map" : "list",
+    searchParams.get("view") === "list" ? "list" : "map",
   );
   const [mapHidden, setMapHidden] = useState(false); // desktop
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
@@ -324,13 +334,24 @@ const SearchResults = () => {
           flow, not an overlay, so a two-line search bar can never sit on top
           of the distance pill. */}
       <div
-        className={`relative z-20 border-b border-line bg-panel/95 backdrop-blur supports-[backdrop-filter]:bg-panel/80 lg:sticky lg:top-0 lg:z-20 ${
-          view === "map"
-            ? "max-lg:fixed max-lg:inset-x-0 max-lg:top-0 max-lg:z-40"
-            : ""
+        // relative is in the else branch, not the base: with both on one
+        // element Tailwind emits .relative after .fixed, so at equal
+        // specificity relative wins and max-lg:fixed does nothing at all.
+        // That is the exact bug the map column's own comment records, two
+        // elements down, and it had been reintroduced here.
+        className={`z-20 border-b border-line bg-panel/95 backdrop-blur supports-[backdrop-filter]:bg-panel/80 lg:sticky lg:top-0 lg:z-20 lg:border-b lg:bg-panel/95 ${
+          view === "map" && !failed
+            ? // Over the map the band itself goes: every control in it already
+              // carries its own white panel and ring, so the only thing the
+              // background was painting was the gaps between them — about
+              // 150px of map, opaque, for no information. Transparent, the
+              // same controls read as chrome floating on the map and the map
+              // runs to the top of the screen.
+              "max-lg:fixed max-lg:inset-x-0 max-lg:top-0 max-lg:z-40 max-lg:border-b-0 max-lg:bg-transparent max-lg:backdrop-blur-none max-lg:supports-[backdrop-filter]:bg-transparent"
+            : "relative"
         }`}
       >
-        <div className="px-4 py-3 lg:px-6">
+        <div className="px-4 py-2 lg:px-6 lg:py-3">
           {/* Keyed on the place alone. The mode, the type and the distance are
               read from the URL by the bar itself, so they need no remount to
               stay in step — and keying on them would throw away a half-typed
@@ -350,7 +371,7 @@ const SearchResults = () => {
             lg:hidden throughout, because the column beside the map already
             carries all of it on a wide screen. */}
         {view === "map" && !failed && (
-          <div className="space-y-2 px-3 pb-3 lg:hidden">
+          <div className="space-y-1.5 px-3 pb-2 lg:hidden">
             {/* How far out the ring reaches. 16px text: anything smaller and
                 iOS zooms the page in when the select takes focus. */}
             {loading ? (
@@ -578,7 +599,7 @@ const SearchResults = () => {
             so they cannot collide with the desktop ones. */}
         <div
           className={`bg-ground ${
-            view === "map"
+            view === "map" && !failed
               ? "max-lg:fixed max-lg:inset-0 max-lg:z-30"
               : "max-lg:hidden"
           } lg:sticky lg:top-[65px] lg:z-0 lg:h-[calc(100dvh-65px)] lg:border-l lg:border-line ${
@@ -599,7 +620,7 @@ const SearchResults = () => {
           {/* What the pin colours mean, over the map's own corner. It renders
               its own box, because only it knows whether there is anything to
               put in one — see the note in MapLegend. */}
-          <MapLegend types={shown.map((listing) => listing.propertyType)} />
+          <MapLegend types={shown.map(categoryOf)} />
         </div>
       </div>
 

@@ -298,7 +298,6 @@ const ChatsDrawer = ({ open, onClose }: Props) => {
             )}
           </ul>
         )}
-
       </aside>
     </div>,
     document.body,

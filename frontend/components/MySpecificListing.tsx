@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import AvailabilityActions from "@/components/listing/AvailabilityActions";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Gallery from "@/components/listing/Gallery";
 import { api } from "@/lib/api";
@@ -13,6 +14,7 @@ import {
   isRental,
   labelOf,
   listingLocation,
+  statusChip,
 } from "@/lib/listing";
 import {
   detailRows,
@@ -28,67 +30,48 @@ import { apiMessage } from "@/lib/validation/apiError";
 
 type Props = { id: string };
 
-// note is a node, not a string: one of these has to carry a mailto link, and
+const NOTE_TAKEN_DOWN = (
+  <>
+    Our team removed this listing after it was reported. The reason was sent to
+    you in a notification. Correct what was wrong and{" "}
+    {ADMIN_CONTACT_MAIL ? (
+      <>
+        write to{" "}
+        <a
+          href={`mailto:${ADMIN_CONTACT_MAIL}?subject=${encodeURIComponent(
+            "Taken-down listing — fixed and asking for a review",
+          )}`}
+          className="font-medium text-ink underline decoration-line decoration-1 underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
+        >
+          {ADMIN_CONTACT_MAIL}
+        </a>
+      </>
+    ) : (
+      "tell us"
+    )}
+    , and it can go back up.
+  </>
+);
+
+// Only the notes live here now: the word for each status and the colour of its
+// chip are shared in lib/listing.ts, because the card grid and the edit page
+// print the same words and had their own copies of them.
+//
+// A note is a node, not a string: one of these has to carry a mailto link, and
 // an address a seller has to retype by hand is an address most of them will not
 // write to at all.
-const STATUS_DISPLAY: Record<
-  ListingStatus,
-  { text: string; badge: string; note: React.ReactNode }
-> = {
-  DRAFT: {
-    text: "Draft",
-    badge: "border-warn/30 bg-warn/10 text-warn",
-    note: "Buyers cannot see this listing until you publish it.",
-  },
-  ACTIVE: {
-    text: "Live",
-    badge: "border-accent/30 bg-accent-soft text-accent",
-    note: "This listing is visible to buyers in search.",
-  },
-  SOLD: {
-    text: "Sold",
-    badge: "border-line bg-ground text-muted",
-    note: "Marked as sold.",
-  },
-  RENTED: {
-    text: "Rented",
-    badge: "border-line bg-ground text-muted",
-    note: "Marked as rented.",
-  },
-  EXPIRED: {
-    text: "Expired",
-    badge: "border-line bg-ground text-muted",
-    note: "This listing has expired and is hidden from search.",
-  },
+const STATUS_NOTE: Record<ListingStatus, React.ReactNode> = {
+  DRAFT: "Buyers cannot see this listing until you publish it.",
+  ACTIVE: "This listing is visible to buyers in search.",
+  // Out of search, but the page still opens: anyone holding the link sees that
+  // it is gone rather than a 404, and is offered similar properties instead.
+  SOLD: "Out of search. Buyers with the link see it is sold.",
+  RENTED: "Out of search. Buyers with the link see it is taken.",
+  EXPIRED: "This listing has expired and is hidden from search.",
   // Done to them, not by them — so the note says what happened, where the
   // reason is, and who to write to. A dead end here reads as a ban; the
   // address is what makes it a step.
-  TAKEN_DOWN: {
-    text: "Taken down",
-    badge: "border-danger/30 bg-danger/10 text-danger",
-    note: (
-      <>
-        Our team removed this listing after it was reported. The reason was sent
-        to you in a notification. Correct what was wrong and{" "}
-        {ADMIN_CONTACT_MAIL ? (
-          <>
-            write to{" "}
-            <a
-              href={`mailto:${ADMIN_CONTACT_MAIL}?subject=${encodeURIComponent(
-                "Taken-down listing — fixed and asking for a review",
-              )}`}
-              className="font-medium text-ink underline decoration-line decoration-1 underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
-            >
-              {ADMIN_CONTACT_MAIL}
-            </a>
-          </>
-        ) : (
-          "tell us"
-        )}
-        , and it can go back up.
-      </>
-    ),
-  },
+  TAKEN_DOWN: NOTE_TAKEN_DOWN,
 };
 
 const sectionHeading = "font-display text-[20px] leading-tight";
@@ -157,13 +140,8 @@ const MySpecificListing = ({ id }: Props) => {
     );
   }
 
-  // Falls back rather than throwing: the status is a database enum that can
-  // grow, and one unknown word should not take down the whole page.
-  const status = STATUS_DISPLAY[listing.status] ?? {
-    text: listing.status,
-    badge: "border-line bg-ground text-muted",
-    note: "",
-  };
+  const status = statusChip(listing.status);
+  const note = STATUS_NOTE[listing.status] ?? "";
   const location = listingLocation(listing);
   const editHref = `/list/my/listings/edit/${listing.id}`;
 
@@ -207,11 +185,11 @@ const MySpecificListing = ({ id }: Props) => {
       <div className="relative z-10 flex flex-col gap-3 rounded-lg border border-line bg-panel/95 px-4 py-3 backdrop-blur sm:sticky sm:top-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <span
-            className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${status.badge}`}
+            className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${status.className}`}
           >
             {status.text}
           </span>
-          <p className="text-[14px] text-muted">{status.note}</p>
+          <p className="text-[14px] text-muted">{note}</p>
         </div>
         {/* grow at base: three buttons side by side need ~347px and have ~248px,
             so they stack into full-width rows instead of splitting their labels. */}
@@ -238,6 +216,24 @@ const MySpecificListing = ({ id }: Props) => {
               Publish listing
             </button>
           )}
+          {/* Renders nothing on an expired or taken-down listing — the
+              component decides that, so this page and the public one cannot
+              disagree about who may change what.
+
+              "next" on a draft, "all" otherwise: this page has its own Publish
+              button, gated on the checklist below, and "all" would put a second
+              ungated one beside it. Everywhere else "all" adds only Unlist. */}
+          <AvailabilityActions
+            moves={listing.status === "DRAFT" ? "next" : "all"}
+            id={id}
+            title={listing.title}
+            listingType={listing.listingType}
+            status={listing.status}
+            onChange={(next) =>
+              setListing((prev) => prev && { ...prev, status: next })
+            }
+            className="grow sm:grow-0"
+          />
         </div>
       </div>
 

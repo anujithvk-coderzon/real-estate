@@ -1,7 +1,7 @@
 import {  type Request, type Response } from "express";
-import { listTake, registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
+import { availabilityValidation, listTake, registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
-import { sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService, similarListingService, complaintListingService } from "./listing.service.js";
+import { listingAvailabilityService, sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService, similarListingService, complaintListingService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
 import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
 import type { ListingType, PostedBy, PropertyType } from "../../generated/prisma/enums.js";
@@ -20,6 +20,15 @@ export const publishListing=async(req:Request,res:Response)=>{
      const listingId=req.params?.id as string;
      if(!listingId) throw new BadRequestError("Listing Id required")
      const response=await listingPublishingService(userId,listingId)
+    return res.status(200).json({message:response})
+}
+export const setListingAvailability=async(req:Request,res:Response)=>{
+     const userId=req.user?.id as string;
+     const listingId=req.params?.id as string;
+     if(!listingId) throw new BadRequestError("Listing Id required")
+     const validated=availabilityValidation.safeParse(req.body)
+     if(!validated.success) throw validated.error;
+     const response=await listingAvailabilityService(userId,listingId,validated.data.status)
     return res.status(200).json({message:response})
 }
 export const getAmentites=async(req:Request,res:Response)=>{

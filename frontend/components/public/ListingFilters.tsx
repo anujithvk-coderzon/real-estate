@@ -15,18 +15,18 @@
 // push every property below the fold. From 1024px up there is room to show them.
 
 import { useEffect, useRef, useState } from "react";
+import BudgetSlider from "@/components/public/BudgetSlider";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatRupeesShort } from "@/lib/format";
 import {
-  BUDGET_MAX,
-  BUDGET_STEPS,
   SEARCH_LISTING_TYPES,
+  modeSelectValue,
+  searchTypeOptions,
+  typeChoice,
+  typeSelectValue,
   NO_BEDROOMS,
   POSTED_BY,
   RADIUS_OPTIONS,
-  SEARCH_PROPERTY_TYPES,
-  budgetAt,
-  budgetPosition,
   labelOf,
   propertyTypeOptions,
   searchLabelOf,
@@ -60,8 +60,6 @@ const BEDROOM_OPTIONS: Option[] = [
 
 // How long the slider waits after the last move before changing the URL. Without
 // it, one drag across the scale would fire a hundred requests.
-const COMMIT_DELAY = 250;
-
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
@@ -137,82 +135,6 @@ const Pills = ({
     </div>
   </fieldset>
 );
-
-/* ---------- the budget slider ---------- */
-
-// Keyed on the committed amount by its parent, so a chip removal or Clear all
-// remounts it at the right spot instead of needing an effect to resync.
-const BudgetSlider = ({
-  id,
-  amount,
-  onCommit,
-  compact = false,
-}: {
-  // Both layouts stay in the DOM, so each copy needs its own id for its label.
-  id: string;
-  amount: string;
-  onCommit: (next: string) => void;
-  compact?: boolean;
-}) => {
-  // Both held locally while dragging, so the label keeps up with the thumb and
-  // the URL is only told once the user stops moving it.
-  const [position, setPosition] = useState(() =>
-    budgetPosition(Number(amount)),
-  );
-  // Kept beside the position rather than recomputed from it: rounding to two
-  // figures is lossy, so a URL saying ₹23,000 must keep saying ₹23,000.
-  const [shown, setShown] = useState(() => Number(amount) || 0);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
-
-  const move = (next: number) => {
-    const nextAmount = budgetAt(next);
-    setPosition(next);
-    setShown(nextAmount);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(
-      () => onCommit(nextAmount ? String(nextAmount) : ""),
-      COMMIT_DELAY,
-    );
-  };
-
-  const label = shown ? `Up to ${formatRupeesShort(shown)}` : "Any budget";
-
-  return (
-    <div className={compact ? "min-w-56 flex-1" : ""}>
-      <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="text-[13px] font-medium text-muted">
-          Budget
-        </label>
-        <span className="text-[15px] font-medium tabular-nums text-ink">
-          {label}
-        </span>
-      </div>
-      <input
-        id={id}
-        type="range"
-        min={0}
-        max={BUDGET_STEPS}
-        step={1}
-        value={position}
-        onChange={(event) => move(Number(event.target.value))}
-        // A screen reader would otherwise announce the bare position, "47".
-        aria-valuetext={label}
-        className={`mt-2 w-full accent-accent ${focusRing}`}
-      />
-      <div className="mt-0.5 flex justify-between text-[12px] text-muted">
-        <span>Any</span>
-        <span>{formatRupeesShort(BUDGET_MAX)}</span>
-      </div>
-    </div>
-  );
-};
 
 // The budget, behind a trigger that states its own value. A native <details>
 // gives the open/close state and keyboard support for free, but it only closes
@@ -309,17 +231,12 @@ const ListingFilters = ({
 
   const showBedrooms = !NO_BEDROOMS.includes(propertyType);
 
-  // listingType=PG is a real, working URL — SiteFooter links to it and the API
-  // answers it — but PG is deliberately not one of the two choices offered
-  // here, because the API folds PG into Rent for searchers. Without this, that
-  // URL left the control showing "Buy or rent" and no pill selected while the
-  // chip beside it said "PG or hostel": two parts of one bar disagreeing about
-  // what is being filtered. Offered only when it is already set, so it never
-  // becomes a third thing to decide between.
-  const modeOptions =
-    listingType === "PG"
-      ? [...SEARCH_LISTING_TYPES, { value: "PG", label: labelOf("PG") }]
-      : SEARCH_LISTING_TYPES;
+  // Two choices here, as before. listingType=PG — a real URL, linked from
+  // SiteFooter — no longer leaves this control showing nothing selected: PG is
+  // a rental, so Rent lights up and the type control beside it says "PG or
+  // hostel". Two parts of one bar describing one search.
+  const modeOptions = SEARCH_LISTING_TYPES;
+  const shownMode = modeSelectValue(listingType);
   // Radius is not in FILTER_PARAMS: that list is shared with the home page, which
   // has no radius. It still counts here, so the phone's badge matches the sheet.
   const activeCount =
@@ -355,6 +272,11 @@ const ListingFilters = ({
   const setParam = (name: string, value: string) => {
     // Each listing type allows different property types, and only some types have
     // bedrooms. A stale value would quietly empty the list, so it goes with it.
+    if (name === "propertyType") {
+      // One control, two parameters: PG lives in listingType. See typeChoice.
+      apply(typeChoice(value, listingType));
+      return;
+    }
     if (name === "listingType") {
       const allowed = propertyTypeOptions(value).some(
         (option) => option.value === propertyType,
@@ -478,7 +400,7 @@ const ListingFilters = ({
             </label>
             <select
               id="filter-listingType"
-              value={listingType}
+              value={shownMode}
               onChange={(event) => setParam("listingType", event.target.value)}
               className={inlineSelect}
             >
@@ -495,18 +417,19 @@ const ListingFilters = ({
             </label>
             <select
               id="filter-propertyType"
-              value={propertyType}
+              value={typeSelectValue(listingType, propertyType)}
               onChange={(event) => setParam("propertyType", event.target.value)}
               className={inlineSelect}
             >
               <option value="">Any type</option>
-              {propertyTypeOptions(listingType, SEARCH_PROPERTY_TYPES).map(
-                (option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ),
-              )}
+              {searchTypeOptions(
+                listingType,
+                typeSelectValue(listingType, propertyType),
+              ).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </>
         )}
@@ -692,7 +615,7 @@ const ListingFilters = ({
               <Pills
                 legend="Looking to"
                 options={modeOptions}
-                value={listingType}
+                value={shownMode}
                 anyLabel="Buy or rent"
                 onPick={(value) => setParam("listingType", value)}
               />
@@ -706,20 +629,21 @@ const ListingFilters = ({
                 </label>
                 <select
                   id="sheet-propertyType"
-                  value={propertyType}
+                  value={typeSelectValue(listingType, propertyType)}
                   onChange={(event) =>
                     setParam("propertyType", event.target.value)
                   }
                   className={sheetSelect}
                 >
                   <option value="">Any type</option>
-                  {propertyTypeOptions(listingType, SEARCH_PROPERTY_TYPES).map(
-                    (option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ),
-                  )}
+                  {searchTypeOptions(
+                    listingType,
+                    typeSelectValue(listingType, propertyType),
+                  ).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </>

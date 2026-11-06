@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { dangerButton, secondaryButton } from "@/lib/ui";
 
 type Props = {
@@ -28,6 +28,10 @@ const ConfirmDialog = ({
   onCancel,
 }: Props) => {
   const dialog = useRef<HTMLDialogElement>(null);
+  // Generated, not fixed: a page may hold more than one of these — a grid of
+  // cards is the obvious case — and two elements sharing an id means every
+  // dialog after the first is announced with the first one's heading.
+  const headingId = useId();
 
   useEffect(() => {
     const element = dialog.current;
@@ -43,7 +47,7 @@ const ConfirmDialog = ({
   return (
     <dialog
       ref={dialog}
-      aria-labelledby="confirm-dialog-title"
+      aria-labelledby={headingId}
       // Esc: let the parent decide, so its state stays in sync.
       onCancel={(event) => {
         event.preventDefault();
@@ -56,10 +60,7 @@ const ConfirmDialog = ({
       className="modal m-auto w-[min(420px,calc(100vw-32px))] rounded-2xl bg-panel p-0 text-ink shadow-[0_24px_60px_-24px_rgba(48,32,68,0.5)] backdrop:bg-ink/40"
     >
       <div className="p-6">
-        <h2
-          id="confirm-dialog-title"
-          className="font-display text-[18px] leading-tight"
-        >
+        <h2 id={headingId} className="font-display text-[18px] leading-tight">
           {title}
         </h2>
         <div className="mt-2 text-[15px] leading-relaxed text-muted">

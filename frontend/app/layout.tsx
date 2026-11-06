@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import AuthBootStrap from "@/components/AuthBootstrap";
 import OnboardingGate from "@/components/OnboardingGate";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -17,30 +18,25 @@ const manrope = Manrope({
   subsets: ["latin"],
 });
 
-// The site's own URL, needed before Next can turn a relative OG image path into
-// the absolute one WhatsApp and Google require. Set NEXT_PUBLIC_SITE_URL in
-// Vercel; the fallback only keeps local builds working.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   // A template, so every page appends rather than replaces. Without it each
   // route has to restate the brand, and most forget.
   title: {
-    default: "Properties — homes, plots and rooms across India",
-    template: "%s — Properties",
+    default: `${SITE_NAME} — homes, plots and rooms across India`,
+    template: `%s — ${SITE_NAME}`,
   },
   description:
     "Search homes, plots, villas, offices and PG rooms across India. Filter by budget, bedrooms and seller, and see every match on a map.",
-  applicationName: "Properties",
+  applicationName: SITE_NAME,
   // Listings are shared on WhatsApp far more than they are found on Google, and
   // a link with no preview card looks like spam.
   openGraph: {
     type: "website",
-    siteName: "Properties",
+    siteName: SITE_NAME,
     locale: "en_IN",
-    url: siteUrl,
-    title: "Properties — homes, plots and rooms across India",
+    url: SITE_URL,
+    title: `${SITE_NAME} — homes, plots and rooms across India`,
     description:
       "Search homes, plots, villas, offices and PG rooms across India, and see every match on a map.",
   },

@@ -15,7 +15,11 @@ import { authReady, isSignedIn } from "@/lib/api";
 import { recallHomeSearch } from "@/lib/homeSearch";
 import {
   RADIUS_OPTIONS,
-  SEARCH_LISTING_TYPES,
+  SEARCH_MODES,
+  modeSelectValue,
+  searchTypeOptions,
+  typeChoice,
+  typeSelectValue,
   SEARCH_PROPERTY_TYPES,
   TYPE_COLOUR,
   categoryPhoto,
@@ -206,6 +210,14 @@ const HeroStage = () => {
   // nothing can answer. The rule is lib/listing's, the same one the filter bar
   // obeys; this is the last thing the old URL-writing href() did that still
   // needs doing.
+  // The type list carries PG, which in the data is a listingType. So this one
+  // control can move both pieces of the hero's state — see typeChoice.
+  const chooseKind = (value: string) => {
+    const changes = typeChoice(value, mode);
+    if (changes.listingType !== undefined) setMode(changes.listingType);
+    setKind(changes.propertyType);
+  };
+
   const chooseMode = (next: string) => {
     setMode(next);
     if (
@@ -522,15 +534,19 @@ const HeroStage = () => {
                 aria-labelledby="bar-mode-label"
                 className="flex gap-1 rounded-xl bg-panel p-1 ring-1 ring-line"
               >
-                {SEARCH_LISTING_TYPES.map((option) => {
-                  const selected = option.value === mode;
+                {SEARCH_MODES.map((option) => {
+                  const selected = option.value === modeSelectValue(mode);
                   return (
                     <button
                       key={option.value}
                       type="button"
                       // Pressing the chosen one again clears it, so "any"
                       // stays reachable without a third button.
-                      onClick={() => chooseMode(selected ? "" : option.value)}
+                      onClick={() =>
+                        chooseMode(
+                          selected && mode !== "PG" ? "" : option.value,
+                        )
+                      }
                       aria-pressed={selected}
                       className={`flex h-9 items-center rounded-lg px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                         selected
@@ -538,7 +554,7 @@ const HeroStage = () => {
                           : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
                       }`}
                     >
-                      {option.value === "SALE" ? "Buy" : "Rent"}
+                      {option.label}
                     </button>
                   );
                 })}
@@ -551,13 +567,13 @@ const HeroStage = () => {
               </label>
               <select
                 id="hero-type"
-                value={kind}
-                onChange={(event) => setKind(event.target.value)}
+                value={typeSelectValue(mode, kind)}
+                onChange={(event) => chooseKind(event.target.value)}
                 className={BAR_SELECT}
                 suppressHydrationWarning
               >
                 <option value="">Any type</option>
-                {propertyTypeOptions(mode, SEARCH_PROPERTY_TYPES).map(
+                {searchTypeOptions(mode, typeSelectValue(mode, kind)).map(
                   (option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -751,8 +767,8 @@ const HeroStage = () => {
                       aria-labelledby="hero-mode-label"
                       className="grid grid-cols-2 gap-1 rounded-xl bg-ground p-1 md:inline-flex md:bg-panel/95 md:shadow-[0_8px_24px_-12px_rgba(48,32,68,0.3)] md:ring-1 md:ring-line md:backdrop-blur-sm"
                     >
-                      {SEARCH_LISTING_TYPES.map((option) => {
-                        const selected = option.value === mode;
+                      {SEARCH_MODES.map((option) => {
+                        const selected = option.value === modeSelectValue(mode);
                         return (
                           <button
                             key={option.value}
@@ -760,7 +776,9 @@ const HeroStage = () => {
                             // Pressing the chosen one again clears it, so "any"
                             // stays reachable without a third button.
                             onClick={() =>
-                              chooseMode(selected ? "" : option.value)
+                              chooseMode(
+                                selected && mode !== "PG" ? "" : option.value,
+                              )
                             }
                             aria-pressed={selected}
                             className={`flex h-10 items-center justify-center rounded-lg text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-9 md:px-4 md:text-[14px] ${
@@ -769,7 +787,7 @@ const HeroStage = () => {
                                 : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
                             }`}
                           >
-                            {option.value === "SALE" ? "Buy" : "Rent"}
+                            {option.label}
                           </button>
                         );
                       })}
@@ -795,8 +813,8 @@ const HeroStage = () => {
                       </label>
                       <select
                         id="hero-type"
-                        value={kind}
-                        onChange={(event) => setKind(event.target.value)}
+                        value={typeSelectValue(mode, kind)}
+                        onChange={(event) => chooseKind(event.target.value)}
                         className={HERO_SELECT}
                         // Chrome's autofill stamps __gcruniqueid on every form
                         // field before React hydrates, which React then reports
@@ -806,13 +824,14 @@ const HeroStage = () => {
                         suppressHydrationWarning
                       >
                         <option value="">Any type</option>
-                        {propertyTypeOptions(mode, SEARCH_PROPERTY_TYPES).map(
-                          (option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ),
-                        )}
+                        {searchTypeOptions(
+                          mode,
+                          typeSelectValue(mode, kind),
+                        ).map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
 

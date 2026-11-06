@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AddressForm from "@/components/AddressForm";
+import AvailabilityActions from "@/components/listing/AvailabilityActions";
 import { ImagePreview, VideoPreview } from "@/components/FilePreview";
 import MapPicker from "@/components/MapPicker";
 import PropertyDetailsForm from "@/components/PropertyDetailsForm";
@@ -16,6 +17,7 @@ import {
   getMissingFields,
   listingLocation,
   listingToFormData,
+  statusChip,
 } from "@/lib/listing";
 import {
   IMAGE_TYPES,
@@ -34,6 +36,7 @@ import {
   type Listing,
   type ListingFormData,
   type ListingImage,
+  type ListingStatus,
   type ListingVideo,
   type LngLat,
 } from "@/lib/types";
@@ -66,6 +69,12 @@ const EditListing = ({ id }: Props) => {
 
   const [saving, setSaving] = useState(false);
   const [savingStep, setSavingStep] = useState("");
+  // Kept out of the form data on purpose: every other field here is editable,
+  // and this one is not — it changes through its own endpoint, from the card
+  // grid or the listing's own page. Shown because a seller editing a listing
+  // needs to know whether buyers are seeing it meanwhile. SOLD and RENTED are
+  // separate statuses, so the chip already says the right word for the type.
+  const [status, setStatus] = useState<ListingStatus | null>(null);
 
   const showSavedMedia = (listing: Listing) => {
     setSavedImages(listing.listingImages);
@@ -77,6 +86,7 @@ const EditListing = ({ id }: Props) => {
       .get(`/list/owner/${id}`)
       .then((response) => {
         const listing: Listing = response.data.response;
+        setStatus(listing.status);
         setData(listingToFormData(listing));
         setLocation(listingLocation(listing));
         showSavedMedia(listing);
@@ -243,9 +253,20 @@ const EditListing = ({ id }: Props) => {
       >
         ← Back to listing
       </Link>
-      <h1 className="font-display mt-3 text-[28px] leading-tight lg:text-[34px]">
-        Edit listing
-      </h1>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1 className="font-display text-[28px] leading-tight lg:text-[34px]">
+          Edit listing
+        </h1>
+        {status && (
+          <span
+            className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${
+              statusChip(status).className
+            }`}
+          >
+            {statusChip(status).text}
+          </span>
+        )}
+      </div>
       <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">
         Nothing changes, including removed photos, until you save.
       </p>
@@ -501,6 +522,34 @@ const EditListing = ({ id }: Props) => {
           </ul>
         )}
       </section>
+
+      {/* ---------- availability ---------- */}
+      {/* Its own block, below the form and above Save: every control above this
+          line waits for Save, and these take effect the moment they are
+          pressed. Mixing them into the same row as Save would make that promise
+          at the top of the page — "nothing changes until you save" — false. */}
+      {status && (
+        <section className="mt-10 rounded-lg border border-line bg-panel p-5 lg:p-6">
+          <h2 className={sectionTitle}>Availability</h2>
+          <p className="mt-1.5 max-w-xl text-[15px] leading-relaxed text-muted">
+            {status === "DRAFT"
+              ? "Only you can see this listing. Publishing puts it in search."
+              : status === "ACTIVE"
+                ? "Buyers can find this listing in search. These take effect straight away, not on Save."
+                : "This listing is out of search. Buyers with the link see that it is taken. These take effect straight away, not on Save."}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <AvailabilityActions
+              moves="all"
+              id={id}
+              title={data.title}
+              listingType={data.listingType}
+              status={status}
+              onChange={setStatus}
+            />
+          </div>
+        </section>
+      )}
 
       {/* ---------- save ---------- */}
       <div className="mt-8 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">

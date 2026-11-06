@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import TypeGlyph from "@/components/public/TypeGlyph";
 import { formatDate, formatNumber, formatRupeesShort } from "@/lib/format";
-import { TYPE_COLOUR, isRental, labelOf } from "@/lib/listing";
+import { TYPE_COLOUR, categoryLabel, isRental, labelOf } from "@/lib/listing";
 import { BADGE_TONE, reraBadge } from "@/lib/rera";
 import type { PublicListingSummary } from "@/lib/types";
 
@@ -353,7 +353,7 @@ const PublicListingCard = ({
             style={{ background: TYPE_COLOUR[listing.propertyType] }}
             className="h-[7px] w-[7px] shrink-0 rounded-full"
           />
-          {labelOf(listing.propertyType)}
+          {categoryLabel(listing)}
         </p>
 
         <h3 className="mt-2 truncate text-[15px] font-semibold text-ink">

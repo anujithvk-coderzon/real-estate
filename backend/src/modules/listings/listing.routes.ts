@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { isAuthorized } from "../../middlewares/jwtTokens.js";
-import { fetchSellerListings, createListingPost, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch, similarListings, complaintListing } from "./listing.controller.js";
+import { fetchSellerListings, createListingPost, setListingAvailability, deleteListing, deleteListingImage, deleteListingVideo, fetchListingImages, fetchListings, fetchListingVideo, fetchOwnerListings, fetchOwnerSpecificListing, fetchSpecificListings, geoCode, getAmentites, publishListing, reverseGeoCode, updateListing, uploadListingImages, uploadListingVideo, userSearch, similarListings, complaintListing } from "./listing.controller.js";
 import { upload } from "../../lib/multer.js";
 
 const router=Router()
@@ -9,6 +9,9 @@ const router=Router()
 router.post('/create',isAuthorized,createListingPost);
 
 router.patch('/publish/:id',isAuthorized,publishListing)
+// Availability only: SOLD, RENTED or back to ACTIVE. Separate from /update so a
+// status change is its own auditable act rather than one field among forty.
+router.patch('/status/:id',isAuthorized,setListingAvailability)
 router.get('/amenities',isAuthorized,getAmentites)
 router.post('/images/:id',isAuthorized,upload.array("images",10),uploadListingImages)
 router.post('/video/:id',isAuthorized,upload.single("video"),uploadListingVideo)

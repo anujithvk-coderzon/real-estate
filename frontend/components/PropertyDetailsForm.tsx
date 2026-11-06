@@ -219,46 +219,6 @@ const PropertyDetailsForm = ({
         </Field>
       </div>
 
-      {/* ---------- price ---------- */}
-      <div className="space-y-4 border-t border-line pt-6">
-        <h3 className={groupTitle}>Price</h3>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field
-            id="price"
-            label={rental ? "Monthly rent (₹)" : "Price (₹)"}
-            hint={
-              listingType &&
-              (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")
-            }
-          >
-            <input {...moneyInput("price", rental ? "18,000" : "45,00,000")} />
-          </Field>
-
-          <label className="flex items-center gap-2 self-end pb-2.5 text-[15px] text-ink">
-            <input
-              name="isNegotiable"
-              type="checkbox"
-              checked={data.isNegotiable}
-              onChange={handleChange}
-              className="h-4 w-4 accent-accent"
-            />
-            Price is negotiable
-          </label>
-        </div>
-
-        {rental && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field id="securityDeposit" label="Security deposit (₹)">
-              <input {...moneyInput("securityDeposit", "50,000")} />
-            </Field>
-            <Field id="maintenance" label="Monthly maintenance (₹)" optional>
-              <input {...moneyInput("maintenance", "1,500")} />
-            </Field>
-          </div>
-        )}
-      </div>
-
       {/* ---------- area ---------- */}
       <div className="space-y-4 border-t border-line pt-6">
         <h3 className={groupTitle}>Area</h3>
@@ -302,6 +262,46 @@ const PropertyDetailsForm = ({
             </div>
           </Field>
         </div>
+      </div>
+
+      {/* ---------- price ---------- */}
+      <div className="space-y-4 border-t border-line pt-6">
+        <h3 className={groupTitle}>Price</h3>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field
+            id="price"
+            label={rental ? "Monthly rent (₹)" : "Price (₹)"}
+            hint={
+              listingType &&
+              (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")
+            }
+          >
+            <input {...moneyInput("price", rental ? "18,000" : "45,00,000")} />
+          </Field>
+
+          <label className="flex items-center gap-2 self-end pb-2.5 text-[15px] text-ink">
+            <input
+              name="isNegotiable"
+              type="checkbox"
+              checked={data.isNegotiable}
+              onChange={handleChange}
+              className="h-4 w-4 accent-accent"
+            />
+            Price is negotiable
+          </label>
+        </div>
+
+        {rental && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field id="securityDeposit" label="Security deposit (₹)">
+              <input {...moneyInput("securityDeposit", "50,000")} />
+            </Field>
+            <Field id="maintenance" label="Monthly maintenance (₹)" optional>
+              <input {...moneyInput("maintenance", "1,500")} />
+            </Field>
+          </div>
+        )}
       </div>
 
       {/* ---------- configuration ---------- */}

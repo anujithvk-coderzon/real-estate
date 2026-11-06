@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import BudgetSlider from "@/components/public/BudgetSlider";
 import NearbyButton from "@/components/public/NearbyButton";
 import { rememberHomeSearch } from "@/lib/homeSearch";
 import {
   NO_BEDROOMS,
   RADIUS_OPTIONS,
+  SEARCH_MODES,
+  modeSelectValue,
+  searchTypeOptions,
+  typeChoice,
+  typeSelectValue,
   SEARCH_PROPERTY_TYPES,
   propertyTypeOptions,
 } from "@/lib/listing";
@@ -31,14 +37,6 @@ type Props = {
   // screen would be the form competing with itself.
   variant?: "card" | "toolbar" | "compact";
 };
-
-// Two, not three. PG listings come back under Rent — the API folds them in —
-// so offering PG separately would be a third choice that filters out the very
-// rentals most people mean.
-const MODES = [
-  { value: "SALE", label: "Buy" },
-  { value: "RENT", label: "Rent" },
-];
 
 const MAX_LOCATION_LENGTH = 100;
 
@@ -147,7 +145,7 @@ const ModeGroup = ({
     aria-label="Looking to"
     className={`flex h-11 rounded-lg bg-panel p-1 ring-1 ring-line md:h-10 ${className}`}
   >
-    {MODES.map((mode) => {
+    {SEARCH_MODES.map((mode) => {
       const selected = value === mode.value;
       return (
         <button
@@ -239,7 +237,7 @@ const TypeSelect = ({
       className={`h-11 rounded-lg border border-line bg-panel px-3 text-[16px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:h-10 md:text-[15px] ${className}`}
     >
       <option value="">Any type</option>
-      {propertyTypeOptions(mode, SEARCH_PROPERTY_TYPES).map((type) => (
+      {searchTypeOptions(mode, value).map((type) => (
         <option key={type.value} value={type.value}>
           {type.label}
         </option>
@@ -281,6 +279,8 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     ? (searchParams.get("propertyType") ?? "")
     : typeDraft;
   const radius = live ? (searchParams.get("radius") ?? "") : radiusDraft;
+  // Only the toolbar offers this: the hero has no results to narrow yet.
+  const maxPrice = live ? (searchParams.get("maxPrice") ?? "") : "";
 
   // Location is required: without it there is no place to search around.
   const canSearch = location.trim() !== "";
@@ -303,7 +303,10 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
 
   // Clicking the selected mode again clears it, so "any" is always reachable.
   const toggleMode = (value: string) => {
-    const mode = listingType === value ? "" : value;
+    const shown = modeSelectValue(listingType);
+    // Pressing the lit button clears it — except when PG is what lit it, where
+    // the useful move is to widen PG to every rental, not to drop the mode.
+    const mode = shown === value && listingType !== "PG" ? "" : value;
     if (!live) {
       setModeDraft(mode);
       return;
@@ -322,15 +325,20 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   };
 
   const pickType = (value: string) => {
+    // One control, two parameters: PG is a tenure in the data, so choosing it
+    // writes listingType, not propertyType. See typeChoice.
+    const changes = typeChoice(value, listingType);
     if (!live) {
-      setTypeDraft(value);
+      setTypeDraft(changes.propertyType);
+      if (changes.listingType !== undefined) setModeDraft(changes.listingType);
       return;
     }
     // A plot or a commercial space has no bedrooms, so a bedroom filter left
-    // over from apartments would match nothing at all.
+    // over from apartments would match nothing at all — and a PG is let by the
+    // bed, so the same applies.
     applyNow({
-      propertyType: value,
-      ...(NO_BEDROOMS.includes(value) ? { beds: "" } : {}),
+      ...changes,
+      ...(NO_BEDROOMS.includes(value) || value === "PG" ? { beds: "" } : {}),
     });
   };
 
@@ -504,13 +512,13 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
               so they are not part of submitting this form, and inside it they
               would be unreachable until it was opened. */}
           <ModeGroup
-            value={listingType}
+            value={modeSelectValue(listingType)}
             onToggle={toggleMode}
             className="hidden shrink-0 md:flex"
           />
           <TypeSelect
             id="toolbar-type"
-            value={propertyType}
+            value={typeSelectValue(listingType, propertyType)}
             mode={listingType}
             onPick={pickType}
             className="hidden shrink-0 md:block md:w-44"
@@ -560,24 +568,44 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             because a flex item defaults to min-width:auto and one sized by its
             longest option would push the row past the screen rather than
             share it. */}
-        <div className="mt-2 flex gap-2 md:hidden">
+        <div className="mt-1.5 flex gap-2 md:hidden">
           <ModeGroup
-            value={listingType}
+            value={modeSelectValue(listingType)}
             onToggle={toggleMode}
             className="shrink-0"
           />
           <TypeSelect
             id="toolbar-type-narrow"
-            value={propertyType}
+            value={typeSelectValue(listingType, propertyType)}
             mode={listingType}
             onPick={pickType}
             className="min-w-0 flex-1"
           />
+        </div>
+
+        {/* The distance and the budget share a line. A slider needs width, but
+            not a band of its own: dense it is the height of the select beside
+            it, so this is one row rather than two.
+
+            The same track the filter bar shows on a laptop, not a select of
+            preset ceilings — one control, one vocabulary, both screens. Below
+            lg only; from there the filter bar beside the results carries it.
+            Keyed on the committed amount, so clearing the chip or pressing
+            Clear all puts the thumb back where it belongs. */}
+        <div className="mt-1.5 flex items-center gap-2 lg:hidden">
           <RadiusSelect
             id="toolbar-radius-narrow"
             value={radius}
             onPick={(value) => applyNow({ radius: value })}
-            className="min-w-0 shrink-0"
+            className="shrink-0 md:hidden"
+          />
+          <BudgetSlider
+            id="toolbar-budget"
+            key={maxPrice}
+            amount={maxPrice}
+            onCommit={(next) => applyNow({ maxPrice: next })}
+            dense
+            className="min-w-0 flex-1 rounded-lg bg-panel px-2.5 py-1 ring-1 ring-line"
           />
         </div>
       </div>
@@ -618,8 +646,10 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             {/* Butted into one control, like a scale bar: three positions of the
                 same question, not three separate buttons. */}
             <div className="flex gap-px overflow-hidden rounded-lg ring-1 ring-line">
-              {MODES.map((mode) => {
-                const selected = listingType === mode.value;
+              {SEARCH_MODES.map((mode) => {
+                // PG lights Rent: it is a kind of rental, chosen in the type
+                // list below rather than here.
+                const selected = modeSelectValue(listingType) === mode.value;
                 return (
                   <button
                     key={mode.value}
@@ -644,15 +674,22 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             <label htmlFor="search-type" className={labelClass}>
               Property type
             </label>
+            {/* This one listed SEARCH_PROPERTY_TYPES straight, so it was the
+                only type control in the app that ignored the mode — offering
+                Plot under Rent — and the one that PG never reached. It goes
+                through the same two helpers as the others now. */}
             <select
               id="search-type"
-              value={propertyType}
-              onChange={(event) => setTypeDraft(event.target.value)}
+              value={typeSelectValue(listingType, propertyType)}
+              onChange={(event) => pickType(event.target.value)}
               className={`h-11 ${inputClass}`}
               suppressHydrationWarning
             >
               <option value="">Any type</option>
-              {SEARCH_PROPERTY_TYPES.map((type) => (
+              {searchTypeOptions(
+                listingType,
+                typeSelectValue(listingType, propertyType),
+              ).map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
                 </option>

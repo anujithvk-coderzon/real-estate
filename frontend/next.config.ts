@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "rock-pam-estimation-distributors.trycloudflare.com",
+    "say-revenue-packets-illinois.trycloudflare.com",
   ],
 };
 

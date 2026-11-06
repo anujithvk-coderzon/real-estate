@@ -1,4 +1,4 @@
-import { PROPERTY_TYPES, TYPE_COLOUR } from "@/lib/listing";
+import { CATEGORY_OPTIONS, TYPE_COLOUR } from "@/lib/listing";
 
 // What the pin colours mean. Without this the map is prettier and no more
 // useful; with it, a glance says "the cheap side of town is all plots" before
@@ -16,7 +16,7 @@ import { PROPERTY_TYPES, TYPE_COLOUR } from "@/lib/listing";
 // desktop. Two conditions that had to agree, in two files, is what made that
 // possible; now there is one, here.
 const MapLegend = ({ types }: { types: string[] }) => {
-  const present = PROPERTY_TYPES.filter((type) => types.includes(type.value));
+  const present = CATEGORY_OPTIONS.filter((type) => types.includes(type.value));
   if (present.length < 2) return null;
 
   return (

@@ -262,3 +262,19 @@ export const listTake = z.coerce
 
 export type CreateListingInput=z.infer<typeof registeringValidation>
 export type UpdateListingInput=z.infer<typeof updateValidation>
+// The availability an owner may set on their own listing. Four values, not six:
+// EXPIRED belongs to the expiry job, and TAKEN_DOWN to moderation — a seller who
+// could leave TAKEN_DOWN would make moderation a suggestion.
+//
+// DRAFT is unlisting: it takes the listing out of search and stops its page
+// opening at all, which is stronger than SOLD and loses every link already sent
+// to a buyer. Entering DRAFT is allowed; leaving it is not, because that is
+// publishing and /publish/:id checks what a live listing must have.
+// See docs/adr/0002-listing-availability-status.md.
+export const availabilityValidation = z.object({
+  status: z.enum(["ACTIVE", "SOLD", "RENTED", "DRAFT"], {
+    message: "Choose available, sold, rented or unlisted",
+  }),
+})
+
+export type AvailabilityInput=z.infer<typeof availabilityValidation>

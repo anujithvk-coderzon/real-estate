@@ -1,19 +1,22 @@
 import Link from "next/link";
+import AvailabilityActions from "@/components/listing/AvailabilityActions";
 import { formatNumber, formatRupeesShort, formatTimeAgo } from "@/lib/format";
-import { isRental, labelOf } from "@/lib/listing";
+import { isRental, labelOf, STATUS_LABEL } from "@/lib/listing";
 import type { ListingStatus, ListingSummary } from "@/lib/types";
 
-const STATUS_BADGE: Record<ListingStatus, { text: string; className: string }> =
-  {
-    DRAFT: { text: "Draft", className: "bg-panel/95 text-warn" },
-    ACTIVE: { text: "Live", className: "bg-accent text-white" },
-    SOLD: { text: "Sold", className: "bg-panel/95 text-muted" },
-    RENTED: { text: "Rented", className: "bg-panel/95 text-muted" },
-    EXPIRED: { text: "Expired", className: "bg-panel/95 text-muted" },
-    // Loud on purpose. Every other status here is something the seller did;
-    // this one was done to them, and it is the one they have to notice.
-    TAKEN_DOWN: { text: "Taken down", className: "bg-danger text-white" },
-  };
+// Solid, not the hairline chip the dashboard and edit pages use: this one sits
+// over a photograph, where a border alone disappears. The words come from
+// STATUS_LABEL so all three surfaces say the same thing.
+const BADGE_COLOUR: Record<ListingStatus, string> = {
+  DRAFT: "bg-panel/95 text-warn",
+  ACTIVE: "bg-accent text-white",
+  SOLD: "bg-panel/95 text-muted",
+  RENTED: "bg-panel/95 text-muted",
+  EXPIRED: "bg-panel/95 text-muted",
+  // Loud on purpose. Every other status here is something the seller did;
+  // this one was done to them, and it is the one they have to notice.
+  TAKEN_DOWN: "bg-danger text-white",
+};
 
 const HouseOutline = () => (
   <svg viewBox="0 0 48 48" aria-hidden="true" className="h-10 w-10 text-line">
@@ -28,14 +31,23 @@ const HouseOutline = () => (
   </svg>
 );
 
-const ListingCard = ({ listing }: { listing: ListingSummary }) => {
+// onStatusChange is optional so the card stays usable on a page that has no
+// way to react to the change — without it the card simply offers no
+// availability button, rather than offering one that silently lies.
+const ListingCard = ({
+  listing,
+  onStatusChange,
+}: {
+  listing: ListingSummary;
+  onStatusChange?: (next: ListingStatus) => void;
+}) => {
   const cover = listing.listingImages?.[0]?.path;
   // Falls back rather than throwing. The status comes from a database enum
   // that can grow at any time, and a missing key used to white-screen the
   // seller's whole listings page over one unknown word.
-  const badge = STATUS_BADGE[listing.status] ?? {
-    text: listing.status,
-    className: "bg-panel/95 text-muted",
+  const badge = {
+    text: STATUS_LABEL[listing.status] ?? listing.status,
+    className: BADGE_COLOUR[listing.status] ?? "bg-panel/95 text-muted",
   };
 
   const facts = [
@@ -117,13 +129,29 @@ const ListingCard = ({ listing }: { listing: ListingSummary }) => {
           <span className="text-muted">
             Updated {formatTimeAgo(listing.updatedAt)}
           </span>
-          {/* Sits above the card's link overlay so it stays clickable on its own. */}
-          <Link
-            href={`/list/my/listings/edit/${listing.id}`}
-            className="relative z-10 rounded-lg px-2 py-1 font-medium text-accent transition-colors hover:bg-accent-soft"
-          >
-            {listing.status === "DRAFT" ? "Continue editing" : "Edit"}
-          </Link>
+          {/* Both sit above the card's link overlay so they stay clickable on
+              their own; without relative z-10 the stretched title link covers
+              them and every tap opens the listing instead. */}
+          <div className="relative z-10 flex items-center gap-1">
+            {/* Renders nothing on a draft, an expired listing or a taken-down
+                one, and owns its own confirmation. */}
+            {onStatusChange && (
+              <AvailabilityActions
+                variant="inline"
+                id={listing.id}
+                title={listing.title}
+                listingType={listing.listingType}
+                status={listing.status}
+                onChange={onStatusChange}
+              />
+            )}
+            <Link
+              href={`/list/my/listings/edit/${listing.id}`}
+              className="rounded-lg bg-accent-soft px-2.5 py-1.5 font-medium text-accent transition-colors hover:bg-accent/15"
+            >
+              {listing.status === "DRAFT" ? "Continue editing" : "Edit"}
+            </Link>
+          </div>
         </div>
       </div>
 

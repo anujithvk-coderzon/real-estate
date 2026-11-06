@@ -144,13 +144,13 @@ const ChatThread = ({ id }: { id: string }) => {
     socket.onmessage = (frame) => {
       const event = JSON.parse(frame.data);
       if (event.type !== "message") return;
-      
+
       if (event.conversationId !== id) return;
       setMessages((previous) => [...previous, event.message]);
-          api
-          .post(`/chat/conversation/${id}/read`)
-          .then(() => window.dispatchEvent(new Event(CHAT_UNREAD_CHANGED)))
-          .catch(() => {});
+      api
+        .post(`/chat/conversation/${id}/read`)
+        .then(() => window.dispatchEvent(new Event(CHAT_UNREAD_CHANGED)))
+        .catch(() => {});
     };
     return () => socket.close();
   }, [id]);
@@ -203,9 +203,7 @@ const ChatThread = ({ id }: { id: string }) => {
             // home page. Until the header arrives the slug is unknown, so home
             // is the fallback rather than a dead link.
             href={
-              header?.listing?.slug
-                ? `/property/${header.listing.slug}`
-                : "/"
+              header?.listing?.slug ? `/property/${header.listing.slug}` : "/"
             }
             aria-label="Back to the property"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted transition-colors hover:bg-ground hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -253,7 +251,9 @@ const ChatThread = ({ id }: { id: string }) => {
             the same seller are indistinguishable. */}
         {header && (
           <Link
-            href={header.listing.slug ? `/property/${header.listing.slug}` : "#"}
+            href={
+              header.listing.slug ? `/property/${header.listing.slug}` : "#"
+            }
             className="flex items-center gap-2 border-t border-line bg-accent-soft/50 px-3 py-2 text-[13px] hover:bg-accent-soft sm:px-4"
           >
             <span className="min-w-0 flex-1 truncate text-muted">
@@ -305,9 +305,7 @@ const ChatThread = ({ id }: { id: string }) => {
                   {dayLabel(message.createdAt)}
                 </p>
               )}
-              <div
-                className={mine ? "flex justify-end" : "flex justify-start"}
-              >
+              <div className={mine ? "flex justify-end" : "flex justify-start"}>
                 <div
                   className={`max-w-[80%] px-3.5 py-2 text-[15px] leading-6 ${
                     mine

@@ -110,6 +110,60 @@ export const listingPublishingService=async(userId:string,listingId:string)=>{
   return 'Published successfully'
 }
 
+// Every availability change an owner is allowed to make. One endpoint rather
+// than a status field on update: a PATCH that can quietly carry `status` beside
+// forty other fields is a PATCH where nobody can see who closed a listing or
+// why. See docs/adr/0002-listing-availability-status.md.
+export const listingAvailabilityService=async(userId:string,listingId:string,status:'ACTIVE'|'SOLD'|'RENTED'|'DRAFT')=>{
+  const user=await prisma.user.findUnique({where:{id:userId},select:{id:true}})
+  if(!user) throw new BadRequestError("Invalid Token")
+  const listing=await prisma.listing.findUnique({
+    where:{id:listingId,ownerId:userId},
+    select:{status:true,listingType:true,contactName:true,contactPhone:true},
+  })
+  if(!listing) throw new NotFoundError("Listing not found")
+
+  // Where the listing stands decides whether it may move at all. Each of these
+  // is a state the owner does not own: a draft leaves only by publishing, which
+  // checks photos and a pin first; the other two were not theirs to begin with.
+  // Leaving DRAFT is publishing, and publishing is /publish/:id: it refuses a
+  // listing with no contact details, and this endpoint must not be a way round
+  // that. Entering DRAFT is allowed, below.
+  if(listing.status==='DRAFT') throw new BadRequestError("Publish this listing before changing whether it is available")
+  if(listing.status==='EXPIRED') throw new BadRequestError("This listing has expired. Edit it and publish it again")
+  if(listing.status==='TAKEN_DOWN') throw new BadRequestError("Our team removed this listing after a report. The reason was sent to you in a notification")
+
+  // SALE ends as SOLD, RENT and PG as RENTED. The UI derives this and never
+  // offers the wrong word, but a UI is not a constraint: without this check a
+  // crafted request can mark a hostel sold, and the day that happens neither
+  // status means anything.
+  const closed=listing.listingType==='SALE' ? 'SOLD' : 'RENTED'
+  if(status!=='ACTIVE' && status!=='DRAFT' && status!==closed){
+    throw new BadRequestError(listing.listingType==='SALE'
+      ? "A property for sale can only be marked sold"
+      : "A property to rent can only be marked rented")
+  }
+
+  // Reopening republishes it, so it has to clear the same bar publishing does.
+  // An edit can empty these columns, which would otherwise put a listing back
+  // in search with no way to reach the seller.
+  if(status==='ACTIVE' && (!listing.contactName || !listing.contactPhone)){
+    throw new BadRequestError("Add a contact name and phone number before making this available again \u2014 buyers have no other way to reach you")
+  }
+
+  if(status===listing.status){
+    return status==='ACTIVE' ? 'This listing is already available' : 'This listing is already closed'
+  }
+
+  await prisma.listing.update({where:{id:listingId},data:{status}})
+  if(status==='DRAFT') return 'Unlisted. Its page no longer opens for anyone, and it is back in your drafts'
+  return status==='ACTIVE'
+    ? 'Back in search. Buyers can contact you about it again'
+    : status==='SOLD'
+      ? 'Marked as sold and removed from search'
+      : 'Marked as rented and removed from search'
+}
+
 export const updateListingService=async(userId:string,listingId:string,newData:UpdateListingInput)=>{
  const user=await prisma.user.findUnique({where:{id:userId}})
  if(!user) throw new BadRequestError("Invalid Token")
@@ -365,10 +419,17 @@ const projectClaim=(listing:{
 export const SpecificListFetchingService=async(slug:string,userId?:string)=>{
 const signedIn=userId ? Boolean(await prisma.user.findUnique({where:{id:userId},select:{id:true}})) : false
 const listing=await prisma.listing.findUnique({
-    where:{slug,status:'ACTIVE'},
-    // ownerId is kept here only long enough to answer "is this yours"; it is
-    // destructured out below so it never reaches the browser.
-    omit:{id:true,projectId:true},
+    // Sold and rented listings keep their page on purpose. The link is already
+    // in buyers' WhatsApp threads and in Google's index, and a 404 there throws
+    // away a visitor who has just proved what they are looking for; the page
+    // says it is gone and offers similar ones instead. Search, the map and
+    // similarListingService all still filter ACTIVE.
+    // See docs/adr/0002-listing-availability-status.md.
+    where:{slug,status:{in:['ACTIVE','SOLD','RENTED']}},
+    // ownerId is kept here only long enough to answer "is this yours", and id
+    // only long enough to hand back to the owner; both are destructured out
+    // below so neither reaches anybody else's browser.
+    omit:{projectId:true},
     include:{
         amenities:{select:{name:true,category:true}},
         // The registered project, when the unit is in one of our records.
@@ -381,7 +442,7 @@ const listing=await prisma.listing.findUnique({
     },
 })
 if(!listing) throw new NotFoundError("Listing not found")
-const {contactName,contactPhone,ownerId,
+const {contactName,contactPhone,ownerId,id,
   project:_project,projectNameText:_name,projectReraText:_rera,builderNameText:_builder,
   projectReraAbsence:_absence,
   ...publicFields}=listing
@@ -389,6 +450,10 @@ const isOwner=Boolean(userId) && userId===ownerId
 return {
     ...publicFields,
     isOwner,
+    // Only to the owner, and only because the dashboard routes are keyed by id:
+    // without it an owner reading their own listing cannot be linked to its
+    // editor, and the availability buttons on this page have nothing to call.
+    ...(isOwner && {id}),
     ...(signedIn && {contactName,contactPhone}),
     project:projectClaim(listing),
     listingImages:listing.listingImages.map((img)=>({

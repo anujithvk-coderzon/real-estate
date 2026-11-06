@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { SITE_URL } from "@/lib/site";
+
+const siteUrl = SITE_URL;
 
 // Only the routes that exist without data. Individual listings are not here on
 // purpose: generating them means calling the API at build time, which couples a

@@ -32,12 +32,6 @@ const FILTERS: {
     many: "rented listings",
     status: "RENTED",
   },
-  {
-    label: "Expired",
-    one: "expired listing",
-    many: "expired listings",
-    status: "EXPIRED",
-  },
 ];
 
 // Each sort is a value of the API's ?price= parameter; the default sends none.
@@ -342,7 +336,17 @@ const MyListings = () => {
                     }
                     transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <ListingCard listing={listing} />
+                    <ListingCard
+                      listing={listing}
+                      // Reloaded rather than patched in place: on the Live tab
+                      // a listing just marked sold no longer belongs in the
+                      // list it is sitting in, and the count in every tab
+                      // label is now wrong by one.
+                      onStatusChange={() => {
+                        setReloading(true);
+                        loadView(view);
+                      }}
+                    />
                   </motion.li>
                 ))}
               </AnimatePresence>

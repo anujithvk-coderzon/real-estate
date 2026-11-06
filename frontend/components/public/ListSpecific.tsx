@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import AvailabilityActions from "@/components/listing/AvailabilityActions";
 import BackLink from "@/components/public/BackLink";
 import ReportListing from "@/components/public/ReportListing";
 import Gallery from "@/components/listing/Gallery";
@@ -33,6 +34,7 @@ import {
   RERA_SCOPE,
 } from "@/lib/rera";
 import { authHref, rememberReturn } from "@/lib/returnTo";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { api, authReady } from "@/lib/api";
 import { errorToast } from "@/lib/toast";
 import { apiMessage } from "@/lib/validation/apiError";
@@ -45,10 +47,13 @@ import {
 } from "@/lib/format";
 import {
   amenityCategoryLabel,
+  categoryLabel,
   contactChannels,
   isRental,
+  isUnavailable,
   labelOf,
   listingLocation,
+  unavailableNotice,
 } from "@/lib/listing";
 import {
   availabilityText,
@@ -57,7 +62,7 @@ import {
   landmarkText,
   placeName,
 } from "@/lib/listingDisplay";
-import type { PublicListing } from "@/lib/types";
+import type { ListingStatus, PublicListing } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
 
 type Props = { slug: string };
@@ -65,6 +70,9 @@ type Props = { slug: string };
 // Long descriptions and amenity lists start collapsed, so the page stays easy to scan.
 const LONG_DESCRIPTION = 320;
 const AMENITIES_PREVIEW = 8;
+
+// How much of a listing title the WhatsApp prefill quotes back.
+const TITLE_IN_MESSAGE = 70;
 
 const sectionHeading = "font-display text-[20px] leading-tight";
 const newTabNote = <span className="sr-only"> (opens in a new tab)</span>;
@@ -135,7 +143,13 @@ const glanceFacts = (listing: PublicListing): Fact[] => {
 };
 
 // Price, the running costs for rentals, and how to reach the seller.
-const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
+const PriceAndContact = ({
+  listing,
+  onStatus,
+}: {
+  listing: PublicListing;
+  onStatus: (next: ListingStatus) => void;
+}) => {
   // The same answer the card gave, so a card and the page it opens never
   // disagree about the one registration we publish.
   const agentRera = reraBadge({
@@ -159,14 +173,26 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
   const signedIn = "contactPhone" in listing;
   // Phone numbers are stored as 10 digits; tel: and WhatsApp need the +91 country code.
   const phone = listing.contactPhone?.replace(/\D/g, "").slice(-10);
+  // WhatsApp shows a prefilled message in a single-line input, so a 150-character
+  // title pushes the actual question out of sight before the buyer can read it.
+  const quoted =
+    listing.title.length > TITLE_IN_MESSAGE
+      ? `${listing.title.slice(0, TITLE_IN_MESSAGE - 1).trimEnd()}…`
+      : listing.title;
+  // The link, not the title, is what the seller needs: someone with eight plots
+  // in the same taluk cannot tell them apart from a title they wrote in March.
+  // It goes last and on its own line because WhatsApp only builds a preview card
+  // for a trailing URL — which is what the openGraph tags in app/layout.tsx are
+  // for — and naming the site turns every enquiry into its own advertisement.
   const whatsappText = encodeURIComponent(
-    `Hi, I saw "${listing.title}" and would like to know more.`,
+    `Hi, I saw "${quoted}" on ${SITE_NAME} and would like to know more.\n\n${SITE_URL}${here}`,
   );
 
   // What the seller left switched on. Call and WhatsApp also need a number to
   // dial, so both are gated on the phone as well as on the toggle; chat only
   // needs an account, which is why a listing with no number still has one way in.
   const channels = contactChannels(listing);
+  const gone = isUnavailable(listing.status);
   const canCall = Boolean(phone) && channels.call;
   const canWhatsapp = Boolean(phone) && channels.whatsapp;
   const canChat = signedIn && !listing.isOwner && channels.chat;
@@ -267,7 +293,17 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
       <div className="border-t border-line bg-accent-soft/50 p-5">
         <h2 className="font-display text-[15px]">Contact the seller</h2>
 
-        {listing.isOwner ? (
+        {gone && !listing.isOwner ? (
+          // Leaving the buttons live on a closed listing means the seller keeps
+          // taking calls about land they sold months ago — and a seller punished
+          // for telling us costs us every future sold date. The reward for
+          // marking it has to be fewer useless calls, not the same number.
+          <p className="mt-1.5 text-[14px] text-muted">
+            {unavailableNotice(listing.status)}, so the seller is no longer
+            taking enquiries about it. Similar properties nearby are listed
+            below.
+          </p>
+        ) : listing.isOwner ? (
           // Your own listing. Offering you a button to ring your own phone is
           // worse than useless — it suggests the page does not know who you
           // are. Show what a buyer sees, and the way to change it.
@@ -295,12 +331,35 @@ const PriceAndContact = ({ listing }: { listing: PublicListing }) => {
                 </dd>
               </div>
             </dl>
+            {/* Straight to this listing's own editor. The list was never the
+                destination the owner wanted — it is a page where they have to
+                find again the listing they are already looking at. Falls back
+                to the list only when the server sent no id, which is what an
+                older response, or a cached one, looks like. */}
             <Link
-              href="/list/my/listings"
+              href={
+                listing.id
+                  ? `/list/my/listings/edit/${listing.id}`
+                  : "/list/my/listings"
+              }
               className={`mt-4 block text-center bg-panel ${secondaryButton}`}
             >
-              Manage your listings
+              {listing.id ? "Edit this listing" : "Manage your listings"}
             </Link>
+            {/* Full width under Edit, and only when the server sent the id.
+                Renders nothing on a draft or a taken-down listing, and the
+                banner at the top of the page is what says which state it is
+                in — this button only offers the move. */}
+            {listing.id && (
+              <AvailabilityActions
+                id={listing.id}
+                title={listing.title}
+                listingType={listing.listingType}
+                status={listing.status}
+                onChange={onStatus}
+                className="mt-2 w-full bg-panel"
+              />
+            )}
           </>
         ) : !signedIn ? (
           <>
@@ -692,6 +751,23 @@ const ListSpecific = ({ slug }: Props) => {
     <main className="mx-auto w-full max-w-6xl px-5 pb-20 pt-6 lg:px-8 lg:pt-8">
       <BackLink />
 
+      {/* Above everything, before the photos raise any hope. A closed listing is
+          reachable on purpose — the link lives on in WhatsApp threads and in
+          Google's index — so this line is the whole reason the page still
+          answers instead of 404ing. role="status" because someone arriving by
+          screen reader needs it before the title, not after the gallery. */}
+      {isUnavailable(listing.status) && (
+        <p
+          role="status"
+          className="mt-4 rounded-lg border border-line bg-ground px-4 py-3 text-[15px] text-muted"
+        >
+          <span className="font-medium text-ink">
+            {unavailableNotice(listing.status)}.
+          </span>{" "}
+          It is kept here for reference and no longer appears in search.
+        </p>
+      )}
+
       {/* Phones: photo first, since a phone-width photo is short and the title
           sits right below it. Desktop: title first, so a tall photo never hides
           what the property is. The header stays first in the page's reading
@@ -704,7 +780,7 @@ const ListSpecific = ({ slug }: Props) => {
               {labelOf(listing.listingType)}
             </li>
             <li className="rounded-full bg-panel px-3 py-1 ring-1 ring-line">
-              {labelOf(listing.propertyType)}
+              {categoryLabel(listing)}
             </li>
           </ul>
           <h1 className="mt-3 font-display text-[28px] leading-[1.1] lg:text-[36px]">
@@ -743,7 +819,12 @@ const ListSpecific = ({ slug }: Props) => {
           aria-label="Price and contact"
           className="self-start lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
         >
-          <PriceAndContact listing={listing} />
+          <PriceAndContact
+            listing={listing}
+            onStatus={(next) =>
+              setListing((prev) => prev && { ...prev, status: next })
+            }
+          />
         </aside>
 
         {/* ---------- the details ---------- */}

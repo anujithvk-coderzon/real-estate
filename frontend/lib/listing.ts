@@ -1,4 +1,9 @@
-import type { Listing, ListingFormData, LngLat } from "@/lib/types";
+import type {
+  Listing,
+  ListingFormData,
+  ListingStatus,
+  LngLat,
+} from "@/lib/types";
 
 /* ---------- choices (values match the Prisma enums) ---------- */
 
@@ -12,13 +17,94 @@ export const LISTING_TYPES: Option[] = [
   { value: "PG", label: "PG or hostel" },
 ];
 
-// What a searcher is offered: two choices, not three. PG is not dropped — the
-// API folds PG listings into RENT — it just stops being a third thing to
-// decide between before you have said where you are looking.
+// What a searcher is offered. Rent still returns PG listings — the API's
+// rentCoversPg turns listingType=RENT into { in: ["RENT", "PG"] } — so the two
+// overlap deliberately: Rent is "somewhere to live, monthly", PG narrows that
+// to shared rooms and hostels. The labels have to say so, or picking Rent and
+// finding a hostel in the results reads as a bug.
 export const SEARCH_LISTING_TYPES: Option[] = [
   { value: "SALE", label: "For sale" },
   { value: "RENT", label: "For rent or PG" },
 ];
+
+// The same two, in the words a button row can carry. One list, because the
+// hero had this as `option.value === "SALE" ? "Buy" : "Rent"` in two places —
+// a ternary that labels anything that is not SALE as "Rent", which is fragile
+// even with two and wrong the moment a third value reaches it, as PG now does.
+export const SEARCH_MODES: Option[] = [
+  { value: "SALE", label: "Buy" },
+  { value: "RENT", label: "Rent" },
+];
+
+// ---------------------------------------------------------------------------
+// PG, and why it is in the type list rather than beside Buy and Rent.
+//
+// In the data PG is a listingType, next to SALE and RENT — a tenure, not a
+// kind of building. But nobody shops that way: a PG is always a rent, so a
+// third tab asks a question that is really already answered, while the thing
+// someone is actually choosing between is "a flat, a house, or a PG". So it is
+// offered where the building types are, and these three helpers translate
+// between the one control and the two parameters underneath it.
+// ---------------------------------------------------------------------------
+export const PG_TYPE = "PG";
+
+// What the type select offers. Not under Buy — you cannot purchase a
+// paying-guest arrangement — and PG's own building types are Rent's, since the
+// mode underneath is a narrowing of RENT.
+export const searchTypeOptions = (
+  listingType: string,
+  // What is chosen right now, so the one alternative that overlaps it can be
+  // left out — see below.
+  chosen = "",
+): Option[] => {
+  const kinds = propertyTypeOptions(
+    listingType === PG_TYPE ? "RENT" : listingType,
+    SEARCH_PROPERTY_TYPES,
+  );
+  // Room and PG are the two ways of renting part of a home, and offering both
+  // at once invites the question "what is the difference" at the exact moment
+  // the answer does not matter. So whichever is chosen, the other steps out:
+  // Room means a place of your own, PG means a bed and a landlord's household.
+  const withoutRoom = chosen === PG_TYPE;
+  const withoutPg = chosen === "ROOM";
+  const list = withoutRoom ? kinds.filter((o) => o.value !== "ROOM") : kinds;
+  return listingType === "SALE" || withoutPg
+    ? list
+    : [...list, { value: PG_TYPE, label: "PG or hostel" }];
+};
+
+// What a listing counts as on the map and in its legend. PG is a tenure in the
+// data, so a PG room would otherwise be drawn and listed as "Room" — the one
+// thing this app says it is not.
+export const categoryOf = (listing: {
+  listingType?: string | null;
+  propertyType?: string | null;
+}) =>
+  listing.listingType === PG_TYPE ? PG_TYPE : (listing.propertyType ?? "");
+
+// What that select shows: the tenure wins, because when it is PG the building
+// type is deliberately empty.
+export const typeSelectValue = (listingType: string, propertyType: string) =>
+  listingType === PG_TYPE ? PG_TYPE : propertyType;
+
+// What the two parameters become when it changes. Choosing PG sets the tenure
+// and clears the building type; choosing a building type while PG is on widens
+// the tenure back to RENT rather than leaving a PG filter nobody can see.
+export const typeChoice = (
+  value: string,
+  listingType: string,
+): Record<string, string> =>
+  value === PG_TYPE
+    ? { listingType: PG_TYPE, propertyType: "" }
+    : {
+        propertyType: value,
+        ...(listingType === PG_TYPE ? { listingType: "RENT" } : {}),
+      };
+
+// What the Buy/Rent group shows. PG is a rent, so Rent stays lit — two
+// controls describing one search instead of disagreeing about it.
+export const modeSelectValue = (listingType: string) =>
+  listingType === PG_TYPE ? "RENT" : listingType;
 
 export const PROPERTY_TYPES: Option[] = [
   { value: "APARTMENT", label: "Apartment" },
@@ -28,6 +114,14 @@ export const PROPERTY_TYPES: Option[] = [
   { value: "COMMERCIAL", label: "Commercial space" },
   { value: "OFFICE", label: "Office" },
   { value: "ROOM", label: "Room" },
+];
+
+// The legend's vocabulary: every property type, plus PG. Declared here rather
+// than beside the other PG helpers because a const cannot spread a list that
+// the file has not reached yet.
+export const CATEGORY_OPTIONS: Option[] = [
+  ...PROPERTY_TYPES,
+  { value: PG_TYPE, label: "PG or hostel" },
 ];
 
 // What a searcher is offered: six, not seven. Somebody looking for premises to
@@ -95,6 +189,18 @@ export const TYPE_COLOUR: Record<string, string> = {
   COMMERCIAL: "#d18c76",
   OFFICE: "#d7a352",
   ROOM: "#68a7ae",
+  // A PG is not a room with a different label on it — one is a tenancy of your
+  // own, the other is a bed in a run household — so it gets its own colour on
+  // the map and its own line in the legend, like every other category.
+  //
+  // Rose, not the green this started as. Room is #68a7ae, a teal, and a green
+  // beside it was two colours you had to hold next to each other to tell
+  // apart — on 28px pins scattered across a map, nobody does that. These two
+  // are the pair most likely to appear together and the pair a reader most
+  // needs to separate, so they are put at opposite ends of the wheel: teal
+  // against rose. It also stays clear of the purples, which differ from it in
+  // hue, and of the terracotta, which differs in saturation.
+  PG: "#b2578b",
 };
 
 export const POSTED_BY: Option[] = [
@@ -147,6 +253,15 @@ const LABELS: Record<string, string> = Object.fromEntries(
 
 export const labelOf = (value: string | null | undefined) =>
   value ? (LABELS[value] ?? value) : "";
+
+// What to call a listing on a public surface. A PG is stored with
+// propertyType: ROOM, so labelOf(propertyType) alone calls it "Room" — the one
+// thing the search now insists it is not. Pairs with categoryOf, which decides
+// the same question for the map's pin colours and its legend.
+export const categoryLabel = (listing: {
+  listingType?: string | null;
+  propertyType?: string | null;
+}) => labelOf(categoryOf(listing));
 
 // The same values as the SEARCH surfaces name them. One bar must not carry a
 // chip reading "Commercial space" beside a select reading "Commercial or
@@ -281,12 +396,16 @@ export const propertyTypeOptions = (
   // the search-side merge. A search surface passes SEARCH_PROPERTY_TYPES.
   base: Option[] = PROPERTY_TYPES,
 ) => {
-  if (listingType === "PG") {
-    return base.filter((o) =>
-      ["ROOM", "APARTMENT", "INDEPENDENT_HOUSE"].includes(o.value),
-    );
-  }
-  if (listingType === "RENT") return base.filter((o) => o.value !== "PLOT");
+  // PG used to cut this to three — room, apartment, independent house — on the
+  // reasoning that nobody runs a PG out of a villa. They do, and a searcher who
+  // had picked Villa and then pressed PG watched the choice vanish with no
+  // explanation. So PG now offers what Rent offers.
+  //
+  // PLOT is the one real exclusion, and it is not a matter of taste: a plot is
+  // bare land, so there is nothing on it to rent or to sleep in. Offering it
+  // would be offering a combination that cannot exist.
+  if (listingType === "RENT" || listingType === "PG")
+    return base.filter((o) => o.value !== "PLOT");
   return base;
 };
 
@@ -479,3 +598,122 @@ export const listingLocation = (
   listing.latitude !== null && listing.longitude !== null
     ? [listing.longitude, listing.latitude]
     : null;
+
+/* ---------- availability ---------- */
+
+// SOLD and RENTED are one event told in two words: the property is no longer
+// available. Which word is right is decided by the listing type, never by the
+// seller — offered both, some will mark a rental SOLD, and the moment that
+// happens neither status means anything. One button, one derived value.
+export const closedStatusFor = (listingType?: string | null) =>
+  listingType === "SALE" ? "SOLD" : "RENTED";
+
+// What that button says. PG and RENT both end as RENTED, so both read
+// "rented"; only a sale is "sold".
+export const closeLabel = (listingType?: string | null) =>
+  listingType === "SALE" ? "Mark as sold" : "Mark as rented";
+
+// Reachable by direct link, absent from search: the link is already in buyers'
+// WhatsApp threads and in Google's index, so a 404 here throws away a visitor
+// who has just proved what they are looking for. See docs/adr/0002.
+export const isUnavailable = (status?: string | null) =>
+  status === "SOLD" || status === "RENTED";
+
+// Said in the past tense, because the buyer is reading about something that has
+// already happened to a property they cannot have.
+export const unavailableNotice = (status?: string | null) =>
+  status === "SOLD"
+    ? "This property has been sold"
+    : "This property is no longer available";
+
+// Constant, because nothing about going back on sale depends on the type.
+export const AVAILABLE_LABEL = "Mark as available";
+
+export type AvailabilityMove = {
+  next: ListingStatus;
+  label: string;
+  // Whether it takes the listing off the market, and so whether it is worth a
+  // question first. Reopening is the undo and asks nothing.
+  closing: boolean;
+};
+
+// Every move the owner may make from where the listing stands. EXPIRED belongs
+// to the expiry job and TAKEN_DOWN to moderation, so both return nothing — a
+// seller who could leave TAKEN_DOWN would make moderation a suggestion.
+//
+// Unlisting is deliberately not called "move to draft". A sold listing keeps
+// its page, with a banner and similar properties; a draft's page 404s, so every
+// link already sitting in a buyer's WhatsApp thread dies with it. The word has
+// to say that something is being removed.
+// See docs/adr/0002-listing-availability-status.md.
+export const availabilityMoves = (listing: {
+  listingType?: string | null;
+  status?: string | null;
+}): AvailabilityMove[] => {
+  const closed = closedStatusFor(listing.listingType) as ListingStatus;
+  if (listing.status === "DRAFT")
+    return [{ next: "ACTIVE", label: "Publish listing", closing: false }];
+  if (listing.status === "ACTIVE")
+    return [
+      {
+        next: closed,
+        label: closeLabel(listing.listingType),
+        closing: true,
+      },
+      { next: "DRAFT", label: "Unlist", closing: true },
+    ];
+  if (listing.status === closed)
+    return [
+      { next: "ACTIVE", label: AVAILABLE_LABEL, closing: false },
+      // Also offered here, not only when live: a seller who sold months ago may
+      // want the page gone altogether rather than left standing as a record.
+      { next: "DRAFT", label: "Unlist", closing: true },
+    ];
+  return [];
+};
+
+// The single move a card or a listing page offers: sold or rented when it is
+// live, available again when it is closed. Never publishing — that has its own
+// button with a checklist in front of it — and never unlisting, which belongs
+// on the edit page where there is room to say what it costs.
+export const nextAvailability = (listing: {
+  listingType?: string | null;
+  status?: string | null;
+}): AvailabilityMove | null =>
+  listing.status === "DRAFT"
+    ? null
+    : (availabilityMoves(listing).find((move) => move.next !== "DRAFT") ??
+      null);
+
+// The word for each status, and the chip it is shown in. Three surfaces print
+// these — the card grid over a photo, the dashboard bar, and the edit page —
+// and they used to carry their own copies of the words. The words belong
+// together; only the card keeps its own colours, because a chip over a photo
+// needs a solid background rather than a hairline border.
+export const STATUS_LABEL: Record<ListingStatus, string> = {
+  DRAFT: "Draft",
+  ACTIVE: "Live",
+  SOLD: "Sold",
+  RENTED: "Rented",
+  EXPIRED: "Expired",
+  // Loud on purpose. Every other status is something the seller did; this one
+  // was done to them, and it is the one they have to notice.
+  TAKEN_DOWN: "Taken down",
+};
+
+export const STATUS_CHIP: Record<ListingStatus, string> = {
+  DRAFT: "border-warn/30 bg-warn/10 text-warn",
+  ACTIVE: "border-accent/30 bg-accent-soft text-accent",
+  SOLD: "border-line bg-ground text-muted",
+  RENTED: "border-line bg-ground text-muted",
+  EXPIRED: "border-line bg-ground text-muted",
+  TAKEN_DOWN: "border-danger/30 bg-danger/10 text-danger",
+};
+
+// Falls back rather than throwing: the status is a database enum that can grow
+// at any time, and one unknown word should not take a seller's page down.
+export const statusChip = (status?: string | null) => ({
+  text: STATUS_LABEL[status as ListingStatus] ?? status ?? "",
+  className:
+    STATUS_CHIP[status as ListingStatus] ?? "border-line bg-ground text-muted",
+});

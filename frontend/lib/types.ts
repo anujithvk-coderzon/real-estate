@@ -270,6 +270,12 @@ export type PublicListing = Omit<
   // own Listing shape, which has no such field — and there, absent means the
   // same as false.
   isOwner?: boolean;
+  // The listing's own id, sent only to its owner — the dashboard routes are
+  // keyed by id and this page otherwise knows nothing but the slug, so without
+  // it an owner looking at their own listing cannot be linked to it. Varying
+  // the response by viewer is what contactName and contactPhone below already
+  // do; this follows that rule rather than adding one.
+  id?: string;
   // Only sent to signed-in users; missing for visitors.
   contactName?: string | null;
   contactPhone?: string | null;

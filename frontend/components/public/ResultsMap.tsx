@@ -5,7 +5,13 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatNumber, formatRupeesShort } from "@/lib/format";
-import { TYPE_COLOUR, isRental, labelOf } from "@/lib/listing";
+import {
+  TYPE_COLOUR,
+  categoryLabel,
+  categoryOf,
+  isRental,
+  labelOf,
+} from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 
 type Props = {
@@ -164,7 +170,7 @@ const buildCard = (listing: PublicListingSummary) => {
   }
 
   const specs = [
-    labelOf(listing.propertyType),
+    categoryLabel(listing),
     typeof listing.bedrooms === "number" ? `${listing.bedrooms} bd` : "",
     typeof listing.bathrooms === "number" ? `${listing.bathrooms} ba` : "",
     listing.areaValue
@@ -322,7 +328,7 @@ const ResultsMap = ({
       // PIN_SVG fills with currentColor, so one declaration colours the whole
       // teardrop and its outline stays white.
       label.style.color =
-        TYPE_COLOUR[listing.propertyType] ?? "var(--color-accent)";
+        TYPE_COLOUR[categoryOf(listing)] ?? "var(--color-accent)";
       label.innerHTML = PIN_SVG; // our own fixed SVG, no user text, so innerHTML is safe here
       pin.append(label);
       pin.setAttribute(

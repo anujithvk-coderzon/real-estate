@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { SITE_URL } from "@/lib/site";
+
+const siteUrl = SITE_URL;
 
 // Crawlers are most of how a property site is found, so what they may read is
 // worth stating rather than leaving to a default.
