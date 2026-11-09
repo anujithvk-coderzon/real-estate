@@ -178,29 +178,72 @@ const CATEGORY_PHOTO: Record<string, string> = {
 export const categoryPhoto = (propertyType: string, width = 350) =>
   `https://images.unsplash.com/${CATEGORY_PHOTO[propertyType] ?? CATEGORY_PHOTO.INDEPENDENT_HOUSE}?auto=format&fit=crop&w=${width}&q=85`;
 
-// A colour per type, from the reference's legend. Used for the dot on a card and
-// — once the search map gets it — to colour its pins, so the same property type
-// is the same colour wherever it appears.
+// A colour per type. The dot on a card, the pin on the search map, the teardrop
+// on the hero's illustrated map and the swatch in MapLegend all read from here,
+// so the same property type is the same colour everywhere it appears.
+//
+// These are no longer the reference's legend colours. That set had three
+// purples, a terracotta and an amber in it, and it failed in two ways at once.
+//
+// Villa #a582b9 and Plot #a489ba were 4.9 CIE Lab apart — two different hex
+// strings and one visible colour on a 7px dot. And the set as a whole was
+// 4.7 apart under deuteranopia, the commonest colour blindness: two categories
+// were literally indistinguishable for roughly one man in sixteen looking at
+// the legend.
+//
+// So this set was solved for rather than picked. Candidates were every colour
+// in a mid-lightness, mid-chroma band of CIE LCh that is in sRGB gamut and
+// stays clear of everything a pin must not be mistaken for — the illustrated
+// map's land, parks, water, highway and white roads, plus --color-ink (the
+// "where you searched" dot), --color-accent (the radius ring) and the #1a73e8
+// device blue. From those ~21,000 candidates, eight were chosen to maximise
+// the SMALLEST gap between any two of them, under normal vision and under
+// simulated deuteranopia and protanopia together, with a floor of 30 degrees
+// of hue between neighbours so no two can be described by the same word.
+//
+//   worst of the 28 pairs    before -> after
+//   normal vision              23.8 -> 31.3
+//   deuteranopia                4.7 -> 21.0
+//   protanopia                 14.7 -> 22.0
+//
+// For scale: Okabe-Ito, the published colour-blind-safe eight that most
+// scientific figures use, scores 26.4 / 10.8 / 20.4 on the same measure. This
+// set beats it on all three, because it was allowed to ignore the one
+// constraint Okabe-Ito carries and this map does not — printing on white.
+//
+// Six of the eight kept their hue, so the meanings carry over: Apartment is
+// still blue, House still violet, Office still amber, Room still teal, PG still
+// at the pink end, Commercial still warm. Two had to move, and Villa moved
+// furthest, out of a purple family that could not hold three members.
+//
+// The honest limit, worth knowing before anyone adds a ninth category: eight is
+// already more than colour alone can carry. Dropping to seven would make the
+// worst pair 34.3 and to six 40.6. If the legend ever feels crowded again, the
+// answer is fewer colours — Office and Commercial are already ONE choice in the
+// search, see SEARCH_PROPERTY_TYPES — or a glyph inside the pin so colour stops
+// being the only channel. It is not a tenth hue.
 export const TYPE_COLOUR: Record<string, string> = {
-  APARTMENT: "#648ad0",
-  INDEPENDENT_HOUSE: "#8257bc",
-  VILLA: "#a582b9",
-  PLOT: "#a489ba",
-  COMMERCIAL: "#d18c76",
-  OFFICE: "#d7a352",
-  ROOM: "#68a7ae",
+  APARTMENT: "#226bae",
+  INDEPENDENT_HOUSE: "#a990f8",
+  // Sage. Out of the purples entirely: it was the third of three, and the one
+  // the other two could most afford to lose.
+  VILLA: "#74a872",
+  // Olive, and dark where Villa's green is light — 35 apart, and 20 of that is
+  // lightness alone, so the two survive being printed small and side by side.
+  // A plot is open ground, which is the one category here that is not a
+  // building and the one that earns a green.
+  PLOT: "#696c0f",
+  COMMERCIAL: "#b54766",
+  OFFICE: "#e69340",
+  ROOM: "#18b9b0",
   // A PG is not a room with a different label on it — one is a tenancy of your
-  // own, the other is a bed in a run household — so it gets its own colour on
-  // the map and its own line in the legend, like every other category.
+  // own, the other is a bed in a run household — so it gets its own colour and
+  // its own line in the legend, like every other category.
   //
-  // Rose, not the green this started as. Room is #68a7ae, a teal, and a green
-  // beside it was two colours you had to hold next to each other to tell
-  // apart — on 28px pins scattered across a map, nobody does that. These two
-  // are the pair most likely to appear together and the pair a reader most
-  // needs to separate, so they are put at opposite ends of the wheel: teal
-  // against rose. It also stays clear of the purples, which differ from it in
-  // hue, and of the terracotta, which differs in saturation.
-  PG: "#b2578b",
+  // Still at the pink end, and still the furthest thing on the wheel from
+  // Room's teal, because those two are the pair most likely to appear together
+  // and the pair a reader most needs to separate.
+  PG: "#f485d7",
 };
 
 export const POSTED_BY: Option[] = [

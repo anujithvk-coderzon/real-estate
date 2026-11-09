@@ -17,6 +17,7 @@ import MapLegend from "@/components/public/MapLegend";
 import ResultsMap from "@/components/public/ResultsMap";
 import SearchBar from "@/components/public/SearchBar";
 import { api } from "@/lib/api";
+import { fixErrorKm, gradeFix } from "@/lib/fix";
 import { RADIUS_OPTIONS, categoryOf, type Option } from "@/lib/listing";
 import type { PublicListingSummary } from "@/lib/types";
 import { primaryButton, secondaryButton } from "@/lib/ui";
@@ -132,6 +133,11 @@ const SearchResults = () => {
       ? ([parts[1], parts[0]] as [number, number]) // MapLibre wants lon first
       : null;
   }, [fix]);
+  // How wrong `me` might be, in metres, set by "Find nearby properties" only
+  // when the fix was too coarse to state as fact. Absent on a typed search and
+  // on a precise one, which is what makes `approximate` below false by default
+  // for every link that existed before this.
+  const accuracy = Number(searchParams.get("acc")) || 0;
   // Refinements, applied in the browser.
   const sort = searchParams.get("sort") ?? "";
   const postedBy = searchParams.get("postedBy") ?? "";
@@ -145,9 +151,25 @@ const SearchResults = () => {
   // Radius cannot be one of those: widening it asks for listings the server never
   // sent, so it belongs here and a change refetches.
   const serverQuery = new URLSearchParams(
-    Object.entries({ location, listingType, propertyType, radius }).filter(
-      ([, value]) => value,
-    ),
+    Object.entries({
+      location,
+      listingType,
+      propertyType,
+      radius,
+      // The device's own fix, when "Find nearby properties" supplied it, sent
+      // so the API measures from HERE instead of geocoding `location` back to
+      // the centroid of whatever area got named. The gap between those two
+      // points is the bug this fixes: a property 25 km away reading as 2.4 km,
+      // and the ring drawn around a suburb — or, when the fix resolved no
+      // closer than a district, around a point fifty kilometres off.
+      //
+      // `location` still travels, but with a point the API ignores it and uses
+      // it for nothing: it is this page's label and the map dot's name. And
+      // SearchBar deletes `me` the moment the typed place changes, so these
+      // coordinates are only ever here when the search IS the visitor's own
+      // position.
+      ...(device ? { lat: String(device[1]), lon: String(device[0]) } : {}),
+    }).filter(([, value]) => value),
   ).toString();
 
   const [retry, setRetry] = useState(0);
@@ -210,9 +232,11 @@ const SearchResults = () => {
     () => (loading || !result ? [] : result.listings),
     [loading, result],
   );
-  // What the ring is drawn around: the point the API geocoded the place name
-  // to, because that is the point it measured every distanceKm from. The
-  // device's own fix is NOT it — see the `me` prop below.
+  // What the ring is drawn around: the point the API measured every distanceKm
+  // from, whatever that was. On a nearby search that is now the device's own
+  // fix, sent above, so the ring and the "You are here" dot land on the same
+  // spot. On a typed search it is still the geocoded place, and the two are
+  // different points for the reason the `me` prop documents.
   //
   // Kept WHILE the next search is in flight rather than nulled by `loading`.
   // That null is what made the dot and the ring disappear the moment the
@@ -224,6 +248,17 @@ const SearchResults = () => {
   const center = result?.center ?? device;
   // Empty means the API's own default, which is 10 km.
   const radiusKm = Number(radius) || 10;
+  // Graded here rather than trusted from the URL, because the radius is not
+  // fixed: someone who arrives with a coarse fix and then widens to 50 km has
+  // turned an approximate search into a fair one without touching `acc`, and
+  // the same fix at 10 km is worse than it was at 20. One function in
+  // lib/fix.ts decides, so the button that refuses and the page that captions
+  // cannot drift apart.
+  //
+  // Requires a device fix: an `acc` typed into the URL with no `me` beside it
+  // describes the width of nothing.
+  const approximate =
+    Boolean(device) && accuracy > 0 && gradeFix(accuracy, radiusKm) !== "good";
 
   // 3. Sort and filter. Memoised, so hovering a card doesn't rebuild the map's pins.
   const shown = useMemo(() => {
@@ -305,6 +340,9 @@ const SearchResults = () => {
     // serverQuery holds only what the API is asked for; this is where the
     // search came from, and loosening it does not move the visitor.
     if (fix) next.set("me", fix);
+    // Nor does it improve the fix. Dropping `acc` here would quietly promote a
+    // rough search to an exact-looking one just because a filter came off.
+    if (accuracy) next.set("acc", String(accuracy));
     return `${pathname}?${next}`;
   };
   // The next distance up, or nothing at 50 km. Offered when a search comes back
@@ -316,6 +354,10 @@ const SearchResults = () => {
     const next = new URLSearchParams(serverQuery);
     next.set("radius", value);
     if (fix) next.set("me", fix);
+    // Carried, not dropped — and widening is exactly how a coarse fix stops
+    // being a problem, so the caption can disappear on arrival while the
+    // number that justified it travels with the link.
+    if (accuracy) next.set("acc", String(accuracy));
     // Widening from the map's own message keeps the visitor on the map.
     if (view === "map") next.set("view", "map");
     return `${pathname}?${next}`;
@@ -438,6 +480,24 @@ const SearchResults = () => {
               >
                 {heading}
               </h1>
+              {/* The caveat that outlives the toast. A toast is gone in six
+                  seconds and never comes back on a reload or a shared link,
+                  and the thing it was warning about — every distance on this
+                  page — is still here. This is the same sentence, attached to
+                  the results it is about.
+
+                  Under the heading rather than over it: the heading answers
+                  "what did I get", and this qualifies that answer. warn, not
+                  danger, because nothing failed. The search ran and most of
+                  what came back is genuinely nearby; it is the precision that
+                  is overstated, not the result. */}
+              {approximate && (
+                <p className="mt-3 rounded-lg border border-warn/25 bg-warn/5 px-3 py-2 text-[12.5px] leading-snug text-warn">
+                  Measured from an approximate location — your device placed you
+                  to within about {fixErrorKm(accuracy)} km, so the distances
+                  shown are rough. Search by area name for exact ones.
+                </p>
+              )}
             </div>
 
             {!failed && (
@@ -576,6 +636,7 @@ const SearchResults = () => {
                   >
                     <PublicListingCard
                       listing={listing}
+                      approximate={approximate}
                       showMode={!listingType}
                       highlighted={listing.slug === activeSlug}
                       onHoverChange={(hovered) =>
@@ -613,6 +674,11 @@ const SearchResults = () => {
             radiusKm={radiusKm}
             centerLabel={titleCase(location)}
             me={device}
+            // Kilometres here, metres in the URL: the URL carries what the
+            // browser gave, and every consumer converts for itself rather than
+            // guessing which unit it was handed. 0 when the fix was good
+            // enough, which is what stops the circle being drawn at all.
+            accuracyKm={approximate ? accuracy / 1000 : 0}
             activeSlug={activeSlug}
             onActiveChange={setActiveSlug}
             onSelect={selectFromMap}

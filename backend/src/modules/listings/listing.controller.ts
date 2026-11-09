@@ -1,5 +1,5 @@
 import {  type Request, type Response } from "express";
-import { availabilityValidation, listTake, registeringValidation, searchRadius, updateValidation } from "./listing.validation.js";
+import { availabilityValidation, listTake, registeringValidation, searchPoint, searchRadius, updateValidation } from "./listing.validation.js";
 import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
 import { listingAvailabilityService, sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService, similarListingService, complaintListingService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
@@ -181,10 +181,23 @@ export const userSearch=async(req:Request,res:Response)=>{
     const listingType=req.query.listingType as ListingType;
     const propertyType=req.query.propertyType as PropertyType;
     const location=req.query.location as string;
-    if(!location) throw new BadRequestError("Location required")
     const radius=searchRadius.safeParse(req.query.radius)
     if(!radius.success) throw radius.error
-    const {listings,center}=await searchService(location,radius.data,listingType,propertyType)
+
+    // lat/lon come from the visitor's own device, and when they are here they
+    // win: a coordinate is the position, a place name is only a description of
+    // it. Geocoding the name instead measured every distance from the named
+    // area's centroid, which is how a listing 25 km away came back as 2.4 km.
+    //
+    // Both or neither — one alone is not a point. A name is still required when
+    // there is no point, so every link that worked before this still works.
+    const given=req.query.lat!==undefined && req.query.lon!==undefined
+    const point=given
+      ? searchPoint.parse({lat:req.query.lat,lon:req.query.lon})
+      : undefined
+    if(!point && !location) throw new BadRequestError("Location required")
+
+    const {listings,center}=await searchService(location,radius.data,listingType,propertyType,point)
     return res.status(200).json({message:"Search results fetched successfully",lists:listings,center})
 }
 

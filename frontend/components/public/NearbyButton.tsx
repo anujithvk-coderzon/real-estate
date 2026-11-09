@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LocateIcon, PinIcon } from "@/components/public/icons";
+import { fixErrorKm, gradeFix, widerRadiusFor } from "@/lib/fix";
 import { addressFromPin } from "@/lib/geocode";
-import { errorToast } from "@/lib/toast";
+import { errorToast, warningToast } from "@/lib/toast";
 
 // /list/search takes a place name, geocodes it, and searches a radius around
 // that point. So the phone's coordinates become the name of the area the
@@ -15,25 +16,19 @@ import { errorToast } from "@/lib/toast";
 // also why an empty radius is left meaning "10" everywhere else.
 const DEFAULT_RADIUS = 10;
 
-// How coarse a fix we will still search from, in metres.
+// How coarse a fix we will still search from now lives in lib/fix.ts, with the
+// geometry it comes from. Both thresholds are shared with the results page,
+// which has to make the same judgement about the same fix in order to label it
+// — and a policy copied into two files is a policy that will disagree with
+// itself the first time one of them is edited.
 //
 // The device is never asked what it is. A laptop on a known wifi network is
 // often placed to within 30 m, while a phone indoors with GPS switched off
 // falls back to the mobile network and can be out by 20 km — so "is this a
 // phone?" is the wrong question, and screen width answers an even more
 // different one (a tablet in landscape and a small laptop are the same width).
-// What the browser does hand us is coords.accuracy: the radius, in metres, it
-// is 95% confident the person is inside. That is the only honest test, and it
-// works the same on every device.
-//
-// Half the radius, rather than a fixed number of metres: beyond that the
-// circle we draw has more slack in it than area, and an IP-derived fix — which
-// lands on the ISP's exchange — would produce a search that looks exactly like
-// a working one while answering a question nobody asked. Expressed as a share
-// because the radius is now the visitor's to choose: 5 km of error is useless
-// against a 10 km search and unremarkable against a 50 km one, so a constant
-// in metres would start rejecting fixes that are fine for the wider searches.
-const WORST_FIX_SHARE = 0.5;
+// coords.accuracy is what the browser actually hands us, and it means the same
+// thing everywhere.
 
 type Props = {
   // What the visitor already chose in the hero. Those three controls are
@@ -63,9 +58,8 @@ const NearbyButton = ({
   const [busy, setBusy] = useState(false);
 
   // Resolved to a number here rather than left blank, because the accuracy
-  // test below has to compare against it and the toast has to name it.
+  // test below is relative to it.
   const km = Number(radius) || DEFAULT_RADIUS;
-  const worstFixMetres = km * 1000 * WORST_FIX_SHARE;
 
   const find = () => {
     if (!("geolocation" in navigator)) {
@@ -76,15 +70,55 @@ const NearbyButton = ({
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
-        // Said in kilometres because that is the unit the search is in, and it
-        // makes the reason obvious: "within 38 km" next to a 10 km search
-        // explains itself.
-        if (coords.accuracy > worstFixMetres) {
+        // Three outcomes, not two, and the line between them is geometric
+        // rather than chosen. See lib/fix.ts for the table it comes from.
+        //
+        // "useless" means the search circle and the circle the visitor is
+        // actually standing in cannot touch: every property near them is
+        // outside it and everything it returns is at least a radius away. No
+        // wording makes that result honest, so it is the only case refused.
+        //
+        // The old guard refused everything above HALF the radius, which threw
+        // away the whole middle band — a 21 km fix on a 20 km search covers
+        // about half the area the visitor cares about, and half is not nothing
+        // when the alternative is a toast.
+        const grade = gradeFix(coords.accuracy, km);
+        const offBy = fixErrorKm(coords.accuracy);
+        if (grade === "useless") {
+          // Name the error once and never the radius. It used to read "only
+          // known to within 20 km, which is too rough for a 20 km search" —
+          // the same number twice, apparently refusing itself, because the
+          // number printed was the radius while the number tested was half of
+          // it. "This distance" points at the Distance control without quoting
+          // a figure back that invites the comparison.
+          //
+          // And it names a distance that would work, when one exists, so the
+          // refusal is a route rather than a dead end. widerRadiusFor can
+          // never return the distance already chosen: reaching this branch
+          // means the fix is at least 2x the radius, so anything with overlap
+          // is wider than what is set.
+          const wider = widerRadiusFor(coords.accuracy);
           errorToast(
-            `Your location is only known to within ${Math.round(coords.accuracy / 1000)} km, which is too rough for a ${km} km search. Try searching by area name.`,
+            wider
+              ? `Your device could only place you within ${offBy} km, which is too rough for this distance. Try ${wider.label}, or search by area name.`
+              : `Your device could only place you within ${offBy} km, which is too rough to search around you. Search by area name instead.`,
           );
           setBusy(false);
           return;
+        }
+        if (grade === "approximate") {
+          // A warning, not an error: the search IS happening, and it is behind
+          // this toast already. What it has to carry is the one thing the
+          // results cannot show on their own — that the point everything was
+          // measured from is not exactly where the visitor is standing.
+          //
+          // The results page says the same thing in a way that outlives a
+          // toast: a note under the heading, the uncertainty drawn on the map,
+          // and a ~ on every distance. This is the first warning, not the only
+          // one, which is why it can afford to be one sentence.
+          warningToast(
+            `Your location is only known to within ${offBy} km, so distances here are rough. Search by area name for exact ones.`,
+          );
         }
         try {
           const address = await addressFromPin([
@@ -129,6 +163,22 @@ const NearbyButton = ({
           params.set("radius", String(km));
           params.set("view", "map");
           params.set("me", me);
+          // How wrong `me` might be, in whole metres, and only when it is
+          // worth saying. A fix good enough to search in silence carries no
+          // acc at all, so a precise search keeps a clean URL and the results
+          // page has nothing to caveat.
+          //
+          // In the URL rather than in memory because the results page is a
+          // separate route: a reload, a shared link or the back button all
+          // arrive with no React state, and a page that forgot the fix was
+          // rough would start stating rough distances as fact. The same
+          // reasoning that put `me` here.
+          //
+          // Metres, as the browser gave it, so the one place that rounds is
+          // the one place that prints.
+          if (grade === "approximate")
+            params.set("acc", String(Math.round(coords.accuracy)));
+          else params.delete("acc");
           // Absent rather than present-and-empty, so the URL says only what was
           // actually chosen.
           if (listingType) params.set("listingType", listingType);

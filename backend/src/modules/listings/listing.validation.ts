@@ -247,6 +247,32 @@ export const searchRadius = z.coerce
   .refine((km) => [10, 20, 30, 40, 50].includes(km), "Choose 10, 20, 30, 40 or 50 km")
   .default(10)
 
+// The point a search is measured from, when the visitor's own device supplied
+// it instead of a place name.
+//
+// This exists because a name is a lossy way to carry a position. "Find nearby
+// properties" has the exact fix in hand, and sending only the locality name
+// meant the server geocoded that name back to a CENTROID and measured every
+// distance from there — so a listing could read "2.4 km" while standing 25 km
+// away, and the ring on the map was drawn around the centroid rather than the
+// visitor. The error grew with the name: a suburb is a kilometre or two out, a
+// district can be fifty.
+//
+// Coerced because query strings are strings. Bounded to India for the same
+// reason the listing's own coordinates are: a longitude of 900 is not a place,
+// and this arrives in a URL anyone can type.
+export const searchPoint = z.object({
+  lat: z.coerce
+    .number()
+    .min(6.5, "Location must be inside India")
+    .max(37.6, "Location must be inside India"),
+  lon: z.coerce
+    .number()
+    .min(68.1, "Location must be inside India")
+    .max(97.4, "Location must be inside India"),
+})
+export type SearchPoint = z.infer<typeof searchPoint>
+
 // How many listings one page returns. The home page wants eight; the catalogue
 // wants a full page.
 //

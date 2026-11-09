@@ -27,3 +27,12 @@ export const successToast = (message: string) => {
 export const errorToast = (message: string) => {
   toast.error(message, { duration: 4000, style: toastStyle });
 };
+
+// For something that went ahead anyway and the visitor should know about —
+// amber under richColors, where an error is red. Longer than an error toast
+// because nothing failed and there is no retry to get on with: this is a
+// caveat to read, and the thing it is a caveat about is already on screen
+// behind it.
+export const warningToast = (message: string) => {
+  toast.warning(message, { duration: 6000, style: toastStyle });
+};

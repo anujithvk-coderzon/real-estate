@@ -16,6 +16,15 @@ type Props = {
   highlighted?: boolean;
   // Search results: tell the map which card the pointer is on.
   onHoverChange?: (hovered: boolean) => void;
+  // Set when the search was measured from a device fix too coarse to state as
+  // fact — see lib/fix.ts. The number below is then right about the search and
+  // wrong about the visitor by up to the width of the fix, so it is shown as an
+  // estimate rather than suppressed: "roughly 3 km away" is still worth having,
+  // "3.0 km" is a claim nobody can stand behind.
+  //
+  // A prop rather than something read from the listing, because it is a fact
+  // about the SEARCH and every card on the page shares it.
+  approximate?: boolean;
 };
 
 // "650 m" or "2.4 km"
@@ -112,6 +121,7 @@ const PublicListingCard = ({
   showMode = true,
   highlighted = false,
   onHoverChange,
+  approximate = false,
 }: Props) => {
   const cover = listing.listingImages?.[0]?.path;
   // Every photograph the feed already sends, capped. /list/all selects
@@ -376,8 +386,16 @@ const PublicListingCard = ({
           <span className="min-w-0 truncate">{place}</span>
           {typeof listing.distanceKm === "number" && (
             <span className="shrink-0 tabular-nums">
-              &middot; {formatDistance(listing.distanceKm)}
-              <span className="sr-only"> from the searched place</span>
+              {/* The tilde is the whole signal in two characters, which is all
+                  the room a card has. The screen-reader text carries what it
+                  stands for, because "~" is read aloud as nothing at all. */}
+              &middot; {approximate ? "~" : ""}
+              {formatDistance(listing.distanceKm)}
+              <span className="sr-only">
+                {approximate
+                  ? " from your approximate location"
+                  : " from the searched place"}
+              </span>
             </span>
           )}
         </p>

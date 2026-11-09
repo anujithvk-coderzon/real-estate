@@ -549,24 +549,52 @@ const HeroStage = () => {
 
             bg-ground of its own: the section is bg-ground/40, and the map's own
             edges would otherwise sit on a tint rather than the page. */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[176px] overflow-hidden bg-ground lg:hidden">
-          <MapPlate radiusKm={Number(km) || 10} />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[208px] overflow-hidden bg-ground lg:hidden">
+          {/* offsetY slides the drawing up inside the band. Centred, the band
+              showed the stripe y 123-326 of a 450-unit drawing, which put the
+              ring's centre at 88px — directly under the heading and the solid
+              end of the fade, so the part of the map worth seeing was the part
+              covered up. 55 units is about 48px on a phone: the centre and the
+              pins move into the clear air above the heading, and the ring stays
+              on the plate instead of being pushed off the top.
+
+              One number, so it is a dial. Raise it to show more of the lower
+              map, drop it towards 0 to put the plate back where it was. */}
+          <MapPlate radiusKm={Number(km) || 10} offsetY={55} />
           {/* The fade is what makes the controls readable over a drawing. It
               has to be near solid by the time the labels start — those are
               10px uppercase text-muted, the lowest-contrast type on the page,
               and they cannot share a background with a street grid. The
-              heading above them is display-size and dark, so it can. */}
+              heading above them is display-size and dark, so it can.
+
+              It used to start at ground/5 and be at ground/40 by halfway,
+              which veiled the drawing over its whole height to protect text
+              that now starts near the bottom edge. With the content pushed
+              down, the fade can hold off: /0 through the stretch the map has
+              to itself, then solid by the band's end, which is where the
+              heading lands. Same job, done in the last quarter instead of
+              everywhere. */}
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-b from-ground/5 via-ground/40 to-ground"
+            className="absolute inset-0 bg-gradient-to-b from-ground/0 via-ground/10 to-ground"
           />
         </div>
 
-        {/* pt-24 on a phone clears the band's top half, so the map gets a
-            stretch of its own to be seen in before the heading lands on it.
-            lg:py-7 puts the compact padding back where the contour takes
-            over. */}
-        <div className="relative mx-auto w-full max-w-7xl px-5 pb-6 pt-24 lg:px-10 lg:py-7">
+        {/* The phone's top padding is what gives the map its own stretch of
+            screen before the heading lands on it. It was pt-24 — 96px of a
+            176px band, so the drawing was half visible and half under text,
+            and the pins and the ring's centre were in the covered half.
+
+            196px of a 208px band: the map is clear almost to the band's edge,
+            and only the heading's top sliver overlaps it, at the point where
+            the fade has already gone solid. The labels and controls start
+            below the band entirely, on the section's own background, so the
+            lowest-contrast type on the page never shares a background with a
+            street grid.
+
+            lg:pt-7 puts the compact padding back where the contour takes
+            over and the band is not rendered at all. */}
+        <div className="relative mx-auto w-full max-w-7xl px-5 pb-6 pt-[196px] lg:px-10 lg:py-7 lg:pt-7">
           <h1
             id="home-heading"
             className="font-display text-[22px] leading-tight"

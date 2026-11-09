@@ -19,9 +19,11 @@ type Props = {
   // What the map frames: the whole search. Filters then only add or remove pins,
   // so the view stays put instead of jumping (or flying off to all of India at 0 matches).
   frame?: PublicListingSummary[];
-  // THE point the API measured every distanceKm from: the place name, as
-  // Nominatim geocoded it. The ring has to be drawn around this and nothing
-  // else, because `distanceKm <= km` is the filter that decided what came back.
+  // THE point the API measured every distanceKm from. On a typed search that is
+  // the place name as Nominatim geocoded it; on a nearby search it is the
+  // device's own fix, which the API is now sent directly. The ring has to be
+  // drawn around this and nothing else, because `distanceKm <= km` is the
+  // filter that decided what came back.
   center?: [number, number] | null;
   // The radius the search used, so an empty result frames the area that was
   // actually looked at rather than an arbitrary zoom. Also what the ring on the
@@ -29,12 +31,25 @@ type Props = {
   radiusKm?: number;
   // What to call that point: the name of the place the search was aimed at.
   centerLabel?: string;
-  // The device's own position, when "Find nearby properties" supplied it. A
-  // SEPARATE point, deliberately: the search is anchored on a place name, and
-  // the point Nominatim returns for a suburb can be a kilometre or two from
-  // where the visitor is standing. Drawing the ring around the visitor instead
-  // was what put a property the API called 9.8 km away outside a 10 km circle.
+  // The device's own position, when "Find nearby properties" supplied it.
+  //
+  // Still a separate prop from `center`, because the two are not always the
+  // same point — but on a nearby search they now coincide, because the fix is
+  // sent to the API and the API measures from it. They differ only when a
+  // visitor who pressed the button then typed a different place, and keeping
+  // them apart is what stops the ring from being drawn around a point the
+  // `distanceKm <= km` filter never used: that mismatch is what once put a
+  // property the API called 9.8 km away outside a 10 km circle.
   me?: [number, number] | null;
+  // How wrong `me` might be, in kilometres, when the fix was too coarse to
+  // state as fact. 0 or absent means it was good enough to say nothing about.
+  //
+  // Drawn as a second circle around the device dot, in the device's own blue,
+  // because the map is the only place that can show what a caveat in words
+  // cannot: the visitor is somewhere in THERE, and the search was run from one
+  // point inside it. The gap between the two circles is the whole explanation
+  // for why a distance on a card is approximate.
+  accuracyKm?: number;
   activeSlug?: string | null;
   onActiveChange?: (slug: string | null) => void;
   onSelect?: (slug: string) => void;
@@ -87,6 +102,14 @@ const circleAround = ([lon, lat]: [number, number], km: number) => {
 const AREA_SOURCE = "search-area";
 const AREA_FILL = "search-area-fill";
 const AREA_EDGE = "search-area-edge";
+
+// And the same three for the uncertainty around the device fix. Its own source
+// rather than a second feature in the first, because the two circles come and
+// go independently: the search area is always drawn, this one only when the fix
+// was coarse.
+const FIX_SOURCE = "device-accuracy";
+const FIX_FILL = "device-accuracy-fill";
+const FIX_EDGE = "device-accuracy-edge";
 
 // The device-location blue of every map people already use. The one place on
 // this site that deliberately steps outside the palette: here the colour is
@@ -148,7 +171,7 @@ const formatDistance = (km: number) =>
 // The preview above a pin: a small copy of the result card, in the same order
 // (photo → price → size and rooms → title → place), so nothing has to be re-learned.
 // Built with textContent (never innerHTML), because titles and places are typed by users.
-const buildCard = (listing: PublicListingSummary) => {
+const buildCard = (listing: PublicListingSummary, approximate: boolean) => {
   const text = (className: string, content: string) => {
     const element = document.createElement("span");
     element.className = className;
@@ -179,9 +202,12 @@ const buildCard = (listing: PublicListingSummary) => {
   ].filter(Boolean);
 
   const place = [listing.locality, listing.city].filter(Boolean).join(", ");
+  // Same tilde the result cards use, for the same reason: this preview is a
+  // small copy of one, and a distance that is an estimate there cannot be a
+  // fact here.
   const distance =
     typeof listing.distanceKm === "number"
-      ? ` · ${formatDistance(listing.distanceKm)}`
+      ? ` · ${approximate ? "~" : ""}${formatDistance(listing.distanceKm)}`
       : "";
 
   const body = document.createElement("span");
@@ -213,11 +239,17 @@ const ResultsMap = ({
   radiusKm = 10,
   centerLabel = "",
   me = null,
+  accuracyKm = 0,
   activeSlug = null,
   onActiveChange,
   onSelect,
 }: Props) => {
   const router = useRouter();
+  // One derived flag for the three places that have to agree: the uncertainty
+  // circle, the tilde in a pin's preview, and the dot's own label. It needs
+  // BOTH a fix and a width — an accuracy with no `me` has nothing to be drawn
+  // around, and a `me` with no accuracy was good enough to say nothing about.
+  const approximate = Boolean(me) && accuracyKm > 0;
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const pins = useRef(
@@ -303,7 +335,7 @@ const ResultsMap = ({
 
     const showPreview = (listing: PublicListingSummary) => {
       keepOpen();
-      const card = buildCard(listing);
+      const card = buildCard(listing, approximate);
       card.addEventListener("click", (event) => {
         event.preventDefault(); // stay in the app instead of reloading the page
         router.push(`/property/${listing.slug}`);
@@ -361,7 +393,7 @@ const ResultsMap = ({
       placed.forEach(({ marker }) => marker.remove());
       placed.clear();
     };
-  }, [listings, router]);
+  }, [listings, router, approximate]);
 
   // Frame the whole search once per result set. Filter changes don't touch the
   // camera, so a map the user has panned stays where they left it.
@@ -424,13 +456,64 @@ const ResultsMap = ({
     const current = map.current;
     if (!current) return;
 
+    // How wrong the device fix might be, drawn around the device dot. Before
+    // the early return below, because a search with no geocodable centre still
+    // has a visitor standing somewhere, and a stale accuracy circle left on the
+    // map would be claiming a width the current fix does not have.
+    //
+    // Solid where the search edge is dashed, and in the device's own blue
+    // rather than the accent: the two circles mean different things and have to
+    // be told apart at a glance. The ring is "what was searched". This is
+    // "where you might be" — and when it is much the larger of the two, that
+    // is the picture a sentence on a card cannot draw.
+    const drawFix = () => {
+      if (!me) return;
+      const data = circleAround(me, accuracyKm);
+      const existing = current.getSource(FIX_SOURCE);
+      if (existing) {
+        (existing as maplibregl.GeoJSONSource).setData(data);
+        return;
+      }
+      current.addSource(FIX_SOURCE, { type: "geojson", data });
+      current.addLayer({
+        id: FIX_FILL,
+        type: "fill",
+        source: FIX_SOURCE,
+        // Fainter than the search area's 0.06, because this circle is usually
+        // the bigger of the two and a tint that reads well at 10 km would
+        // flood the screen at 40.
+        paint: { "fill-color": DEVICE_BLUE, "fill-opacity": 0.05 },
+      });
+      current.addLayer({
+        id: FIX_EDGE,
+        type: "line",
+        source: FIX_SOURCE,
+        paint: {
+          "line-color": DEVICE_BLUE,
+          "line-width": 1,
+          "line-opacity": 0.45,
+        },
+      });
+    };
+    const clearFix = () => {
+      for (const id of [FIX_FILL, FIX_EDGE])
+        if (current.getLayer(id)) current.removeLayer(id);
+      if (current.getSource(FIX_SOURCE)) current.removeSource(FIX_SOURCE);
+    };
+    if (approximate) {
+      if (current.isStyleLoaded()) drawFix();
+      else current.once("load", drawFix);
+    } else clearFix();
+
     // A place the geocoder could not find has no area to draw, and a ring left
     // over from the previous search would be pointing at the wrong town.
     if (!center) {
       for (const id of [AREA_FILL, AREA_EDGE])
         if (current.getLayer(id)) current.removeLayer(id);
       if (current.getSource(AREA_SOURCE)) current.removeSource(AREA_SOURCE);
-      return;
+      // Returning here skips the cleanup at the bottom of the effect, so the
+      // one listener registered above has to be let go of here too.
+      return () => current.off("load", drawFix);
     }
 
     const data = circleAround(center, radiusKm);
@@ -490,19 +573,29 @@ const ResultsMap = ({
     // ring does: the circle is the area that was searched, the blue dot is you,
     // and a property can be near the one without being near the other.
     const here = me
-      ? new maplibregl.Marker({ element: mapDot("You are here", true) })
+      ? new maplibregl.Marker({
+          element: mapDot(
+            // The label is the dot's accessible name and its tooltip, so it is
+            // the only place a screen reader learns the fix is rough.
+            approximate
+              ? `Roughly where you are, to within ${Math.ceil(accuracyKm)} km`
+              : "You are here",
+            true,
+          ),
+        })
           .setLngLat(me)
           .addTo(current)
       : null;
 
     return () => {
       current.off("load", draw);
+      current.off("load", drawFix);
       anchor?.remove();
       here?.remove();
       // The layers are left in place and only re-fed above: a new search moves
       // the ring, it does not need a new source. They go with the map itself.
     };
-  }, [center, radiusKm, centerLabel, me]);
+  }, [center, radiusKm, centerLabel, me, accuracyKm, approximate]);
 
   // Light up the pin of the card being hovered (and bring it above its neighbours).
   useEffect(() => {

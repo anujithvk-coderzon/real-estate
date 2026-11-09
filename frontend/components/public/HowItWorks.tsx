@@ -43,16 +43,33 @@ const Steps = ({
   eyebrow,
   heading,
   steps,
+  // A stamp beside the heading, for a card that has something to claim. Only
+  // the seller card uses it: "free" is the reason a seller picks an unknown
+  // site over the portals that charge owners to post, and it belongs on the
+  // heading rather than buried as a fourth step, because it is not a step.
+  badge,
 }: {
   eyebrow: string;
   heading: string;
   steps: { title: string; body: string }[];
+  badge?: string;
 }) => (
   <div className="rounded-2xl bg-panel p-6 ring-1 ring-line sm:p-7">
     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent">
       {eyebrow}
     </p>
-    <h3 className="mt-2 font-display text-[22px] leading-tight">{heading}</h3>
+    {/* flex-wrap, so a long heading and the stamp stack on a narrow phone
+        instead of squeezing the words. items-center rather than baseline: the
+        pill has padding of its own and reads as hung off the line, not sat on
+        it. */}
+    <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+      <h3 className="font-display text-[22px] leading-tight">{heading}</h3>
+      {badge && (
+        <span className="rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-accent">
+          {badge}
+        </span>
+      )}
+    </div>
     {/* Numbered, because these are in an order. The number is the only
         decoration in here — a row of icons would be three more things to
         read before the sentence that matters. */}
@@ -99,7 +116,12 @@ const HowItWorks = () => (
 
     <div className="mt-7 grid grid-cols-1 gap-4 lg:grid-cols-2">
       <Steps eyebrow="If you are looking" heading="Find it" steps={BUYER} />
-      <Steps eyebrow="If you are selling" heading="List it" steps={SELLER} />
+      <Steps
+        eyebrow="If you are selling"
+        heading="List it"
+        steps={SELLER}
+        badge="Free"
+      />
     </div>
 
     <div className="mt-6 flex flex-wrap items-center gap-2.5">
@@ -112,8 +134,19 @@ const HowItWorks = () => (
       <Link href="/auth/login" className={secondaryButton}>
         Sign in
       </Link>
+      {/* This used to read "Free to browse. An account is needed to contact a
+          seller or to list." Both sentences were true and together they said
+          the wrong thing: naming browsing as the free part implies listing is
+          the part that is not, and the only other mention of listing was in a
+          sentence about what an account is needed FOR. A seller reading it
+          learned the cost of posting was unstated, which on a market where the
+          big portals charge owners reads as "paid".
+
+          Parallel now, and free of "always" for the reason stamped in the
+          header. */}
       <p className="text-[13px] text-muted">
-        Free to browse. An account is needed to contact a seller or to list.
+        Free to browse and free to list. An account is needed to contact a
+        seller or to post a property.
       </p>
     </div>
   </section>

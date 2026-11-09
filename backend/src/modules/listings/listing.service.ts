@@ -4,7 +4,7 @@ import { PropertyType, type ListingType, type PostedBy, type Prisma, type Projec
 import { toSQFT } from "../../lib/area.js";
 import { avatarPublicUrl, cdnUrl, uploadImage, uploadVideo, videoEmbedUrl } from "../../lib/bunny.js";
 import { prisma } from "../../lib/prisma.js";
-import type { CreateListingInput, UpdateListingInput } from "./listing.validation.js";
+import type { CreateListingInput, SearchPoint, UpdateListingInput } from "./listing.validation.js";
 import redis from "../../lib/redis.js";
 import { ListingStatus, type ListingOrderBy } from "./listing.type.js";
 import type { ListingWhereInput } from "../../generated/prisma/models.js";
@@ -591,17 +591,37 @@ export const reverseGeoCodingService=async(lat:number,lon:number)=>{
   return response.data.address
 }
 
-export const searchService=async(location:string,km:number,type?:ListingType,property?:PropertyType,)=>{
-const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
-    timeout:5000,
-    params:{q:location,countrycodes:NOMINATIM_COUNTRY_CODE,
-    format:"jsonv2"
-}})
-const result = response.data[0];
-if (!result) return {center:null,listings:[]};
-const lat = Number(result.lat);
-const long = Number(result.lon);
+// `point` is the visitor's own position, from "Find nearby properties". When it
+// is given it IS the centre, and nothing is geocoded: the device already knows
+// where it is, and asking Nominatim to turn a locality name back into a
+// coordinate only moves the answer. That round trip is what made a property
+// 25 km away read as 2.4 km and drew the map's ring around a suburb centroid
+// instead of the visitor — the further the name's scale, the worse it got, and
+// a district centroid can be fifty kilometres from anywhere inside it.
+//
+// `location` still arrives on that path, but only as the label the results page
+// shows. It must NOT reach the where clause below, because a name match is a
+// different question from "within km of this point" and would put listings from
+// an identically named locality in another state into a search anchored on a
+// GPS fix.
+export const searchService=async(location:string,km:number,type?:ListingType,property?:PropertyType,point?:SearchPoint,)=>{
+let lat:number
+let long:number
+if(point){
+  lat=point.lat
+  long=point.lon
+}else{
+  const response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
+      headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
+      timeout:5000,
+      params:{q:location,countrycodes:NOMINATIM_COUNTRY_CODE,
+      format:"jsonv2"
+  }})
+  const result = response.data[0];
+  if (!result) return {center:null,listings:[]};
+  lat = Number(result.lat);
+  long = Number(result.lon);
+}
 
 const where:ListingWhereInput=({
   status:ListingStatus.ACTIVE,
@@ -611,9 +631,12 @@ const where:ListingWhereInput=({
   ...(property && {
     propertyType:property
   }),
-  OR: [
-  boxAround(lat, long, km),                                      
-  { locality: { contains: location, mode: "insensitive" } },     
+  // On a coordinate search the box is the whole question. On a typed search the
+  // name is allowed to match as well, for a listing whose locality is what was
+  // asked for.
+  OR: point ? [boxAround(lat, long, km)] : [
+  boxAround(lat, long, km),
+  { locality: { contains: location, mode: "insensitive" } },
   { city: { contains: location, mode: "insensitive" } },
   { district: { contains: location, mode: "insensitive" } },
 ],
