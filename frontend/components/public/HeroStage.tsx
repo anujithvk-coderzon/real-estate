@@ -563,7 +563,7 @@ const HeroStage = () => {
               "YMid" crops about. Its pins occupy 87 units, so every width from
               320px to 1023px keeps all eight, and the offset that used to hold
               it together is no longer needed to hold anything. */}
-          <MapPlate radiusKm={Number(km) || 10} pins="band" />
+          <MapPlate radiusKm={Number(km) || 10} pins="strip" />
           {/* The fade is what makes the controls readable over a drawing. It
               has to be near solid by the time the labels start — those are
               10px uppercase text-muted, the lowest-contrast type on the page,
@@ -845,7 +845,7 @@ const HeroStage = () => {
                   <div className="absolute inset-0 md:hidden">
                     <MapPlate
                       radiusKm={Number(km) || 10}
-                      pins="band"
+                      pins="scatter"
                       offsetY={78}
                     />
                   </div>
@@ -1060,6 +1060,28 @@ const HeroStage = () => {
                 a decorative row raises on its own — what are these for — and
                 says the one thing visitors get wrong about the search, that
                 leaving the type alone returns all of them rather than none. */}
+            {/* What the eight colours on the drawing above are — on a phone,
+                which is the only width where that question goes unanswered.
+                From md the heading and the row of labelled type cards below
+                answer it; both are md:block and md:flex, so a phone gets eight
+                unexplained colours and nothing that names a single kind of
+                property the site carries.
+
+                Short enough to read in the gap between the search and the
+                scroll: the kinds, and the one thing visitors get wrong, which
+                is that leaving the type alone returns all of them rather than
+                none. "one pin each above" is what ties the words to the
+                colours, and is the whole reason this is a sentence rather than
+                a decorative line.
+
+                Claims nothing the drawing does not: no counts, no prices, no
+                places. The same line the pins themselves have to hold. */}
+            <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[13px] leading-snug text-muted md:hidden">
+              <span className="annot">Every kind</span>
+              Apartments, houses, villas, plots, shops and rooms — one pin each
+              above. Leave the type alone and the search returns all of them.
+            </p>
+
             <div className="mt-12 hidden text-center md:block">
               <h2 className="font-display text-[20px] leading-tight">
                 Every kind of property, in one search

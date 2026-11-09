@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import NearbyButton from "@/components/public/NearbyButton";
 import { rememberHomeSearch } from "@/lib/homeSearch";
@@ -35,12 +35,6 @@ type Props = {
   // type choices live in the filter bar there, so asking for them twice on one
   // screen would be the form competing with itself.
   variant?: "card" | "toolbar" | "compact";
-  // toolbar only: one more control for the phone's own row, placed after the
-  // distance. The search page puts its "More filters" button here, because on
-  // a phone in map view the filter bar beside the results is underneath a
-  // fixed, full-screen map and cannot be reached at all. Passed in rather than
-  // built here so this file keeps knowing nothing about the sheet it opens.
-  extra?: ReactNode;
 };
 
 const MAX_LOCATION_LENGTH = 100;
@@ -139,16 +133,28 @@ const ClearLocation = ({
 const ModeGroup = ({
   value,
   onToggle,
+  compact = false,
   className = "",
 }: {
   value: string;
   onToggle: (value: string) => void;
+  // The phone's row has four questions to fit across 288px of usable width, so
+  // its copy of this control gives back what it can: 4px of padding instead of
+  // 8, 20px of button padding instead of 28, and 13px type instead of 14. The
+  // height does not move — 44px is the finger, and the row is read at a glance
+  // rather than studied, so a point of type size costs nothing here. A prop
+  // rather than an override through className: these are padding utilities
+  // against padding utilities, and which one wins is the CSS emit order, which
+  // is not a thing to leave a layout standing on.
+  compact?: boolean;
   className?: string;
 }) => (
   <div
     role="group"
     aria-label="Looking to"
-    className={`flex h-11 rounded-lg bg-panel p-1 ring-1 ring-line md:h-10 ${className}`}
+    className={`flex h-11 rounded-lg bg-panel ring-1 ring-line md:h-10 ${
+      compact ? "p-0.5" : "p-1"
+    } ${className}`}
   >
     {SEARCH_MODES.map((mode) => {
       const selected = value === mode.value;
@@ -158,9 +164,9 @@ const ModeGroup = ({
           type="button"
           onClick={() => onToggle(mode.value)}
           aria-pressed={selected}
-          className={`flex-1 rounded-lg px-3.5 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent md:flex-none ${
-            selected ? "bg-accent text-white" : "text-muted hover:text-ink"
-          }`}
+          className={`flex-1 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent md:flex-none ${
+            compact ? "px-2.5 text-[13px]" : "px-3.5 text-[14px]"
+          } ${selected ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
         >
           {mode.label}
         </button>
@@ -220,6 +226,7 @@ const TypeSelect = ({
   value,
   mode,
   onPick,
+  compact = false,
   className = "",
 }: {
   id: string;
@@ -229,6 +236,11 @@ const TypeSelect = ({
   // rent.
   mode: string;
   onPick: (value: string) => void;
+  // 8px of side padding instead of 12, for the phone's row. The TEXT stays at
+  // 16px in both: anything smaller and iOS zooms the whole page in when the
+  // select takes focus, and on the results page the map underneath is then the
+  // wrong size. So the only width left to give back is the padding.
+  compact?: boolean;
   className?: string;
 }) => (
   <>
@@ -239,7 +251,9 @@ const TypeSelect = ({
       id={id}
       value={value}
       onChange={(event) => onPick(event.target.value)}
-      className={`h-11 rounded-lg border border-line bg-panel px-3 text-[16px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:h-10 md:text-[15px] ${className}`}
+      className={`h-11 rounded-lg border border-line bg-panel text-[16px] text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 md:h-10 md:text-[15px] ${
+        compact ? "px-2" : "px-3"
+      } ${className}`}
     >
       <option value="">Any type</option>
       {searchTypeOptions(mode, value).map((type) => (
@@ -251,7 +265,7 @@ const TypeSelect = ({
   </>
 );
 
-const SearchBar = ({ initialValues, variant = "card", extra }: Props) => {
+const SearchBar = ({ initialValues, variant = "card" }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -563,66 +577,57 @@ const SearchBar = ({ initialValues, variant = "card", extra }: Props) => {
           </button>
         </form>
 
-        {/* The phone's own row: what, which kind, how far, and the way in to
-            everything else — in that order, left to right, which is the order
-            the questions get asked.
+        {/* The phone's own row: what, which kind, and how far. One row, where
+            it was two.
 
-            One row, where it was two. The distance used to sit on a third line
-            with a budget slider beside it, and that slider was a second copy of
-            the one in the filter sheet: two controls for one number, and on the
-            map a whole line of screen spent on it. That line is map now, and
-            the budget is where its siblings are.
+            The third row is gone with the budget slider that was on it — a
+            second copy of the one in the filter sheet, two controls for one
+            number, costing a line of map. The distance came up here to join
+            the other two questions about the search itself.
 
-            Four controls do not fit a 320px screen, and saying otherwise with
-            CSS only truncates something. 288px is what is left here after the
-            padding, and Buy/Rent (~120px), a type select wide enough to read
-            "Any type" (~104px), the distance (~78px) and a 44px button with
-            three 8px gaps want about 370px. So the row wraps — and the two
-            things that wrap together are the distance and the button, held in
-            one flex item for exactly that reason. Without the wrapper the
-            button would drop to a line of its own and sit there alone on most
-            phones; with it, a narrow screen falls back to precisely the two
-            rows it has today, mode and type over distance and more.
+            Three controls across 288px of usable width at 320px, which is the
+            narrowest screen worth building for. It fits because each one gives
+            back what it can: Buy/Rent in its compact form (~96px), the type
+            select at 8px padding with a 6rem floor, and the distance at ~76px,
+            with 6px gaps rather than 8. That leaves the type select about
+            104px of the leftover, which is what "Any type" needs at the 16px
+            text iOS insists on. From 360px up there is room to spare.
 
-            min-w on the type select rather than min-w-0: an item with
-            flex-basis 0 has a hypothetical main size of 0, which is what
-            decides line breaking, so the row would never wrap at all — it
-            would squeeze the select to nothing and clip "Any type" instead.
-            The floor is the width that text needs, so the row breaks at the
-            point where it would otherwise become unreadable. */}
-        <div
-          className={`mt-1.5 flex flex-wrap items-center gap-2 ${
-            // Without the extra button, everything in here is md:hidden and the
-            // row would be an empty 6px of margin from md up. With one, the row
-            // has to survive to lg, which is where the filter bar beside the
-            // results becomes reachable again.
-            extra ? "lg:hidden" : "md:hidden"
-          }`}
-        >
+            flex-wrap is still here, as the floor's safety net rather than as
+            the layout: if a device's text runs wider than the estimate above,
+            the row breaks into two instead of overflowing the screen or
+            clipping a label. min-w on the type select rather than min-w-0 for
+            the same reason — an item with flex-basis 0 has a hypothetical main
+            size of 0, which is what decides line breaking, so with min-w-0 the
+            row could never wrap at all; it would squeeze the select to nothing
+            and clip "Any type" silently.
+
+            The way into the budget, the seller and the BHK count is NOT here.
+            It is a pill at the bottom of the map, beside Map/List — a fourth
+            control on this line is about 60px more than a 320px screen has,
+            and the two map-level controls belong together anyway. See
+            SearchResults. */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
           <ModeGroup
             value={modeSelectValue(listingType)}
             onToggle={toggleMode}
-            className="shrink-0 md:hidden"
+            compact
+            className="shrink-0"
           />
           <TypeSelect
             id="toolbar-type-narrow"
             value={typeSelectValue(listingType, propertyType)}
             mode={listingType}
             onPick={pickType}
-            className="min-w-[6.5rem] flex-1 md:hidden"
+            compact
+            className="min-w-[6rem] flex-1"
           />
-          {/* ml-auto only from md, where the distance has moved into the search
-              row above and this pair is just the button, which belongs at the
-              end of the bar rather than stranded on the left. */}
-          <div className="flex shrink-0 items-center gap-2 md:ml-auto">
-            <RadiusSelect
-              id="toolbar-radius-narrow"
-              value={radius}
-              onPick={(value) => applyNow({ radius: value })}
-              className="md:hidden"
-            />
-            {extra}
-          </div>
+          <RadiusSelect
+            id="toolbar-radius-narrow"
+            value={radius}
+            onPick={(value) => applyNow({ radius: value })}
+            className="shrink-0"
+          />
         </div>
       </div>
     );

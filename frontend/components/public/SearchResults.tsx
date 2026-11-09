@@ -436,33 +436,6 @@ const SearchResults = () => {
             key={location}
             variant="toolbar"
             initialValues={{ location, listingType, propertyType, radius }}
-            // The way to the budget, the seller and the bedrooms while the map
-            // is full screen. Map view only: in list view the filter bar is
-            // right there in the column below, and two buttons opening one
-            // sheet on one screen is how they drift apart.
-            extra={
-              view === "map" && !failed ? (
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(true)}
-                  aria-expanded={filtersOpen}
-                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-panel px-3 text-[15px] font-medium text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                >
-                  <TuneIcon />
-                  {/* The word from md, where the row holds nothing else and
-                      has the width to spare. On a phone it is the icon and
-                      the count, because the word costs the type select beside
-                      it the space it needs to read "Any type". */}
-                  <span className="hidden md:inline">More filters</span>
-                  <span className="sr-only md:hidden">More filters</span>
-                  {refineCount > 0 && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[12px] font-semibold tabular-nums text-white">
-                      {refineCount}
-                    </span>
-                  )}
-                </button>
-              ) : null
-            }
           />
         </div>
         {/* On a phone the map is the whole screen, so every word the results
@@ -755,16 +728,48 @@ const SearchResults = () => {
         </div>
       </div>
 
-      {/* ---------- phones and tablets: switch between list and map ---------- */}
+      {/* ---------- phones and tablets: the map's own two controls ---------- */}
+      {/* Both of these act on the whole screen rather than on one field, so
+          they sit together, floating at the bottom where a thumb is — and off
+          the top of the screen, which is where the search is.
+
+          Filters used to be a fourth control in the row above. Three already
+          fill a 320px screen, and the sheet it opens is not a sibling of
+          "which kind" and "how far": those two change what the search asks
+          for, while everything in the sheet narrows what came back. White
+          against the toggle's ink, because changing view is the move most
+          people make and this one is the way to the rest.
+
+          Map view only: in list view the filter bar is in the column right
+          below, and two buttons opening one sheet on one screen is how they
+          drift apart. */}
       {!failed && (
-        <button
-          type="button"
-          onClick={() => setView(view === "map" ? "list" : "map")}
-          className="fixed bottom-5 left-1/2 z-40 flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 text-[14px] font-semibold text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:hidden"
-        >
-          {view === "map" ? <ListIcon /> : <MapIcon />}
-          {view === "map" ? "List" : "Map"}
-        </button>
+        <div className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 lg:hidden">
+          {view === "map" && (
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              aria-expanded={filtersOpen}
+              className="flex h-11 items-center gap-2 rounded-full bg-panel px-4 text-[14px] font-semibold text-ink shadow-lg ring-1 ring-line transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <TuneIcon />
+              Filters
+              {refineCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[12px] font-semibold tabular-nums text-white">
+                  {refineCount}
+                </span>
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setView(view === "map" ? "list" : "map")}
+            className="flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-[14px] font-semibold text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {view === "map" ? <ListIcon /> : <MapIcon />}
+            {view === "map" ? "List" : "Map"}
+          </button>
+        </div>
       )}
     </div>
   );

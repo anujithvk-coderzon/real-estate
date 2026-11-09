@@ -52,11 +52,23 @@ const HOME_SORTS: Option[] = [
   { value: "price-desc", label: "Price: high to low" },
 ];
 
+// BHK, which is what a buyer in India types and says — "2 BHK", not "2
+// bedrooms". The filter was always here and always worked; it was labelled in
+// a vocabulary nobody searches in, which is its own kind of missing.
+//
+// The "+" is not decoration: `beds` filters listing.bedrooms >= n, so 2 means
+// two or more. Indian portals usually offer BHK as an exact multi-select
+// instead — 2 BHK meaning only 2 — and that is a different filter, in the
+// query as well as in the label. Keeping "+" visible is the honest version of
+// what this one does.
+//
+// Hidden for plots, commercial space and offices. See NO_BEDROOMS: a shop has
+// no BHK count, so the control would be a question with no answer.
 const BEDROOM_OPTIONS: Option[] = [
-  { value: "1", label: "1+" },
-  { value: "2", label: "2+" },
-  { value: "3", label: "3+" },
-  { value: "4", label: "4+" },
+  { value: "1", label: "1+ BHK" },
+  { value: "2", label: "2+ BHK" },
+  { value: "3", label: "3+ BHK" },
+  { value: "4", label: "4+ BHK" },
 ];
 
 // How long the slider waits after the last move before changing the URL. Without
@@ -363,7 +375,7 @@ const ListingFilters = ({
     });
   }
   if (beds) {
-    chips.push({ key: "beds", text: `${beds}+ bedrooms`, clear: { beds: "" } });
+    chips.push({ key: "beds", text: `${beds}+ BHK`, clear: { beds: "" } });
   }
 
   // Rendered twice, once per layout, so each copy needs its own id to stay
@@ -498,7 +510,7 @@ const ListingFilters = ({
         {showBedrooms && (
           <>
             <label className="sr-only" htmlFor="filter-beds">
-              Bedrooms
+              BHK, or bedrooms
             </label>
             <select
               id="filter-beds"
@@ -506,10 +518,10 @@ const ListingFilters = ({
               onChange={(event) => setParam("beds", event.target.value)}
               className={inlineSelect}
             >
-              <option value="">Any bedrooms</option>
+              <option value="">Any BHK</option>
               {BEDROOM_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label} bedrooms
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -693,10 +705,10 @@ const ListingFilters = ({
 
           {showBedrooms && (
             <Pills
-              legend="Bedrooms"
+              legend="BHK"
               options={BEDROOM_OPTIONS}
               value={beds}
-              anyLabel="Any"
+              anyLabel="Any BHK"
               onPick={(value) => setParam("beds", value)}
             />
           )}
