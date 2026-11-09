@@ -342,6 +342,39 @@ const ListAll = () => {
             stays where it was. */}
         <FeaturedPromotions />
 
+        {/* The free-to-list claim, where a phone can actually find it.
+            It was in two places and neither reached a phone: the header link
+            is md and up, because the wordmark and two auth links already want
+            more than a 320px screen has; and the FREE stamp sits on the second
+            of the two How it works cards, which on a one-column phone is a
+            long scroll past the hero, the promotions and three buyer steps.
+
+            So it goes directly under the hero, at every width — the first thing
+            after the search. One line, because this is a notice and not the
+            pitch; How it works still does the explaining below.
+
+            A hairline border and no fill, which is the rule globals.css
+            records: the page is white and separation comes from a rule rather
+            than a tint. .annot is the same stamp the header uses, so the two
+            read as the same claim made twice rather than two different offers.
+
+            visitor === true, not !== false, for the reason How it works gives:
+            it must never flash up for somebody who turns out to be signed in.
+            Register, not /list/create — that form has no auth guard. */}
+        {visitor === true && (
+          <p className="mt-6 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 rounded-xl border border-line px-4 py-3 text-[13.5px] leading-snug text-muted sm:mt-7">
+            <span className="annot">Free</span>
+            Listing a property costs nothing — for owners, brokers and builders
+            alike.
+            <Link
+              href="/auth/register"
+              className="font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+            >
+              Post a property
+            </Link>
+          </p>
+        )}
+
         {/* What this place is and how either side uses it. Visitors only, and
             only once the sign-in check has settled — a returning user has made
             that decision and does not need the pitch between them and the

@@ -36,13 +36,14 @@ import {
 // Every filter this bar owns. Clearing all of them means deleting exactly these,
 // so a location or a page number typed in the URL survives. Sort is not one of
 // them: it changes the order, never which listings match.
-const FILTER_PARAMS = [
-  "listingType",
-  "propertyType",
-  "postedBy",
-  "maxPrice",
-  "beds",
-];
+// The refinements: what this bar owns that the search toolbar does not ask for
+// anywhere. Exported, because the search page puts a second way into the sheet
+// on the map and wants a badge counting what is actually inside it — the mode
+// and the type are in the toolbar there, so counting them would badge a button
+// for choices it does not hold.
+export const REFINE_PARAMS = ["postedBy", "maxPrice", "beds"];
+
+const FILTER_PARAMS = ["listingType", "propertyType", ...REFINE_PARAMS];
 
 // The home page's default order is newest first, which the API already does.
 const HOME_SORTS: Option[] = [
@@ -208,18 +209,40 @@ type Props = {
   showRadius?: boolean;
   // The default order differs per page: newest here, nearest on the search page.
   sorts?: Option[];
+  // The sheet's open state, when someone outside needs to open it. The search
+  // page does: on a phone in map view this whole bar is underneath a fixed,
+  // full-screen map, so its own Filters button cannot be reached and a button
+  // in the map's chrome has to stand in for it. The sheet itself still works
+  // from there — a <dialog> opened with showModal() is promoted to the
+  // browser's top layer, which is painted above every z-index on the page,
+  // including the map's.
+  //
+  // Left undefined, the bar keeps its own state and nothing changes.
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const ListingFilters = ({
   showTypes = true,
   showRadius = false,
   sorts = HOME_SORTS,
+  open,
+  onOpenChange,
 }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sheet = useRef<HTMLDialogElement>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  // Uncontrolled unless a parent passes `open`. Both are kept in step rather
+  // than branching: the local copy is harmless when a parent owns the value,
+  // and keeping it written means handing control over mid-life cannot strand
+  // the sheet open.
+  const [ownOpen, setOwnOpen] = useState(false);
+  const sheetOpen = open ?? ownOpen;
+  const setSheetOpen = (next: boolean) => {
+    setOwnOpen(next);
+    onOpenChange?.(next);
+  };
 
   const listingType = searchParams.get("listingType") ?? "";
   const propertyType = searchParams.get("propertyType") ?? "";

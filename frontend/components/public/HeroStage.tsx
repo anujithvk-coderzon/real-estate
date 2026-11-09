@@ -550,17 +550,20 @@ const HeroStage = () => {
             bg-ground of its own: the section is bg-ground/40, and the map's own
             edges would otherwise sit on a tint rather than the page. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[208px] overflow-hidden bg-ground lg:hidden">
-          {/* offsetY slides the drawing up inside the band. Centred, the band
-              showed the stripe y 123-326 of a 450-unit drawing, which put the
-              ring's centre at 88px — directly under the heading and the solid
-              end of the fade, so the part of the map worth seeing was the part
-              covered up. 55 units is about 48px on a phone: the centre and the
-              pins move into the clear air above the heading, and the ring stays
-              on the plate instead of being pushed off the top.
+          {/* layout="band", and no offsetY at all now.
+              offsetY={55} was here to drag a circle-shaped scatter up into the
+              visible stripe. It worked at one width and only one: this band is
+              a fixed 208px tall and the drawing is cropped with "slice", so the
+              slice of drawing that fits shrinks as the screen widens — 292
+              units at 320px, 122 at 767px, 91 at 1023px, the last pixel before
+              lg hides this band. Offsetting a scatter can satisfy one of those
+              numbers while losing pins at the others.
 
-              One number, so it is a dial. Raise it to show more of the lower
-              map, drop it towards 0 to put the plate back where it was. */}
-          <MapPlate radiusKm={Number(km) || 10} offsetY={55} />
+              The band pin layout is centred on y 225 instead, which is the axis
+              "YMid" crops about. Its pins occupy 87 units, so every width from
+              320px to 1023px keeps all eight, and the offset that used to hold
+              it together is no longer needed to hold anything. */}
+          <MapPlate radiusKm={Number(km) || 10} pins="band" />
           {/* The fade is what makes the controls readable over a drawing. It
               has to be near solid by the time the labels start — those are
               10px uppercase text-muted, the lowest-contrast type on the page,
@@ -730,7 +733,12 @@ const HeroStage = () => {
       {/* Left-aligned on a phone: in a 280px column, centred text starts every
           line in a different place and reads slower. Centred from md, where the
           measure is wide enough to carry it. */}
-      <div className="mx-auto w-full max-w-7xl px-5 pt-8 text-left md:pt-14 md:text-center lg:px-10">
+      {/* pt-4 on a phone, not pt-8. Everything above the illustrated band
+          is a cost paid before the visitor sees what the product does, and the
+          band is the only thing on this screen that shows it. 16px under the
+          header still reads as a gap; the other 16px went to the drawing. md
+          keeps its own pt-14, where the band does not exist. */}
+      <div className="mx-auto w-full max-w-7xl px-5 pt-4 text-left md:pt-14 md:text-center lg:px-10">
         {/* The eyebrow is the first 30px of a phone screen spent on a line that
             adds nothing the headline does not already say. */}
         <p className="annot hidden items-center gap-2 md:inline-flex">
@@ -771,7 +779,12 @@ const HeroStage = () => {
             // Enough room underneath that the section breathes into the next
             // one. It carries the whole separation, there being no rule along
             // the bottom, so it is a little more generous on a wide screen.
-            className="relative mx-auto w-full max-w-7xl px-5 pb-10 pt-4 md:pb-16 md:pt-[180px] lg:px-10"
+            // pt-2 on a phone: the gap between the intro paragraph and the
+            // top edge of the band. It was pt-4, and halving it is the second
+            // half of the 24px the band moves up by. Not pt-0 — the band is
+            // full-bleed and its land colour would otherwise start on the
+            // baseline of the paragraph above it.
+            className="relative mx-auto w-full max-w-7xl px-5 pb-10 pt-2 md:pb-16 md:pt-[180px] lg:px-10"
           >
             <div className="flex justify-center">
               {/* A phone puts the drawing behind the card; from md the card
@@ -793,12 +806,59 @@ const HeroStage = () => {
                     circle from md, where there is room for both. */}
                 <div
                   ref={plate}
-                  className="absolute -left-5 -right-5 top-0 h-[230px] overflow-hidden bg-ground md:relative md:left-auto md:right-auto md:mx-auto md:aspect-square md:h-auto md:w-full md:rounded-full md:ring-[9px] md:ring-panel"
+                  // h-[72vw], not h-[230px]. The height was fixed and the
+                  // width was not, and this drawing is cropped with "slice":
+                  // the SVG scales to cover the box, so a wider box shows LESS
+                  // of the drawing's height. A fixed 230px showed 323 units of
+                  // 450 at 320px and 241 at 430px — a different picture on
+                  // every phone, which is the inconsistency reported here.
+                  //
+                  // Height as a share of width pins the ratio, so the scale and
+                  // the window are identical at every width: 324 units, always.
+                  // 72vw is 230px at 320px wide, so the narrowest phone sees
+                  // exactly what it saw before and nothing above it is cropped
+                  // differently any more.
+                  //
+                  // md:h-auto wins it back for the circle, which is square by
+                  // aspect and was never affected.
+                  className="absolute -left-5 -right-5 top-0 h-[72vw] overflow-hidden bg-ground md:relative md:left-auto md:right-auto md:mx-auto md:aspect-square md:h-auto md:w-full md:rounded-full md:ring-[9px] md:ring-panel"
                 >
                   {/* The ring is the card's distance drawn, so it reads the
                       card's state. It answers the select immediately, which is
                       the feedback that control used to buy with a request. */}
-                  <MapPlate radiusKm={Number(km) || 10} />
+                  {/* Two instances, one per shape, because the phone crops
+                      this to a band and md does not. Only one is ever in the
+                      layout; the cost is the paths twice in the DOM, which is
+                      a few hundred bytes against pins that are actually
+                      visible on a phone.
+
+                      offsetY on the phone because the search card covers the
+                      lower half of the band — the clear strip is the top 37vw
+                      of 72vw, so the pins have to move up into it. 78 units
+                      lands them with ~40 units of air above and below, at
+                      every width, now that the window no longer changes. */}
+                  {/* absolute inset-0 rather than h-full: on md the plate's
+                      height comes from aspect-square, and a percentage height
+                      against an aspect-ratio parent is a resolution rule worth
+                      not depending on. Overlaying the box says it outright, and
+                      the plate is positioned at both widths. */}
+                  <div className="absolute inset-0 md:hidden">
+                    <MapPlate
+                      radiusKm={Number(km) || 10}
+                      pins="band"
+                      offsetY={78}
+                    />
+                  </div>
+                  {/* No pins from md. The card below is absolutely
+                      positioned across the middle of this circle and is
+                      opaque, so a pin scatter here showed six fragments and
+                      two nothing at all; and the labelled legend — one card
+                      per type, with its colour dot and its name — is already
+                      a hundred pixels below this, which is the version that
+                      can actually be read. MapPlate records the measurements. */}
+                  <div className="absolute inset-0 hidden md:block">
+                    <MapPlate radiusKm={Number(km) || 10} />
+                  </div>
                   {/* Fades the drawing into the page, so the card's own edge
                       stays the strongest line on the screen. */}
                   <div
@@ -816,7 +876,7 @@ const HeroStage = () => {
                     one task rather than four separate controls stacked up.
                     From md it goes back to two transparent objects floating at
                     the centre of the circle. */}
-                <div className="relative mt-[118px] flex flex-col gap-1.5 rounded-2xl bg-panel p-2 shadow-[0_18px_44px_-22px_rgba(48,32,68,0.5)] ring-1 ring-line md:absolute md:inset-x-9 md:top-1/2 md:mt-0 md:-translate-y-1/2 md:gap-2.5 md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:ring-0">
+                <div className="relative mt-[37vw] flex flex-col gap-1.5 rounded-2xl bg-panel p-2 shadow-[0_18px_44px_-22px_rgba(48,32,68,0.5)] ring-1 ring-line md:absolute md:inset-x-9 md:top-1/2 md:mt-0 md:-translate-y-1/2 md:gap-2.5 md:rounded-none md:bg-transparent md:p-0 md:shadow-none md:ring-0">
                   {/* Buy / Rent sits first in the DOM because on a phone it
                         sits first on the screen. It used to be second here and
                         first visually, via order-first — so a thumb read mode,

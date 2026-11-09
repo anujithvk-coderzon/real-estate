@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import BudgetSlider from "@/components/public/BudgetSlider";
 import NearbyButton from "@/components/public/NearbyButton";
 import { rememberHomeSearch } from "@/lib/homeSearch";
 import {
@@ -36,6 +35,12 @@ type Props = {
   // type choices live in the filter bar there, so asking for them twice on one
   // screen would be the form competing with itself.
   variant?: "card" | "toolbar" | "compact";
+  // toolbar only: one more control for the phone's own row, placed after the
+  // distance. The search page puts its "More filters" button here, because on
+  // a phone in map view the filter bar beside the results is underneath a
+  // fixed, full-screen map and cannot be reached at all. Passed in rather than
+  // built here so this file keeps knowing nothing about the sheet it opens.
+  extra?: ReactNode;
 };
 
 const MAX_LOCATION_LENGTH = 100;
@@ -246,7 +251,7 @@ const TypeSelect = ({
   </>
 );
 
-const SearchBar = ({ initialValues, variant = "card" }: Props) => {
+const SearchBar = ({ initialValues, variant = "card", extra }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -279,9 +284,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
     ? (searchParams.get("propertyType") ?? "")
     : typeDraft;
   const radius = live ? (searchParams.get("radius") ?? "") : radiusDraft;
-  // Only the toolbar offers this: the hero has no results to narrow yet.
-  const maxPrice = live ? (searchParams.get("maxPrice") ?? "") : "";
-
   // Location is required: without it there is no place to search around.
   const canSearch = location.trim() !== "";
 
@@ -561,52 +563,66 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           </button>
         </form>
 
-        {/* Phones: always on screen, never behind Edit. Each one changes the
-            results the moment it is touched. */}
-        {/* Phones: always on screen, never behind an Edit. Each one changes
-            the results the moment it is touched. min-w-0 on the selects,
-            because a flex item defaults to min-width:auto and one sized by its
-            longest option would push the row past the screen rather than
-            share it. */}
-        <div className="mt-1.5 flex gap-2 md:hidden">
+        {/* The phone's own row: what, which kind, how far, and the way in to
+            everything else — in that order, left to right, which is the order
+            the questions get asked.
+
+            One row, where it was two. The distance used to sit on a third line
+            with a budget slider beside it, and that slider was a second copy of
+            the one in the filter sheet: two controls for one number, and on the
+            map a whole line of screen spent on it. That line is map now, and
+            the budget is where its siblings are.
+
+            Four controls do not fit a 320px screen, and saying otherwise with
+            CSS only truncates something. 288px is what is left here after the
+            padding, and Buy/Rent (~120px), a type select wide enough to read
+            "Any type" (~104px), the distance (~78px) and a 44px button with
+            three 8px gaps want about 370px. So the row wraps — and the two
+            things that wrap together are the distance and the button, held in
+            one flex item for exactly that reason. Without the wrapper the
+            button would drop to a line of its own and sit there alone on most
+            phones; with it, a narrow screen falls back to precisely the two
+            rows it has today, mode and type over distance and more.
+
+            min-w on the type select rather than min-w-0: an item with
+            flex-basis 0 has a hypothetical main size of 0, which is what
+            decides line breaking, so the row would never wrap at all — it
+            would squeeze the select to nothing and clip "Any type" instead.
+            The floor is the width that text needs, so the row breaks at the
+            point where it would otherwise become unreadable. */}
+        <div
+          className={`mt-1.5 flex flex-wrap items-center gap-2 ${
+            // Without the extra button, everything in here is md:hidden and the
+            // row would be an empty 6px of margin from md up. With one, the row
+            // has to survive to lg, which is where the filter bar beside the
+            // results becomes reachable again.
+            extra ? "lg:hidden" : "md:hidden"
+          }`}
+        >
           <ModeGroup
             value={modeSelectValue(listingType)}
             onToggle={toggleMode}
-            className="shrink-0"
+            className="shrink-0 md:hidden"
           />
           <TypeSelect
             id="toolbar-type-narrow"
             value={typeSelectValue(listingType, propertyType)}
             mode={listingType}
             onPick={pickType}
-            className="min-w-0 flex-1"
+            className="min-w-[6.5rem] flex-1 md:hidden"
           />
-        </div>
-
-        {/* The distance and the budget share a line. A slider needs width, but
-            not a band of its own: dense it is the height of the select beside
-            it, so this is one row rather than two.
-
-            The same track the filter bar shows on a laptop, not a select of
-            preset ceilings — one control, one vocabulary, both screens. Below
-            lg only; from there the filter bar beside the results carries it.
-            Keyed on the committed amount, so clearing the chip or pressing
-            Clear all puts the thumb back where it belongs. */}
-        <div className="mt-1.5 flex items-center gap-2 lg:hidden">
-          <RadiusSelect
-            id="toolbar-radius-narrow"
-            value={radius}
-            onPick={(value) => applyNow({ radius: value })}
-            className="shrink-0 md:hidden"
-          />
-          <BudgetSlider
-            id="toolbar-budget"
-            key={maxPrice}
-            amount={maxPrice}
-            onCommit={(next) => applyNow({ maxPrice: next })}
-            dense
-            className="min-w-0 flex-1 rounded-lg bg-panel px-2.5 py-1 ring-1 ring-line"
-          />
+          {/* ml-auto only from md, where the distance has moved into the search
+              row above and this pair is just the button, which belongs at the
+              end of the bar rather than stranded on the left. */}
+          <div className="flex shrink-0 items-center gap-2 md:ml-auto">
+            <RadiusSelect
+              id="toolbar-radius-narrow"
+              value={radius}
+              onPick={(value) => applyNow({ radius: value })}
+              className="md:hidden"
+            />
+            {extra}
+          </div>
         </div>
       </div>
     );

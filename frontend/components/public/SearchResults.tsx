@@ -12,7 +12,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PublicListingCard from "@/components/listing/PublicListingCard";
-import ListingFilters from "@/components/public/ListingFilters";
+import ListingFilters, {
+  REFINE_PARAMS,
+} from "@/components/public/ListingFilters";
 import MapLegend from "@/components/public/MapLegend";
 import ResultsMap from "@/components/public/ResultsMap";
 import SearchBar from "@/components/public/SearchBar";
@@ -88,6 +90,24 @@ const MapIcon = () => (
   >
     <path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z" />
     <path d="M9 4v14M15 6v14" />
+  </svg>
+);
+
+// The same mark the filter bar's own button carries, drawn to the same
+// metrics. Two ways into one sheet should not look like two different controls.
+const TuneIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    aria-hidden="true"
+    className="h-[18px] w-[18px]"
+  >
+    <path d="M3 7h12M19 7h2M3 17h4M11 17h10" />
+    <circle cx="17" cy="7" r="2.1" />
+    <circle cx="9" cy="17" r="2.1" />
   </svg>
 );
 
@@ -190,6 +210,18 @@ const SearchResults = () => {
     searchParams.get("view") === "list" ? "list" : "map",
   );
   const [mapHidden, setMapHidden] = useState(false); // desktop
+  // The filter sheet's open state, held here rather than inside ListingFilters,
+  // because on a phone in map view there are two ways into it and only one of
+  // them is reachable: the bar's own button is under the full-screen map, and
+  // the button in the map's chrome is not.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // What the sheet is holding, for the badge on the button that opens it. Only
+  // its own three: the mode, the type and the distance are in the toolbar on
+  // this page, so counting them would badge the button for choices standing
+  // visible right beside it.
+  const refineCount = REFINE_PARAMS.filter((name) =>
+    searchParams.get(name),
+  ).length;
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const cardRefs = useRef(new Map<string, HTMLLIElement>());
 
@@ -404,6 +436,33 @@ const SearchResults = () => {
             key={location}
             variant="toolbar"
             initialValues={{ location, listingType, propertyType, radius }}
+            // The way to the budget, the seller and the bedrooms while the map
+            // is full screen. Map view only: in list view the filter bar is
+            // right there in the column below, and two buttons opening one
+            // sheet on one screen is how they drift apart.
+            extra={
+              view === "map" && !failed ? (
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(true)}
+                  aria-expanded={filtersOpen}
+                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-panel px-3 text-[15px] font-medium text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <TuneIcon />
+                  {/* The word from md, where the row holds nothing else and
+                      has the width to spare. On a phone it is the icon and
+                      the count, because the word costs the type select beside
+                      it the space it needs to read "Any type". */}
+                  <span className="hidden md:inline">More filters</span>
+                  <span className="sr-only md:hidden">More filters</span>
+                  {refineCount > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[12px] font-semibold tabular-nums text-white">
+                      {refineCount}
+                    </span>
+                  )}
+                </button>
+              ) : null
+            }
           />
         </div>
         {/* On a phone the map is the whole screen, so every word the results
@@ -527,7 +586,13 @@ const SearchResults = () => {
                   down here as well would be two controls for one question,
                   which is how they drift apart. The chip and the "3 filters"
                   badge drop it too, because this prop gates those as well. */}
-              <ListingFilters showTypes={false} sorts={SEARCH_SORTS} />
+              <ListingFilters
+                showTypes={false}
+                sorts={SEARCH_SORTS}
+                // Held above, because the map's chrome opens the same sheet.
+                open={filtersOpen}
+                onOpenChange={setFiltersOpen}
+              />
             </div>
           )}
 

@@ -28,33 +28,62 @@ import { TYPE_COLOUR } from "@/lib/listing";
 // they actually search. An illustration that taught a different mark would be
 // teaching a key the real map then contradicts.
 //
-// Sized to 30x40 viewBox units, which is 26x35px once the band scales the
-// drawing down on a phone — within a pixel or two of the real pin's 28x36.
-//
-// The tip is the spot, as it is there. So each y below is where the pin POINTS,
-// and its body stands in the 40 units above that — which is why the topmost one
-// sits at 208 and not 196: a tip at 196 would have its head clipped off by the
-// band's top edge.
+// Sized to 30x40 viewBox units. The tip is the spot, as it is there, so each y
+// below is where the pin POINTS and its body stands in the 40 units above that.
 //
 // What the pins do NOT do is claim inventory: no prices, no counts, no names,
 // and they sit on invented streets. They are the legend made visible — "these
 // kinds of property, around you" — in the same decorative register as the
 // roads. If they ever gain a number beside them they have crossed into saying
 // something untrue, which is the same line the missing place names hold.
+
+// Pins on the BAND only. The md circle shows the drawing, the radius ring and
+// the centre dot, and nothing else.
 //
-// Positions are hand-placed, not random: all of them clear of the backwater,
-// none on the centre where the visitor stands, and all inside y 180-380 so the
-// phone's band — which crops to roughly that stripe — shows every one of the
-// eight rather than a lucky three.
-const PINS: { type: string; x: number; y: number }[] = [
-  { type: "APARTMENT", x: 268, y: 208 },
-  { type: "OFFICE", x: 392, y: 212 },
-  { type: "INDEPENDENT_HOUSE", x: 196, y: 252 },
-  { type: "ROOM", x: 330, y: 262 },
-  { type: "VILLA", x: 404, y: 300 },
-  { type: "PLOT", x: 240, y: 316 },
-  { type: "COMMERCIAL", x: 182, y: 352 },
-  { type: "PG", x: 306, y: 364 },
+// It carried a scatter of all eight until it was measured. From md the search
+// card is absolutely positioned across the middle of this plate
+// (md:inset-x-9 md:top-1/2 md:-translate-y-1/2 in HeroStage), and the plate is
+// 352px square — so the card covers a horizontal band about 160px tall and
+// 280px wide out of 352, which in viewBox units is x 46..404 of 450 and y
+// 123..327 of 450. The scatter occupied y 168..364. Of eight pins, two were
+// hidden outright, four showed only a fragment — a tip below a pill, a sliver
+// in a 10px gap between two pills, half a head cut off by a straight edge —
+// and the card is near-opaque at those sizes, so there was nothing to see
+// through. Fragments of saturated colour leaking out around a floating control
+// is what "very bad UI/UX" was describing, and no arrangement fixes it: the
+// free area is a thin annulus, and at md the card is taller still because
+// NearbyButton is in it until lg.
+//
+// The deeper reason not to try. Roughly 100px below this circle, from md, sits
+// a labelled row of the same legend: one card per SEARCH_PROPERTY_TYPES, each
+// with a TYPE_COLOUR dot and the type's NAME, under the heading "Every kind of
+// property, in one search". Pins here are that legend again, unlabelled, in
+// the one place it cannot be read. The phone keeps them because the phone has
+// no such row — there the pins ARE the legend, and the band leaves them room.
+
+// The band layout: two staggered rows, spread along the width the band keeps
+// and squeezed into the height it does not.
+//
+// Every body lies between y 181 and y 268, which is 87 units centred on 225 —
+// the viewBox's own middle. That is the whole trick. preserveAspectRatio's
+// "YMid" crops symmetrically about the centre, so a set of pins centred there
+// is the LAST thing a shrinking window loses: the band can fall to 87 units of
+// visible height before a single pin head is touched, and at the band's widest
+// (1023px, the last pixel before lg) it still has 91. Positions tuned to a
+// particular height would have to be retuned the first time one changed.
+//
+// Rows 42 units apart, which clears the 40-unit pin height, so the two rows
+// never overlap and x may repeat between them. All x >= 180 keeps every pin off
+// the backwater, which crosses the left of the drawing exactly at these rows.
+const PINS_BAND: { type: string; x: number; y: number }[] = [
+  { type: "APARTMENT", x: 180, y: 222 },
+  { type: "OFFICE", x: 262, y: 226 },
+  { type: "ROOM", x: 344, y: 221 },
+  { type: "VILLA", x: 418, y: 225 },
+  { type: "INDEPENDENT_HOUSE", x: 200, y: 264 },
+  { type: "PLOT", x: 282, y: 268 },
+  { type: "COMMERCIAL", x: 364, y: 263 },
+  { type: "PG", x: 428, y: 267 },
 ];
 
 type Props = {
@@ -67,9 +96,15 @@ type Props = {
   // the ring's centre off the top edge with it, which loses the one element on
   // here that means anything. This dials the same move in units you can tune.
   offsetY?: number;
+  // "band" marks the drawing with one pin per property type; "none" leaves it
+  // as a drawing. Named for the pins rather than for the shape, because the
+  // shape is the same drawing either way and only the marks differ. See the
+  // note above PINS_BAND for why the circle takes none.
+  pins?: "band" | "none";
 };
 
-const MapPlate = ({ radiusKm, offsetY = 0 }: Props) => {
+const MapPlate = ({ radiusKm, offsetY = 0, pins = "none" }: Props) => {
+  const marks = pins === "band" ? PINS_BAND : [];
   // 10 km sits well inside the plate, 50 km reaches most of it. Linear, because
   // the point is to feel the difference rather than to be to scale.
   const ring = 72 + (Math.min(50, Math.max(10, radiusKm)) / 50) * 138;
@@ -157,7 +192,7 @@ const MapPlate = ({ radiusKm, offsetY = 0 }: Props) => {
           translate-then-scale puts the tip on the spot: the path's own tip is
           (12, 32) in a 24x32 box, so at scale 1.25 that point lands 15 across
           and 40 down from the translate, and the translate backs both out. */}
-      {PINS.map(({ type, x, y }) => (
+      {marks.map(({ type, x, y }) => (
         <g
           key={type}
           transform={`translate(${x - 15} ${y - 40}) scale(1.25)`}
