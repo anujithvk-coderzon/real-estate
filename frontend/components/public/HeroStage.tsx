@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useSearchParams } from "next/navigation";
+import ContourArt from "@/components/ContourArt";
 import MapPlate from "@/components/public/MapPlate";
 import NearbyButton from "@/components/public/NearbyButton";
 import SearchBar, { FIELD_LABEL } from "@/components/public/SearchBar";
@@ -511,9 +512,61 @@ const HeroStage = () => {
     return (
       <section
         aria-labelledby="home-heading"
-        className="border-b border-line bg-ground/40"
+        className="relative overflow-hidden border-b border-line bg-ground/40"
       >
-        <div className="mx-auto w-full max-w-7xl px-5 py-6 lg:px-10 lg:py-7">
+        {/* The same survey contour the sidebar draws, anchored right and
+            bleeding past the top, bottom and right edges so it reads as a
+            fragment of a larger drawing rather than a logo dropped in a box.
+            overflow-hidden on the section is what crops it; nothing in this bar
+            needs to escape the section, and the location field is a plain input
+            with no suggestion list to clip.
+
+            NOT the survey grid used in the hero below: that one carries a
+            mask-image, and a mask applies to an element's descendants too, so
+            putting it on a wrapper would fade out the form standing in it.
+
+            lg only. Below that the row wraps to three or four lines and fills
+            the width, leaving no space the drawing could occupy without
+            sitting under the controls.
+
+            No z-index: this is painted after the section's own background and
+            before the content div, which is `relative` for exactly that
+            reason. A negative z-index would drop it behind bg-ground/40 and
+            disappear. */}
+        <ContourArt className="pointer-events-none absolute -top-28 right-0 hidden h-[460px] w-[560px] text-line lg:block" />
+
+        {/* Below lg the contour has nowhere to go, so the phone gets the hero's
+            treatment instead: the illustrated map as a band across the top,
+            with the heading and controls sitting on it. Two drawings, one per
+            width, because the space each has to work with is different — the
+            lg:block above and the lg:hidden here are the same decision stated
+            from both sides.
+
+            Same MapPlate and same radiusKm as the hero, so the dashed ring is
+            this bar's Distance select drawn. Changing 10 km to 50 km widens the
+            ring here too — the drawing is feedback, not wallpaper, which is the
+            whole reason it earns its bytes on a phone.
+
+            bg-ground of its own: the section is bg-ground/40, and the map's own
+            edges would otherwise sit on a tint rather than the page. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[176px] overflow-hidden bg-ground lg:hidden">
+          <MapPlate radiusKm={Number(km) || 10} />
+          {/* The fade is what makes the controls readable over a drawing. It
+              has to be near solid by the time the labels start — those are
+              10px uppercase text-muted, the lowest-contrast type on the page,
+              and they cannot share a background with a street grid. The
+              heading above them is display-size and dark, so it can. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-b from-ground/5 via-ground/40 to-ground"
+          />
+        </div>
+
+        {/* pt-24 on a phone clears the band's top half, so the map gets a
+            stretch of its own to be seen in before the heading lands on it.
+            lg:py-7 puts the compact padding back where the contour takes
+            over. */}
+        <div className="relative mx-auto w-full max-w-7xl px-5 pb-6 pt-24 lg:px-10 lg:py-7">
           <h1
             id="home-heading"
             className="font-display text-[22px] leading-tight"
