@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "basic-fifty-balanced-munich.trycloudflare.com",
+    "hotel-campaign-encouraged-buried.trycloudflare.com",
   ],
 };
 

@@ -272,8 +272,9 @@ const CreateListing = () => {
 
       {role === "BROKER" && purpose === "SALE" && reraStatus === "PENDING" && (
         <p className="mt-4 rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
-          Your RERA number is on file and shown as provided by you. A verified
-          badge appears once someone checks it against the state register.
+          Your RERA number is with us and not published yet. A verified badge
+          appears on your listings once someone checks it against the state
+          register.
         </p>
       )}
 

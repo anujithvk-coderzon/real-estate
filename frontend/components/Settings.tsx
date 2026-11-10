@@ -437,12 +437,12 @@ const STATUS_DISPLAY: Record<
   NONE: {
     text: "Not added",
     className: "bg-ground text-muted",
-    help: "Agents need a registration number to list a property for sale. Rentals and PG don't.",
+    help: "Optional. Agents must be registered with their state RERA to handle a sale, and adding the number here is what earns a verified badge on your listings.",
   },
   PENDING: {
     text: "Awaiting check",
     className: "bg-warn/10 text-warn",
-    help: "Your number is shown on your listings as provided by you, until someone checks it against the state register.",
+    help: "Your number is with us and not published yet. Nothing appears on your listings until someone checks it against the state register.",
   },
   VERIFIED: {
     text: "Verified",
@@ -460,7 +460,7 @@ const STATUS_DISPLAY: Record<
   REVOKED: {
     text: "Verification withdrawn",
     className: "bg-danger/10 text-danger",
-    help: "This number was verified earlier and is no longer in good standing, so the badge has been taken off your listings. Add a current registration to keep listing properties for sale.",
+    help: "This number was verified earlier and is no longer in good standing, so the badge has been taken off your listings. Add a current registration to get it back.",
   },
 };
 
@@ -478,7 +478,10 @@ const ReraCard = ({
   return (
     <Card
       title="RERA registration"
-      description="Shown on your sale listings so buyers can check it."
+      // Not "shown on your listings": the number itself is never published.
+      // lib/rera publishes the words "RERA verified" for a checked number and
+      // nothing at all for any other state.
+      description="Optional. A number we have checked puts a verified badge on your listings."
       action={
         !editing && (
           <button

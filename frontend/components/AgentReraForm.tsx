@@ -207,8 +207,11 @@ const AgentReraForm = ({
 
       {onSkip && (
         // Third in the row's reading order and quiet, because it is the
-        // answer with a cost: nothing blocks them, and the listing carries
-        // "No RERA number" until a number arrives.
+        // answer with a cost: nothing blocks them, and the listing carries no
+        // badge until a checked number arrives. The cost is the badge, not a
+        // mark against them — lib/rera publishes VERIFIED and nothing else, so
+        // skipping this is silent to buyers rather than held against the
+        // listing.
         <button
           type="button"
           onClick={onSkip}
@@ -233,8 +236,8 @@ const AgentReraForm = ({
         {priorStatus === "REJECTED"
           ? "We checked the number you gave and could not confirm it on your state's register. Check it against your certificate and send it again — the reason we gave is in your settings."
           : priorStatus === "REVOKED"
-            ? "The registration we had verified for you is no longer in good standing. Add a current one to list a property for sale."
-            : "Agents must be registered with their state RERA to handle a sale. We show the number on your listings so buyers can check it."}
+            ? "The registration we had verified for you is no longer in good standing, so the badge is off your listings. Add a current one to get it back."
+            : "Agents must be registered with their state RERA to handle a sale. Giving us the number is optional \u2014 what it buys is a RERA verified badge on your listings, once we have checked it against your state's register."}
       </p>
 
       {form}
