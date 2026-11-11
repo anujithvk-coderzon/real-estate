@@ -130,11 +130,18 @@ const ClearLocation = ({
 // — so they live out here rather than being written twice. Each copy needs its
 // own id: two <select>s sharing one would leave the second label pointing at
 // the first control.
-const ModeGroup = ({
+// Exported, because the signed-in home bar needs this control and had its own
+// copy of it. That copy is where the "border inside a border" came from: ring-1
+// on the container AND ring-1 on every button AND ring-1 ring-accent on the
+// selected one. Two implementations of one control is how they drift, so there
+// is one now.
+export const ModeGroup = ({
   value,
   onToggle,
   compact = false,
   className = "",
+  bare = false,
+  flush = false,
 }: {
   value: string;
   onToggle: (value: string) => void;
@@ -148,15 +155,27 @@ const ModeGroup = ({
   // is not a thing to leave a layout standing on.
   compact?: boolean;
   className?: string;
+  // Drops this control's own outline and rounding, for embedding in a bar that
+  // already has one. The padding stays either way: it is what holds the
+  // selected pill off the edge, and without it a filled button meets the outer
+  // bar's rounded corner as a square.
+  bare?: boolean;
+  // Flush: no padding, no rounding on the buttons, and a hairline between
+  // them. For a cell in a grid rather than a control floating in a bar — the
+  // selected mode fills its half, and the divider it leaves runs the full
+  // height, so it lines up with the dividers of whatever sits in the row
+  // below. A pill inside 4px of padding cannot line up with anything: its
+  // edge is 4px short of the cell's at both ends.
+  flush?: boolean;
 }) => (
   <div
     role="group"
     aria-label="Looking to"
-    className={`flex h-11 rounded-lg bg-panel ring-1 ring-line md:h-10 ${
-      compact ? "p-0.5" : "p-1"
-    } ${className}`}
+    className={`flex h-11 md:h-10 ${
+      bare ? "" : "rounded-lg bg-panel ring-1 ring-line"
+    } ${flush ? "" : compact ? "p-0.5" : "p-1"} ${className}`}
   >
-    {SEARCH_MODES.map((mode) => {
+    {SEARCH_MODES.map((mode, index) => {
       const selected = value === mode.value;
       return (
         <button
@@ -164,9 +183,15 @@ const ModeGroup = ({
           type="button"
           onClick={() => onToggle(mode.value)}
           aria-pressed={selected}
-          className={`flex-1 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent md:flex-none ${
-            compact ? "px-2.5 text-[13px]" : "px-3.5 text-[14px]"
-          } ${selected ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
+          className={`flex-1 font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent ${
+            flush
+              ? index > 0
+                ? "border-l border-line"
+                : ""
+              : "rounded-lg md:flex-none"
+          } ${compact ? "px-2.5 text-[13px]" : "px-3.5 text-[14px]"} ${
+            selected ? "bg-accent text-white" : "text-muted hover:text-ink"
+          }`}
         >
           {mode.label}
         </button>

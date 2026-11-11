@@ -58,85 +58,129 @@ import { TYPE_COLOUR } from "@/lib/listing";
 // the one place it cannot be read. The phone keeps them because the phone has
 // no such row — there the pins ARE the legend, and the band leaves them room.
 
-// Smaller marks than before: PIN_SCALE 1 rather than 1.25, so a pin is 24x32
-// units instead of 30x40 — about 21x28 CSS pixels on a 390px phone. At 1.25
-// they read as balloons dropped on a drawing rather than as marks made on a
-// map, and eight of them crowded a strip they had to share.
+// PIN_SCALE 0.65, so a pin is 15.6x20.8 units instead of 24x32 - about 13.5 x
+// 18 CSS pixels on a 390px phone.
 //
-// The tip is the spot. The path's own tip is (12, 32) in a 24x32 box, so at
-// scale 1 the translate backs out exactly that, and every y below is where the
-// pin POINTS with its body standing in the 32 units above it.
-const PIN_SCALE = 1;
+// The tip is the spot. The path's own tip is (12, 32) in a 24x32 box, so the
+// translate backs out exactly that before the scale, and every y below is
+// where the pin POINTS with its body standing in the 20.8 units above it.
+const PIN_SCALE = 0.65;
 const PIN_W = 24;
 const PIN_H = 32;
 
-// TWO tables, because the two bands this drawing is cropped to are not the
-// same shape at all, and one set of positions tuned for the tighter one looked
-// like a grid in the roomier one.
+// THE PINS MOVE WITH THE RING, which is the whole of this table's design.
 //
-// SCATTER — the visitor hero on a phone. The plate is h-[72vw] with the search
+// They used to be fixed points, chosen to sit inside the ring at its TIGHTEST -
+// r 99.6, which is what 10 km draws. That kept them inside it at every
+// distance, and bought that with the opposite fault: at 50 km the ring is r
+// 210 and the pins were still huddled inside 96, a tight clump in the middle
+// of a large empty circle. Moving the distance had no visible effect on them
+// at all.
+//
+// So a pin is stored as a y and a FRACTION of the ring's own half-width at
+// that y:
+//
+//   u = -1   the left edge of the ring on this line
+//   u =  0   the centre
+//   u = +1   the right edge
+//
+// x is then computed per render from the live radius. The pins fan outwards as
+// the distance grows and draw back in as it shrinks - 130 units of spread at
+// 10 km, 310 at 50 - and they cannot leave the ring at any value, because
+// their position is defined relative to it rather than checked against it.
+//
+// y stays fixed on purpose. The ring grows in both directions but the VISIBLE
+// band does not: both crops below are far shorter than they are wide, so
+// vertical room is spent at 10 km already and there is none to fan into. The
+// spread that is available is horizontal, so that is where it goes.
+//
+// What constrains u, measured rather than guessed:
+//
+//   the ring      the far corner of the box stays 3 units inside the dashes at
+//                 every distance, which is what the -MARGIN below pays for
+//   the halo      no box within 15 of (225, 225) at the TIGHTEST ring, where
+//                 the pins are closest to the middle. It was 26 - the soft
+//                 disc's own radius plus air - and that was the single biggest
+//                 cause of the pins NOT looking scattered: at 10 km the ring
+//                 reaches x 125..325, so a 52-unit hole in the middle of it
+//                 left two 70-unit strips and nothing else. Eight pins in two
+//                 strips are two columns, whatever their y. 15 clears the ink
+//                 dot (r 7.5 plus a 3-wide white stroke, so r 9) with 6 units
+//                 of air, and a pin may now cross the pale disc around it -
+//                 which is decoration, where the dot is the thing that means
+//                 something
+//   the water     the backwater runs down the left, and this is why the fan is
+//                 not symmetrical. Its right edge is (123, 164) -> (91, 218)
+//                 -> (50, 269) off its own quadratic, so the room on the left
+//                 depends on the y - and a flat limit of x >= 140 was tried
+//                 first, which pinned four pins to that one value at 50 km and
+//                 recreated the clump this table exists to remove
+//   no three in a line, at every distance. The worst case over 10..50 km is
+//                 6.1 units in the scatter and 5.7 in the strip
+//
+// What is NOT constrained any more: the parks. A pin was kept off the green
+// blocks when pins were fixed points; a pin that travels 150 units cannot
+// honour that at every stop, and of the two the fan is worth more than a pale
+// green rectangle under one mark.
+const PIN_MARGIN = 4;
+
+type PinSlot = { type: string; y: number; u: number };
+
+// SCATTER - the visitor hero on a phone. The plate is h-[72vw] with the search
 // card starting at mt-[37vw], and both are a share of the width, so the crop
 // is identical at every screen size: with offsetY 78 the drawing is visible
-// from y 141, and the card's top edge lands at y 307.5. That is 166 units of
-// clear map, which is room for an actual scatter — pins at eight different
-// heights across 110 units, in two loose tiers rather than two rows.
-//
-// Three things it has to keep off.
-//
-// The halo at (225, 225): r 22 of accent-soft with the ink dot inside it, which
-// is where the search is measured from and the one mark here that means
-// something. Pins are drawn last, so one crossing it would hide it. No pin box
-// enters x 195..255 by y 195..255 — which is why nothing sits in the middle of
-// the drawing at the middle of its height, and why the two central pins pass
-// above it and below it instead.
-//
-// The backwater, which runs diagonally down the left: roughly x 112..123 at
-// y 164, narrowing to x 50..70 by y 270. Every box here clears it by at least
-// 15 units.
-//
-// The parks, for the same reason the drawing carries no place names — a pin
-// standing in the middle of a green block is saying something about a place
-// that does not exist.
-const PINS_SCATTER: { type: string; x: number; y: number }[] = [
-  { type: "INDEPENDENT_HOUSE", x: 150, y: 196 },
-  { type: "APARTMENT", x: 232, y: 190 },
-  { type: "OFFICE", x: 316, y: 206 },
-  { type: "ROOM", x: 396, y: 186 },
-  { type: "VILLA", x: 118, y: 268 },
-  { type: "PLOT", x: 180, y: 288 },
-  { type: "COMMERCIAL", x: 282, y: 278 },
-  { type: "PG", x: 372, y: 278 },
+// from y 141 and the card's top edge lands at y 307.5. Boxes are held inside
+// y 145..305 of that, across 8 different heights.
+const PINS_SCATTER: PinSlot[] = [
+  { type: "APARTMENT", y: 195, u: -0.317 },
+  { type: "INDEPENDENT_HOUSE", y: 206, u: 0.763 },
+  { type: "COMMERCIAL", y: 235, u: 0.456 },
+  { type: "ROOM", y: 246, u: 0.943 },
+  { type: "VILLA", y: 254, u: -0.628 },
+  { type: "OFFICE", y: 275, u: 0.368 },
+  { type: "PG", y: 283, u: -0.569 },
+  { type: "PLOT", y: 295, u: 0.894 },
 ];
 
-// STRIP — the signed-in bar, which is a fixed 208px tall at every width. Slice
-// keeps the full width, so the slice of drawing that fits shrinks as the screen
-// widens: 292 units at 320px, 91 at 1023px, the last pixel before lg hides the
-// bar. There is no room to scatter in 91 units; what matters there is only that
-// nothing is lost.
+// STRIP - the signed-in bar, a fixed 208px tall at every width. Slice keeps the
+// full width, so the slice of drawing that fits shrinks as the screen widens:
 //
-// So: two rows, and every body between y 189 and y 268 — 79 units straddling
-// 225, the viewBox's own middle, which is the axis "YMid" crops about. A set
-// centred there is the LAST thing a shrinking window loses, so all eight
-// survive every width this bar is shown at. Rows 42 units apart, clearing the
-// 32-unit pin height, so x may repeat between them. All x >= 160 keeps them
-// off the backwater, which crosses the left of the drawing at exactly these
-// rows.
+//   320px -> 292 units visible      600px -> 156
+//   390px -> 240                    768px -> 122
+//   500px -> 187                   1023px ->  91
 //
-// The second row's first pin is at x 172 rather than 200, which is where it sat
-// until the boxes were measured against the halo: at 200 its box came within
-// 14.8 units of (225, 225), inside the halo's own radius of 22 — and pins are
-// drawn last, so it was sitting on top of the mark that says where the search
-// is measured from. The nearest any pin now comes is 25.
-const PINS_STRIP: { type: string; x: number; y: number }[] = [
-  { type: "APARTMENT", x: 180, y: 222 },
-  { type: "OFFICE", x: 262, y: 226 },
-  { type: "ROOM", x: 344, y: 221 },
-  { type: "VILLA", x: 418, y: 225 },
-  { type: "INDEPENDENT_HOUSE", x: 172, y: 264 },
-  { type: "PLOT", x: 282, y: 268 },
-  { type: "COMMERCIAL", x: 364, y: 263 },
-  { type: "PG", x: 428, y: 267 },
+// This used to hold the boxes inside y 182..269, which is the 1023px case, so
+// that all eight survived every width. That promise is given up here, and it
+// is worth being plain about why: 182..269 is 87 units, and on the phone this
+// bar is actually read on there are 240 to 292 units of drawing on screen. All
+// eight pins sat in a thin stripe across the middle of it with empty map above
+// and below - which is what "gathered in one place" was describing.
+//
+// Boxes are held inside y 147..303 instead: the 600px case, fully visible on
+// every phone. The pins now span 123 units of height rather than 66. Above
+// 600px the outermost one or two crop at the top or bottom edge, and that is
+// the trade, taken deliberately: 320-500px is where this screen is used, and
+// 1023px is the last pixel before the whole bar is replaced by the desktop
+// layout anyway.
+const PINS_STRIP: PinSlot[] = [
+  { type: "INDEPENDENT_HOUSE", y: 180, u: 0.767 },
+  { type: "PLOT", y: 190, u: -0.436 },
+  { type: "VILLA", y: 211, u: 0.947 },
+  { type: "OFFICE", y: 237, u: 0.362 },
+  { type: "COMMERCIAL", y: 252, u: 0.837 },
+  { type: "PG", y: 265, u: -0.59 },
+  { type: "APARTMENT", y: 275, u: 0.56 },
+  { type: "ROOM", y: 303, u: -0.469 },
 ];
+
+// Which type sits where is chosen, not left to declaration order. Six of the
+// eight colours are confusable in pairs at CIELAB dE < 48 - Villa/Room 31,
+// Independent house/PG 33, Villa/Plot 35, Apartment/Independent house 37,
+// Commercial/PG 38, Plot/Office 45 - and at 13 pixels with no label beside
+// them, two near-identical dots close together read as one category. Each
+// table keeps its confusable pairs apart at EVERY distance, not just one:
+// closest is Plot/Office, never nearer than 88 units in the scatter and 61 in
+// the strip.
 
 type Props = {
   radiusKm: number;
@@ -157,11 +201,22 @@ type Props = {
 };
 
 const MapPlate = ({ radiusKm, offsetY = 0, pins = "none" }: Props) => {
-  const marks =
+  const slots =
     pins === "scatter" ? PINS_SCATTER : pins === "strip" ? PINS_STRIP : [];
   // 10 km sits well inside the plate, 50 km reaches most of it. Linear, because
   // the point is to feel the difference rather than to be to scale.
   const ring = 72 + (Math.min(50, Math.max(10, radiusKm)) / 50) * 138;
+
+  // Each slot's u resolved against the ring as it is right now. The half-width
+  // available on a pin's own line is the circle's chord there, less the margin
+  // and half a pin box so the box itself stays inside the dashes rather than
+  // just its tip.
+  const marks = slots.map(({ type, y, u }) => {
+    const dy = y - 225;
+    const chord = Math.sqrt(Math.max(0, ring * ring - dy * dy));
+    const half = Math.max(0, chord - PIN_MARGIN - (PIN_W * PIN_SCALE) / 2);
+    return { type, x: 225 + u * half, y };
+  });
 
   return (
     <svg
@@ -252,9 +307,18 @@ const MapPlate = ({ radiusKm, offsetY = 0, pins = "none" }: Props) => {
         <g
           key={type}
           transform={`translate(${x - PIN_W / 2} ${y - PIN_H}) scale(${PIN_SCALE})`}
-          // The lift the real pins get from drop-shadow-md. Tinted with the
-          // ink hue rather than black, like every other shadow on the site.
-          style={{ filter: "drop-shadow(0 2px 2px rgba(48, 32, 68, 0.22))" }}
+          style={{
+            // The lift the real pins get from drop-shadow-md. Tinted with the
+            // ink hue rather than black, like every other shadow on the site.
+            filter: "drop-shadow(0 2px 2px rgba(48, 32, 68, 0.22))",
+            // The same curve and duration as the ring's own r, so the pins
+            // travel WITH the dashes instead of chasing them — two eases of
+            // different lengths on one gesture reads as a glitch. SVG2 maps
+            // the transform attribute onto the CSS property, so this animates
+            // the attribute set above; where it does not, the pins simply
+            // arrive without the travel.
+            transition: "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
         >
           <path
             d="M12 0C5.4 0 0 5.3 0 11.9 0 20.8 12 32 12 32s12-11.2 12-20.1C24 5.3 18.6 0 12 0Z"

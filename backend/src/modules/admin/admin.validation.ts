@@ -27,3 +27,21 @@ export const interestsTake = z.coerce
   .min(1)
   .max(50)
   .default(25);
+
+// The note an operator sends back with a rejected listing. Mandatory, and
+// mandatory for a different reason than the RERA note above: that one is
+// published, this one is the only instruction the seller gets. "Rejected" with
+// no sentence attached tells somebody that their property is wrong and nothing
+// about what to change, which produces a support email and a listing edited at
+// random until it passes.
+//
+// 15 and not 25, matching the take-down bound next door, because the real
+// reasons here are often one short clause - "the first photo is a screenshot
+// from another site" - and a floor that forces padding gets padding.
+export const listingRejectionValidation = z.object({
+  note: z
+    .string()
+    .trim()
+    .min(15, "Say what the seller has to change — this sentence is all they get")
+    .max(300, "Keep the note under 300 characters"),
+});

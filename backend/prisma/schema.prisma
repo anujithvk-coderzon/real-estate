@@ -77,7 +77,7 @@ enum VerificationStatus {
   PENDING
   VERIFIED
   REVOKED
-  REJECTED  
+  REJECTED
 }
 
 enum ProjectStatus {
@@ -87,71 +87,72 @@ enum ProjectStatus {
 }
 
 model User {
-  id                  String             @id @default(uuid())
-  slug                String?            @unique
-  name                String
-  email               String             @unique
-  description         String?
-  password            String?
-  googleId            String?            @unique
-  avatarUrl           String?
-  role                UserRole           @default(USER)
-  isVerified          Boolean            @default(false)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  listings            Listing[]
-  accountType         PostedBy?
-  agentReraNumber     String?            @unique
-  agentReraState      String?
-  agentReraName       String?
-  agentReraStatus     VerificationStatus @default(NONE)
+  id                      String             @id @default(uuid())
+  slug                    String?            @unique
+  name                    String
+  email                   String             @unique
+  description             String?
+  password                String?
+  googleId                String?            @unique
+  avatarUrl               String?
+  role                    UserRole           @default(USER)
+  isVerified              Boolean            @default(false)
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  listings                Listing[]
+  accountType             PostedBy?
+  agentReraNumber         String?            @unique
+  agentReraState          String?
+  agentReraName           String?
+  agentReraStatus         VerificationStatus @default(NONE)
   agentReraVerifiedReason String?
-  agentReraVerifiedAt DateTime?
-  projects            Project[]          @relation("BuiltProjects")
-  interest            UserInterest[]
-  BuyerChats          Conversation[]     @relation("BuyerChats")
-  sellerChats         Conversation[]     @relation("SellerChats")
-  messagesSent        Message[]
-  propertyViews       PropertyView[]
-  promotions          Promotions[]
-  notifications        Notification[]
-  complaints           Complaints[]
+  agentReraVerifiedAt     DateTime?
+  projects                Project[]          @relation("BuiltProjects")
+  interest                UserInterest[]
+  BuyerChats              Conversation[]     @relation("BuyerChats")
+  sellerChats             Conversation[]     @relation("SellerChats")
+  messagesSent            Message[]
+  propertyViews           PropertyView[]
+  promotions              Promotions[]
+  notifications           Notification[]
+  complaints              Complaints[]
+
   @@map("users")
 }
 
 model Project {
-  id             String             @id @default(ulid())
-  name           String
-  description    String?
-  slug           String?            @unique
-  status         ProjectStatus
-  propertyType   PropertyType?
-  totalUnits     Int?
-  minPrice       Decimal?           @db.Decimal(12, 2)
-  maxPrice       Decimal?           @db.Decimal(12, 2)
-  startedAt      DateTime?
-  handoverAt     DateTime?
-  locality       String
-  city           String
-  district       String
-  state          String
-  pincode        String
-  latitude       Float?
-  longitude      Float?
-  reraNumber     String?            @unique
-  reraState      String?
-  reraStatus     VerificationStatus @default(NONE)
+  id                 String             @id @default(ulid())
+  name               String
+  description        String?
+  slug               String?            @unique
+  status             ProjectStatus
+  propertyType       PropertyType?
+  totalUnits         Int?
+  minPrice           Decimal?           @db.Decimal(12, 2)
+  maxPrice           Decimal?           @db.Decimal(12, 2)
+  startedAt          DateTime?
+  handoverAt         DateTime?
+  locality           String
+  city               String
+  district           String
+  state              String
+  pincode            String
+  latitude           Float?
+  longitude          Float?
+  reraNumber         String?            @unique
+  reraState          String?
+  reraStatus         VerificationStatus @default(NONE)
   reraVerifiedReason String?
-  reraVerifiedAt DateTime?
-  isReraExempt   Boolean            @default(false)
-  exemptReason   String?
-  builderId      String
-  builder        User               @relation("BuiltProjects", fields: [builderId], references: [id], onDelete: Restrict)
-  images         ProjectImages[]
-  listings       Listing[]
-  promotions     Promotions[]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  reraVerifiedAt     DateTime?
+  isReraExempt       Boolean            @default(false)
+  exemptReason       String?
+  builderId          String
+  builder            User               @relation("BuiltProjects", fields: [builderId], references: [id], onDelete: Restrict)
+  images             ProjectImages[]
+  listings           Listing[]
+  promotions         Promotions[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([builderId])
   @@map("projects")
@@ -171,33 +172,28 @@ model ProjectImages {
 }
 
 model Listing {
-  id                       String          @id @default(uuid())
+  id                       String              @id @default(uuid())
   projectId                String?
-  project                  Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project                  Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectNameText          String?
   projectReraText          String?
-  // Why a typed-in project carries no RERA number. Not every project has one to
-  // give: anything completed before the Act, and anything under the size the
-  // Act reaches, was never registered. Without this the only way to answer a
-  // required number field is to invent one, and an invented number is worse
-  // than none — it is indistinguishable from a real one.
   projectReraAbsence       ProjectReraAbsence?
   builderNameText          String?
   title                    String
   description              String
-  slug                     String?         @unique
+  slug                     String?             @unique
   listingType              ListingType
   propertyType             PropertyType
   postedBy                 PostedBy
   //price
-  price                    Decimal         @db.Decimal(12, 2)
-  isNegotiable             Boolean         @default(false)
-  securityDeposit          Decimal?        @db.Decimal(12, 2)
-  maintenance              Decimal?        @db.Decimal(10, 2)
+  price                    Decimal             @db.Decimal(12, 2)
+  isNegotiable             Boolean             @default(false)
+  securityDeposit          Decimal?            @db.Decimal(12, 2)
+  maintenance              Decimal?            @db.Decimal(10, 2)
   //area
   areaUnit                 AreaUnit
-  areaValue                Decimal         @db.Decimal(12, 2)
-  areaSqft                 Decimal         @db.Decimal(12, 2)
+  areaValue                Decimal             @db.Decimal(12, 2)
+  areaSqft                 Decimal             @db.Decimal(12, 2)
   // configuration
   bedrooms                 Int?
   bathrooms                Int?
@@ -220,26 +216,25 @@ model Listing {
   //contact 
   contactName              String?
   contactPhone             String?
-  contactPhoneVisibility   Boolean?        @default(true)
-  contactWatsappVisibility Boolean?        @default(true)
-  contactInappVisibility   Boolean?        @default(true)
+  contactPhoneVisibility   Boolean?            @default(true)
+  contactWatsappVisibility Boolean?            @default(true)
+  contactInappVisibility   Boolean?            @default(true)
   //status
-  status                   ListingStatus   @default(DRAFT)
+  status                   ListingStatus       @default(DRAFT)
   expiresAt                DateTime?
   //owner details
   ownerId                  String
-  owner                    User            @relation(fields: [ownerId], references: [id], onDelete: Restrict)
-  //
+  owner                    User                @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   listingImages            ListingImages[]
   amenities                Amenity[]
   listingVideo             ListingVideos?
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @updatedAt
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
   interest                 UserInterest[]
   conversations            Conversation[]
   propertyViews            PropertyView[]
   promotions               Promotions[]
-  complaints                Complaints[]
+  complaints               Complaints[]
   @@index([city, listingType, status])
   @@index([status, createdAt])
   @@index([price])
@@ -251,25 +246,28 @@ model Listing {
 }
 
 model ListingImages {
-  id        String   @id @default(uuid())
-  path      String
-  position  Int      @default(0)
-  listingId String
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([listingId])
+  id         String   @id @default(uuid())
+  path       String
+  position   Int      @default(0)
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  approved   Boolean  @default(false)
+  reviewNote String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([listingId, approved, position])
   @@map("listing_images")
 }
 
 model ListingVideos {
-  id        String   @id @default(uuid())
-  videoId   String   @unique
-  listingId String   @unique
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  videoId    String   @unique
+  listingId  String   @unique
+  approved   Boolean  @default(false)
+  reviewNote String?
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("listing_videos")
 }
@@ -280,7 +278,6 @@ model Amenity {
   category  String
   listing   Listing[]
   createdAt DateTime  @default(now())
-
   @@map("amenities")
 }
 
@@ -291,7 +288,6 @@ model UserInterest {
   user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
   listing   Listing  @relation(references: [id], fields: [listingId], onDelete: Cascade)
   createdAt DateTime @default(now())
-
   @@unique([userId, listingId])
   @@index([userId])
   @@map("user_interests")
@@ -311,7 +307,6 @@ model Conversation {
   sellerUnread    Int       @default(0)
   createdAt       DateTime  @default(now())
   messages        Message[]
-
   @@unique([listingId, buyerId])
   @@map("conversations")
 }
@@ -324,7 +319,6 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
   body           String
   createdAt      DateTime     @default(now())
-
   @@map("messages")
 }
 
@@ -335,7 +329,6 @@ model PropertyView {
   user      User     @relation(fields: [userId], references: [id])
   listing   Listing  @relation(fields: [listingId], references: [id])
   createdAt DateTime @default(now())
-
   @@index([userId, createdAt])
   @@index([listingId, createdAt])
   @@map("property_views")
@@ -360,28 +353,28 @@ model Promotions {
 }
 
 model Notification {
-  id String @id @default(uuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title String
-  body String
-  type String
-  isRead Boolean @default(false)
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  @@index([userId,isRead,createdAt])
+  @@index([userId, isRead, createdAt])
   @@map("notifications")
 }
 
-model Complaints{
-  id String @id @default(uuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Complaints {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   listingId String
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  title String
-  body String
-  status String @default("PENDING")
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  status    String   @default("PENDING")
   createdAt DateTime @default(now())
-  @@unique([userId,listingId,createdAt])
+  @@unique([userId, listingId, createdAt])
   @@map("complaints")
 }

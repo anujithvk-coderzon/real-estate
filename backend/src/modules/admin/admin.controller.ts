@@ -13,13 +13,18 @@ import {
   rejectProjectReraService,
   revokeProjectReraService,
   getListingComplaintsService,
+  getListingApprovalsService,
+  approveListingMediaService,
+  rejectListingMediaService,
+  allowListingMediaService,
+  type ListingApprovalQueue,
   takeDownListingService,
   adminListingService,
   activateTakenDownListingService,
 } from "./admin.service.js";
 import { BadRequestError } from "../../errors/Errors.js";
 import { prisma } from "../../lib/prisma.js";
-import { adminCreationValidation, reraDecisionValidation,} from "./admin.validation.js";
+import { adminCreationValidation, reraDecisionValidation, listingRejectionValidation } from "./admin.validation.js";
 import { VerificationStatus } from "../../generated/prisma/enums.js";
 
 export const createAdmin=async(req:Request,res:Response)=>{
@@ -147,4 +152,43 @@ export const activateTakenDownListing=async(req:Request,res:Response)=>{
     const updated=await activateTakenDownListingService(listingId)
     if(!updated) throw new BadRequestError("Listing could not be activated")
     return res.status(200).json({message:"Listing activated successfully"})
+}
+const APPROVAL_QUEUES=['LIVE','DRAFTS','REJECTED'] as const
+
+export const getListingApprovals=async(req:Request,res:Response)=>{
+    // LIVE by default: it is the queue with buyers on the other end of it,
+    // looking at a listing whose photographs are hidden.
+    const queue=(req.query.queue ?? 'LIVE') as string
+    if(!APPROVAL_QUEUES.includes(queue as ListingApprovalQueue)){
+        throw new BadRequestError("Invalid queue")
+    }
+    const listings=await getListingApprovalsService(queue as ListingApprovalQueue)
+    return res.status(200).json({message:"Fetched successfully",listings})
+}
+
+export const approveListingMedia=async(req:Request,res:Response)=>{
+    const listingId=req.params.id as string
+    if(!listingId) throw new BadRequestError("Invalid listing id")
+    const message=await approveListingMediaService(listingId)
+    return res.status(200).json({message})
+}
+
+export const allowListingMedia=async(req:Request,res:Response)=>{
+    const kind=req.params.kind
+    const mediaId=req.params.id as string
+    if(kind!=='image' && kind!=='video') throw new BadRequestError("Invalid media kind")
+    if(!mediaId) throw new BadRequestError("Invalid media id")
+    const message=await allowListingMediaService(kind,mediaId)
+    return res.status(200).json({message})
+}
+
+export const rejectListingMedia=async(req:Request,res:Response)=>{
+    const kind=req.params.kind
+    const mediaId=req.params.id as string
+    if(kind!=='image' && kind!=='video') throw new BadRequestError("Invalid media kind")
+    if(!mediaId) throw new BadRequestError("Invalid media id")
+    const validated=listingRejectionValidation.safeParse(req.body)
+    if(!validated.success) throw validated.error
+    const message=await rejectListingMediaService(kind,mediaId,validated.data.note)
+    return res.status(200).json({message})
 }

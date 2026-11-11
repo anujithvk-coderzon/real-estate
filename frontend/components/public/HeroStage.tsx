@@ -11,7 +11,7 @@ import { useSearchParams } from "next/navigation";
 import ContourArt from "@/components/ContourArt";
 import MapPlate from "@/components/public/MapPlate";
 import NearbyButton from "@/components/public/NearbyButton";
-import SearchBar, { FIELD_LABEL } from "@/components/public/SearchBar";
+import SearchBar, { FIELD_LABEL, ModeGroup } from "@/components/public/SearchBar";
 import { authReady, isSignedIn } from "@/lib/api";
 import { recallHomeSearch } from "@/lib/homeSearch";
 import {
@@ -159,11 +159,20 @@ type Orbit = {
 // and the browser's own chevron doing the "this opens" work.
 // This bar's labels and selects. Always-visible captions, unlike the card's,
 // which hide from md where the card itself names them.
-const BAR_LABEL =
-  "mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted";
-
+// A segment of the signed-in bar, not a field in a form: no ring, no rounding
+// and no background of its own, because the bar around it has all three. Those
+// were what made three controls read as three boxes.
+//
+// The focus ring is inset. The bar clips its children with overflow-hidden so
+// their square corners take its rounding, and an outline sitting OUTSIDE the
+// box would be clipped away with them — which is a control you cannot see you
+// have tabbed to.
+//
+// 16px at base, like every other select on this page: anything smaller and iOS
+// zooms the whole page in when the select opens, and on a 320px screen that
+// zoom puts the submit button off the edge.
 const BAR_SELECT =
-  "h-9 w-full rounded-lg bg-panel px-2.5 text-[13.5px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+  "h-11 w-full min-w-0 bg-transparent px-2 text-[16px] font-medium text-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent md:h-10 md:text-[15px]";
 
 const HERO_SELECT =
   "h-11 w-full rounded-lg bg-ground px-2 text-[15px] font-medium text-ink ring-1 ring-line focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-10 md:bg-panel/95 md:backdrop-blur-sm";
@@ -605,99 +614,120 @@ const HeroStage = () => {
             Where are you looking?
           </h1>
 
-          {/* Labels stay visible here at every width: this bar has no card
-              around it, and a bare "10 km" beside a bare "Any type" is two
-              controls nobody can name. */}
-          <div className="mt-4 flex flex-wrap items-end gap-2.5">
-            <div>
-              <p id="bar-mode-label" className={BAR_LABEL}>
-                Looking to
-              </p>
-              <div
-                role="group"
-                aria-labelledby="bar-mode-label"
-                className="flex gap-1 rounded-xl bg-panel p-1 ring-1 ring-line"
-              >
-                {SEARCH_MODES.map((option) => {
-                  const selected = option.value === modeSelectValue(mode);
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      // Pressing the chosen one again clears it, so "any"
-                      // stays reachable without a third button.
-                      onClick={() =>
-                        chooseMode(
-                          selected && mode !== "PG" ? "" : option.value,
-                        )
-                      }
-                      aria-pressed={selected}
-                      className={`flex h-9 items-center rounded-lg px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                        selected
-                          ? "bg-accent-soft text-accent ring-1 ring-accent"
-                          : "bg-panel text-ink shadow-[0_1px_1px_rgba(48,32,68,0.06)] ring-1 ring-line hover:ring-accent/60"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
+          {/* ---------- narrowing it down ----------
+              ONE instrument with three segments, not three forms in a row.
+
+              What was here: three controls each with its own ring, each under
+              its own 10px uppercase tracked label, in a flex-wrap row. Four
+              outlines and three shouting labels for three choices — and the
+              mode group had a ring on the container, a ring on every button
+              and a third ring on the selected one, which is the border inside
+              a border. Borders go from four to one.
+
+              The labels are gone, not hidden for tidiness: every control here
+              says its own name already. The segment reads "Buy" and "Rent",
+              the type select sits at "Any type", the distance one at "Within
+              10 km" — and it keeps the word "Within" at every value, so it is
+              never a bare number. An earlier note here argued the labels had
+              to stay because "a bare 10 km beside a bare Any type is two
+              controls nobody can name"; that is true of bare values and is
+              what the option text was already written to avoid. They survive
+              as sr-only, so nothing is lost to a screen reader.
+
+              Base: the mode takes its own row at full width, then type and
+              distance split the next one. From sm all three sit on one line.
+              No wrapping into three ragged rows, which is what 320px did
+              before. */}
+          <div className="mt-3 max-w-2xl overflow-hidden rounded-xl bg-panel ring-1 ring-line">
+            {/* A 2x2 grid at base, so the divider between Buy and Rent falls
+                on the same vertical line as the one between the two selects
+                below it. Both are at 50% of the same box, so they line up by
+                construction rather than by two numbers being kept in step.
+                One row from sm, where all four segments fit side by side. */}
+            <div className="grid grid-cols-2 sm:flex">
+              <div className="col-span-2 border-b border-line sm:col-span-1 sm:border-b-0 sm:border-r">
+                <ModeGroup
+                  bare
+                  flush
+                  value={modeSelectValue(mode)}
+                  // Pressing the chosen one again clears it, so "any" stays
+                  // reachable without a third button.
+                  onToggle={(value) =>
+                    chooseMode(
+                      value === modeSelectValue(mode) && mode !== "PG"
+                        ? ""
+                        : value,
+                    )
+                  }
+                />
               </div>
-            </div>
 
-            <div className="min-w-[10rem]">
-              <label htmlFor="hero-type" className={BAR_LABEL}>
-                Property type
-              </label>
-              <select
-                id="hero-type"
-                value={typeSelectValue(mode, kind)}
-                onChange={(event) => chooseKind(event.target.value)}
-                className={BAR_SELECT}
-                suppressHydrationWarning
-              >
-                <option value="">Any type</option>
-                {searchTypeOptions(mode, typeSelectValue(mode, kind)).map(
-                  (option) => (
+              {/* Equal halves, which the alignment above requires: an uneven
+                  split would put this divider somewhere the Buy/Rent one is
+                  not. It costs the distance select a few pixels at 320px —
+                  "Within 10 km" with the native arrow is the longest thing in
+                  this bar — so the horizontal padding is trimmed to px-2 to
+                  pay for it. */}
+              <div className="flex min-w-0 border-r border-line sm:flex-1">
+                <label htmlFor="hero-type" className="sr-only">
+                  Property type
+                </label>
+                <select
+                  id="hero-type"
+                  value={typeSelectValue(mode, kind)}
+                  onChange={(event) => chooseKind(event.target.value)}
+                  className={BAR_SELECT}
+                  suppressHydrationWarning
+                >
+                  <option value="">Any type</option>
+                  {searchTypeOptions(mode, typeSelectValue(mode, kind)).map(
+                    (option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+              <div className="flex min-w-0 sm:flex-1">
+                <label htmlFor="hero-radius" className="sr-only">
+                  Distance
+                </label>
+                <select
+                  id="hero-radius"
+                  value={km}
+                  onChange={(event) => setKm(event.target.value)}
+                  className={BAR_SELECT}
+                  suppressHydrationWarning
+                >
+                  <option value="">Within 10 km</option>
+                  {RADIUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      Within {option.label}
                     </option>
-                  ),
-                )}
-              </select>
-            </div>
-
-            <div className="min-w-[8rem]">
-              <label htmlFor="hero-radius" className={BAR_LABEL}>
-                Distance
-              </label>
-              <select
-                id="hero-radius"
-                value={km}
-                onChange={(event) => setKm(event.target.value)}
-                className={BAR_SELECT}
-                suppressHydrationWarning
-              >
-                <option value="">Within 10 km</option>
-                {RADIUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    Within {option.label}
-                  </option>
-                ))}
-              </select>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="mt-2.5 max-w-2xl">
-            {/* compact renders none of the three above, so they are passed:
-                without them the form submits an empty mode, type and distance
-                and the choices made right above are dropped on the way to the
-                results page. */}
+          {/* The place comes after the three above, which is the order asked
+              for: pick what you are looking for, then say where. An earlier
+              pass here had it the other way round, on the grounds that the
+              heading asks "where are you looking?" and the field answering it
+              should be the first thing under it. Both readings are defensible
+              and this is the one chosen. */}
+          <div className="mt-3 max-w-2xl">
             <SearchBar
               // Keyed on the restored place: SearchBar seeds its own location
               // state once at mount, and the memory arrives after it.
               key={place}
               variant="compact"
+              // compact renders none of the three below, so they are passed:
+              // without them the form submits an empty mode, type and distance
+              // and the choices made underneath are dropped on the way to the
+              // results page.
               initialValues={{
                 listingType: mode,
                 propertyType: kind,
@@ -711,16 +741,18 @@ const HeroStage = () => {
               away the one control that exists because the device has a GPS
               chip. Given the same three values as SearchBar above, and for the
               same reason: without them it answers "what is near me" when the
-              question set right above it was narrower. */}
-          {/* Phones and tablets only. A desktop has no GPS chip: its position
+              question set above it was narrower.
+
+              Phones and tablets only. A desktop has no GPS chip: its position
               comes from the wifi networks around it, or failing that from the
               IP address, which lands on the ISP's exchange and can be in
               another district. lg rather than md, so a tablet in landscape —
               which does have GPS — keeps it. The accuracy guard inside the
               button is still the test that matters, because a phone with
               location services switched off is just as wrong and no breakpoint
-              can see that; this only stops offering it where it rarely works. */}
-          <div className="mt-2.5 max-w-2xl lg:hidden">
+              can see that; this only stops offering it where it rarely
+              works. */}
+          <div className="mt-3 max-w-2xl lg:hidden">
             <NearbyButton listingType={mode} propertyType={kind} radius={km} />
           </div>
         </div>

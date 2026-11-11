@@ -150,7 +150,44 @@ const MySpecificListing = ({ id }: Props) => {
     ["Pin placed on the map", location !== null],
     ["Description of 30+ characters", listing.description.trim().length >= 30],
   ];
+
+  // Nothing on the approval side gates this. The checklist is the whole bar,
+  // and it is made of things the owner can actually go and do — which is why
+  // an earlier version of this page, with a dead button reading "Waiting for
+  // approval", was the wrong shape: it asked somebody to finish the work and
+  // then wait on us for the one thing they came to do.
   const readyToPublish = checklist.every(([, done]) => done);
+
+  // Which of their own photographs buyers cannot see yet. `approved` is sent
+  // on the owner's payload only, and an older cached response may not carry it
+  // at all — hence `=== false` rather than `!approved`, so an undefined flag
+  // counts as shown rather than silently reporting every photo as hidden.
+  // `=== false` rather than `!approved` throughout: the flag is sent on the
+  // owner's payload only, and an older cached response may not carry it at
+  // all. An undefined flag has to count as "showing", or every photo on a
+  // stale response is reported as hidden.
+  const pendingPhotos = listing.listingImages.filter(
+    (image) => image.approved === false && !image.reviewNote,
+  ).length;
+  const pendingVideo =
+    listing.listingVideo?.approved === false && !listing.listingVideo.reviewNote;
+  const waitingMedia = pendingPhotos + (pendingVideo ? 1 : 0);
+
+  // Declined, with the reason. Each one names the photograph it is about,
+  // because "a photo was rejected" on a listing with ten of them is not
+  // something a seller can act on.
+  const declined: { label: string; note: string }[] = [
+    ...listing.listingImages
+      .filter((image) => image.approved === false && image.reviewNote)
+      .map((image) => ({
+        label: `Photo ${image.position + 1}`,
+        note: image.reviewNote as string,
+      })),
+    ...(listing.listingVideo?.approved === false &&
+    listing.listingVideo.reviewNote
+      ? [{ label: "Your video", note: listing.listingVideo.reviewNote }]
+      : []),
+  ];
 
   const facts = keyFacts(listing);
   const details = detailRows(listing);
@@ -236,6 +273,77 @@ const MySpecificListing = ({ id }: Props) => {
           />
         </div>
       </div>
+
+      {/* ---------- where this stands with us ----------
+          Above the photos rather than in the sidebar, because on a phone the
+          sidebar is below the whole listing and this is the answer to the only
+          question the owner of a draft has. */}
+      {declined.length > 0 && (
+        <section
+          id="media-declined"
+          aria-labelledby="declined-heading"
+          className="mt-5 rounded-xl border border-warn/40 bg-warn/5 p-4 sm:p-5"
+        >
+          <h2 id="declined-heading" className="text-[15px] font-semibold">
+            {declined.length === 1
+              ? `${declined[0]!.label} cannot be shown yet`
+              : `${declined.length} items cannot be shown yet`}
+          </h2>
+          {/* The operator's own sentence, against the photograph it is about.
+              Not a paraphrase: this is the only instruction the seller gets,
+              and it is in their notifications too — kept here because a
+              notification is read once and then buried by the next one. */}
+          <ul className="mt-2 space-y-2">
+            {declined.map((item) => (
+              <li
+                key={item.label}
+                className="break-words text-[15px] leading-relaxed"
+              >
+                <span className="font-medium">{item.label}:</span> {item.note}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2.5 text-[14px] text-muted">
+            Your listing itself is unaffected — it stays exactly where it is,
+            and every other photo is still showing. Replace{" "}
+            {declined.length === 1 ? "it" : "them"} and we will take another
+            look.
+          </p>
+          <Link
+            href={editHref}
+            className={`mt-3.5 flex w-full sm:inline-flex sm:w-auto ${primaryButton}`}
+          >
+            Edit listing
+          </Link>
+        </section>
+      )}
+
+      {waitingMedia > 0 && (
+        <section
+          id="media-state"
+          className="mt-5 rounded-xl border border-line bg-panel p-4 sm:p-5"
+        >
+          <h2 className="text-[15px] font-semibold">
+            {pendingPhotos > 0 && pendingVideo
+              ? `${pendingPhotos} photo${pendingPhotos === 1 ? "" : "s"} and your video are being checked`
+              : pendingVideo
+                ? "Your video is being checked"
+                : `${pendingPhotos} photo${pendingPhotos === 1 ? "" : "s"} ${pendingPhotos === 1 ? "is" : "are"} being checked`}
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-muted">
+            {/* Said in this order on purpose: what is NOT affected first. The
+                fear this paragraph exists to answer is "is my listing
+                broken", and answering it in the second sentence is answering
+                it too late. */}
+            {listing.status === "DRAFT"
+              ? "This does not hold up publishing — publish whenever you are ready. Somebody looks at every photo before buyers see it, and we will notify you when yours go on."
+              : "Your listing is live and buyers can find it in search. Somebody looks at every photo before buyers see it, and we will notify you when yours go on."}
+          </p>
+          {/* No estimate. A number here is a promise made on somebody else's
+              behalf, and a seller told "within 24 hours" who waits 30 has been
+              lied to by this page. */}
+        </section>
+      )}
 
       {/* ---------- photos ---------- */}
       <section className="mt-6">

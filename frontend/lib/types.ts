@@ -116,11 +116,25 @@ export type ListingImage = {
   id: string;
   position: number;
   path: string;
+  // Owner's payload only. The public one omits unapproved photographs
+  // entirely, so a flag there would always be true and would tell a visitor
+  // about a queue that is none of their business.
+  //
+  //   approved false, reviewNote null  →  nobody has looked yet
+  //   approved false, reviewNote set   →  declined, and this is why
+  //   approved true                    →  buyers can see it
+  approved?: boolean;
+  reviewNote?: string | null;
 };
 
 export type ListingVideo = {
   id: string;
   url: string;
+  // Same rule as ListingImage.approved — owner's payload only. The public one
+  // sends `listingVideo: null` for a video nobody has cleared yet, so a
+  // visitor cannot tell one is waiting and does not need to.
+  approved?: boolean;
+  reviewNote?: string | null;
 };
 
 export type ListingAmenity = {
@@ -282,6 +296,17 @@ export type PublicListing = Omit<
   amenities: Omit<ListingAmenity, "id">[];
   listingImages: Omit<ListingImage, "id">[];
   listingVideo: Omit<ListingVideo, "id"> | null;
+  // This listing HAS photographs that are not being shown yet. The one fact
+  // about the queue a visitor gets, and only because the page cannot otherwise
+  // tell "no photos" from "photos not shown", and would print "the seller has
+  // not added photos" over a listing whose eight photographs are waiting on
+  // us. No count and no reason: how many and why is between us and the seller.
+  //
+  // Optional, and not because the API might omit it: the display helpers in
+  // lib/listingDisplay take a PublicListing and are handed the owner's
+  // `Listing` too, which has no such field. Required here would make every one
+  // of them reject the owner's own payload.
+  photosPending?: boolean;
 };
 
 /* ---------- the signed-in user ---------- */

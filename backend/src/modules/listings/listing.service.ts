@@ -103,11 +103,64 @@ export const listingPublishingService=async(userId:string,listingId:string)=>{
   const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId}})
   if(!listing) throw new NotFoundError("Listing not found")
   if(listing.status==='ACTIVE') throw new BadRequestError("Already Published")
+  // A hole that predates the approval queue and is worth naming: this endpoint
+  // only refused a listing that was already ACTIVE, so the owner of a listing
+  // an operator had TAKEN_DOWN could call it and put the listing straight back
+  // into search. listingAvailabilityService guards that state explicitly and
+  // this one did not, which made the guard next door decorative - there were
+  // two roads into ACTIVE and only one of them was watched.
+  //
+  // EXPIRED is deliberately NOT refused here. Re-publishing is exactly how an
+  // expired listing is meant to come back, and the availability endpoint's own
+  // error message tells sellers to do it.
+  if(listing.status==='TAKEN_DOWN'){
+    throw new BadRequestError("Our team removed this listing after a report. The reason was sent to you in a notification \u2014 it cannot be published again from here")
+  }
   if(!listing.contactPhone || !listing.contactName){
     throw new BadRequestError("Add a contact name and phone number before publishing \u2014 buyers have no other way to reach you")
   }
+  // Approval does NOT gate this, deliberately, and it is worth saying why
+  // because an earlier version of this code did gate it.
+  //
+  // Blocking the button means the seller finishes the work and then waits on
+  // us for the one thing they came here to do. The listing is worth nothing to
+  // them in that state and nothing to a buyer either, and every hour of the
+  // queue's backlog is an hour of a property that cannot be found. What the
+  // audit actually protects against lives in the MEDIA - a photograph lifted
+  // off another site, a watermark, a phone number painted across the picture -
+  // so the media is what waits, and the listing goes live now.
+  //
+  // See docs/adr/0003 for what is given up by letting the text through
+  // unread.
+  const [pendingImages,video]=await Promise.all([
+    prisma.listingImages.count({where:{listingId,approved:false}}),
+    prisma.listingVideos.findUnique({where:{listingId},select:{approved:true}}),
+  ])
+  const pendingVideo=video!==null && !video.approved
+  const waiting=pendingImages+(pendingVideo ? 1 : 0)
+
   await prisma.listing.update({where:{id:listingId},data:{status:'ACTIVE'}})
-  return 'Published successfully'
+
+  if(waiting===0) return 'Published. Buyers can find it in search now'
+
+  // Said twice on purpose: once as the toast on the button they just pressed,
+  // and once as a notification that is still there tomorrow. A seller who
+  // publishes, sees no photographs on their live listing and has only a toast
+  // that vanished after four seconds is a seller who thinks the upload failed.
+  const what=pendingImages>0 && pendingVideo
+    ? `${pendingImages} photo${pendingImages===1 ? '' : 's'} and the video`
+    : pendingVideo
+      ? 'the video'
+      : `${pendingImages} photo${pendingImages===1 ? '' : 's'}`
+
+  await prisma.notification.create({data:{
+    userId,
+    title:"Photos Being Checked",
+    body:`${listing.title} is live and buyers can find it in search. Somebody is checking ${what} before they are shown \u2014 the listing is up either way, and we will tell you the moment they go on.`,
+    type:"LISTING_MEDIA_PENDING",
+  }})
+
+  return `Published. Buyers can find it in search now \u2014 ${what} will show once our team has checked ${pendingImages===1 && !pendingVideo ? 'it' : 'them'}`
 }
 
 // Every availability change an owner is allowed to make. One endpoint rather
@@ -150,6 +203,10 @@ export const listingAvailabilityService=async(userId:string,listingId:string,sta
   if(status==='ACTIVE' && (!listing.contactName || !listing.contactPhone)){
     throw new BadRequestError("Add a contact name and phone number before making this available again \u2014 buyers have no other way to reach you")
   }
+  // No approval bar here. Reopening is the same act as publishing, and
+  // publishing is not gated - each photograph carries the gate on its own row,
+  // so whichever road a listing takes back into search its unapproved ones
+  // stay hidden without this endpoint knowing anything about them.
 
   if(status===listing.status){
     return status==='ACTIVE' ? 'This listing is already available' : 'This listing is already closed'
@@ -224,7 +281,11 @@ if (images.length > remaining) {
 
  for(const image of images){
  const url=await uploadImage(listingId,image)
- await prisma.listingImages.create({data:{path:url,listingId,position}})
+ // select, because a bare create RETURNs every column of the row - which
+ // includes `approved` and `reviewNote`. If the database is a migration
+ // behind the generated client, that RETURNING clause is what fails (P2022),
+ // and it fails on an INSERT that would otherwise have been fine.
+ await prisma.listingImages.create({data:{path:url,listingId,position},select:{id:true}})
  position++;
 }
 return `images uploaded successfully`
@@ -306,7 +367,11 @@ export const listsFetchingService = async (page: number,filters:filterType) => {
         locality: true, city: true, district: true, bedrooms: true, bathrooms: true,
         areaValue: true, areaUnit: true, createdAt: true, updatedAt: true, status: true,
         postedBy: true,                           // the card says who listed it
-        listingImages: { orderBy: { position: "asc" }, select: { path: true } },owner:{select:{agentReraStatus:true}}
+        // approved only, on every public read of this table. The filter is
+        // repeated at each call site rather than hidden in a helper because
+        // forgetting it here does not fail, it LEAKS - an unread photograph
+        // appears on the site and nothing in any log says so.
+        listingImages: { where: { approved: true }, orderBy: { position: "asc" }, select: { path: true } },owner:{select:{agentReraStatus:true}}
       },
     }),
     prisma.listing.count({ where }),
@@ -359,6 +424,9 @@ export const OwnerListsFetchingService=async(userId:string,page:number,orderBy:L
 
   }
   const[response,total]=await Promise.all([
+   // NOT filtered on approved: this is the seller's own list, and a seller
+   // whose card went blank because their photo is in a queue would reasonably
+   // conclude the upload had failed and do it again.
    prisma.listing.findMany({where,include:{listingImages:{where:{position:0},select:{path:true,position:true}}},take,skip,orderBy}),
    prisma.listing.count({where})
   ])
@@ -436,12 +504,27 @@ const listing=await prisma.listing.findUnique({
         project:{select:{name:true,slug:true,reraNumber:true,reraStatus:true,isReraExempt:true,
                          reraVerifiedReason:true,reraVerifiedAt:true,
                          builder:{select:{name:true,slug:true}}}},
-        listingImages:{orderBy:{position:"asc"},select:{path:true,position:true}},
-        listingVideo:{select:{videoId:true}},
+        listingImages:{where:{approved:true},orderBy:{position:"asc"},select:{path:true,position:true}},
+        listingVideo:{where:{approved:true},select:{videoId:true}},
         owner:{select:{name:true,slug:true,avatarUrl:true,accountType:true,agentReraNumber:true,agentReraStatus:true,agentReraVerifiedReason:true,agentReraVerifiedAt:true}},
     },
 })
 if(!listing) throw new NotFoundError("Listing not found")
+
+// Whether this listing HAS photographs that are simply not shown yet.
+//
+// Without this the page cannot tell the two cases apart, and it already has
+// copy for one of them: "The seller has not added photos yet". Printing that
+// over a listing whose eight photographs are sitting in a queue is a false
+// statement about a real person, published on their own page, and it reads as
+// carelessness on their part rather than a wait on ours.
+//
+// A count is deliberately not sent. "Photos not shown yet" is all a buyer
+// needs; how many, and why, is between us and the seller.
+const photosPending=(await prisma.listingImages.count({
+  where:{listingId:listing.id,approved:false},
+}))>0
+
 const {contactName,contactPhone,ownerId,id,
   project:_project,projectNameText:_name,projectReraText:_rera,builderNameText:_builder,
   projectReraAbsence:_absence,
@@ -461,6 +544,7 @@ return {
         path:cdnUrl(img.path),
     })),
     listingVideo:listing.listingVideo ? {url:videoEmbedUrl(listing.listingVideo.videoId)} : null,
+    photosPending,
     owner:{
       ...listing.owner,
       avatarUrl:avatarPublicUrl(listing.owner.avatarUrl),
@@ -472,7 +556,11 @@ return {
 export const OwnerSpecificListFetchingService=async(userId:string,listingId:string)=>{
  const existingUSer=await prisma.user.findUnique({where:{id:userId}})
  if(!existingUSer) throw new BadRequestError("Invalid Token")
- const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId},include:{amenities:{select:{id:true,name:true,category:true}},listingImages:{orderBy:{position:"asc"},select:{id:true,path:true,position:true}},listingVideo:{select:{id:true,videoId:true}},owner:{select:{id:true,name:true}}}})
+ // Not filtered on approved, and `approved` itself is selected: the owner sees
+ // every photograph they uploaded, and which of them buyers can see. Hiding a
+ // seller's own photograph from their own dashboard would read as a lost
+ // upload, and they would upload it again.
+ const listing=await prisma.listing.findUnique({where:{id:listingId,ownerId:userId},include:{amenities:{select:{id:true,name:true,category:true}},listingImages:{orderBy:{position:"asc"},select:{id:true,path:true,position:true,approved:true,reviewNote:true}},listingVideo:{select:{id:true,videoId:true,approved:true,reviewNote:true}},owner:{select:{id:true,name:true}}}})
  if(!listing) throw new NotFoundError("Listing not found")
  return {
     ...listing,
@@ -480,8 +568,10 @@ export const OwnerSpecificListFetchingService=async(userId:string,listingId:stri
         id:img.id,
         position:img.position,
         path:cdnUrl(img.path),
+        approved:img.approved,
+        reviewNote:img.reviewNote,
     })),
-    listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo?.videoId)} : null
+    listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo?.videoId),approved:listing.listingVideo.approved,reviewNote:listing.listingVideo.reviewNote} : null
 }
 }
 export const listingImageDeleteService=async(userId:string,imageId:string)=>{
@@ -543,8 +633,6 @@ export const geoCodingService=async(street:string|undefined,city:string,state:st
    let response;
    const cached=await redis.get(`geoLocation:${street}|${city}|${state}|${postalcode}`)
    if(cached){
-    console.log(JSON.parse(cached));
-    
     return JSON.parse(cached)
    }
     response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
@@ -661,7 +749,7 @@ const listings=await prisma.listing.findMany({where,select: {
   createdAt: true,
   updatedAt: true,
   status: true,
-  listingImages: { orderBy: { position: "asc" }, take: 1, select: { path: true } },
+  listingImages: { where: { approved: true }, orderBy: { position: "asc" }, take: 1, select: { path: true } },
 }})
 const final_result=listings.map((list)=>({
   ...list,
@@ -689,7 +777,7 @@ export const sellerListsFetchingService=async(slug:string,page:number)=>{
         locality:true,city:true,district:true,bedrooms:true,bathrooms:true,
         areaValue:true,areaUnit:true,createdAt:true,updatedAt:true,status:true,
         postedBy:true,                            // the card says who listed it
-        listingImages:{orderBy:{position:"asc"},take:1,select:{path:true}},
+        listingImages:{where:{approved:true},orderBy:{position:"asc"},take:1,select:{path:true}},
       },
     }),
     prisma.listing.count({where}),
@@ -732,7 +820,7 @@ const [similar,count]=await Promise.all([
     orderBy:{
       createdAt:'desc'
     },
-    select:{slug:true,title:true,price:true,addressLine:true,locality:true,listingImages:{take:1,orderBy:{position:'asc'},select:{path:true}}}
+    select:{slug:true,title:true,price:true,addressLine:true,locality:true,listingImages:{where:{approved:true},take:1,orderBy:{position:'asc'},select:{path:true}}}
   }),
   prisma.listing.count({where})
 ])

@@ -804,8 +804,21 @@ const ListSpecific = ({ slug }: Props) => {
           {listing.listingImages.length > 0 ? (
             <Gallery images={listing.listingImages} title={listing.title} />
           ) : (
-            <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-panel text-[15px] text-muted ring-1 ring-line sm:aspect-[16/9] lg:max-h-[460px]">
-              The seller has not added photos yet
+            <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-panel px-6 text-center text-[15px] text-muted ring-1 ring-line sm:aspect-[16/9] lg:max-h-[460px]">
+              {/* Two different facts, and the wrong one is a false statement
+                  about a real person on their own page. "The seller has not
+                  added photos" over a listing whose photographs are sitting in
+                  our own queue blames them for a wait that is ours.
+
+                  The pending wording stays vague on purpose. A buyer does not
+                  need to know that somebody here is checking the pictures, and
+                  "being reviewed" on a property page reads as a suspicion
+                  about the property. "Not available yet" is true, carries no
+                  accusation in either direction, and tells them the one useful
+                  thing: come back. */}
+              {listing.photosPending
+                ? "Photos for this property are not available yet"
+                : "The seller has not added photos yet"}
             </div>
           )}
         </section>

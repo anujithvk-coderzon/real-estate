@@ -40,6 +40,13 @@ const Glyph = ({ d }: { d: string }) => (
 
 const NAV = [
   { href: "/home", label: "Home", d: icon.home },
+  // Second, directly under Home. Nobody is blocked by this queue any more —
+  // sellers publish when they like — but its first tab is listings that are in
+  // search with their photographs hidden, which costs the seller enquiries for
+  // every hour it sits there. The RERA queues decide a badge and the flagged
+  // one decides a removal; this one decides whether a buyer can see the
+  // property at all.
+  { href: "/listings", label: "Photo approvals", d: icon.listings },
   { href: "/interests", label: "User interests", d: icon.interests },
   { href: "/promotions", label: "Promotions", d: icon.promotions },
   { href: "/rera", label: "Agent RERA", d: icon.rera },
@@ -56,7 +63,6 @@ const NAV = [
 // Shown but not linked — a staff tool should say what it will hold, and a link
 // to a route that 404s is worse than a label that admits it is not ready.
 const SOON = [
-  { label: "Listings", d: icon.listings, note: "approve, hide, remove" },
   { label: "Sellers", d: icon.users, note: "accounts and profiles" },
 ] as const;
 
