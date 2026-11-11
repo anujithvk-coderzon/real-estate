@@ -51,7 +51,23 @@ export const errorHandler = (
 
   return res.status(400).json({ status: "error", message });
 }
-  return res
-    .status(500)
-    .json({ status: "error", message: "Internal Server Error" });
+  // Outside production, say what actually went wrong in the response body.
+  //
+  // "Internal Server Error" is the correct thing to send a stranger and the
+  // wrong thing to send the person building this: it means every unknown
+  // failure reaches the browser indistinguishable from every other, and the
+  // cause is only in a terminal nobody is looking at. Gated on NODE_ENV so a
+  // real deployment still says nothing.
+  // In development the real message goes in `message`, not in a side field.
+  // The frontend's error toast reads `data.message` and nothing else, so a
+  // cause tucked into `detail` is a cause nobody sees without opening the
+  // network tab. Production still says only "Internal Server Error".
+  const dev = process.env.NODE_ENV !== "production";
+
+  return res.status(500).json({
+    status: "error",
+    message: dev
+      ? `${err?.name ?? "Error"}: ${err?.message ?? "no message"}`
+      : "Internal Server Error",
+  });
 };

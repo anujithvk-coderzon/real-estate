@@ -9,6 +9,23 @@ const BUNNY_STREAM_LIBRARY_ID=process.env.BUNNY_STREAM_LIBRARY_ID
 const BUNNY_STREAM_API_KEY=process.env.BUNNY_STREAM_API_KEY
 
 
+// Bunny says WHY in the response body - a full storage zone, a rejected key, a
+// rate limit - and the status alone does not. Four call sites raised
+// `Bunny upload failed (507)` and nothing else, so a quota problem and an auth
+// problem read identically on screen, and a batch of ten photos never said
+// which one it stopped on.
+//
+// Returns never, so `if(!res.ok) await bunnyFailed(...)` still narrows for
+// TypeScript afterwards.
+const bunnyFailed=async(res:Response,name?:string):Promise<never>=>{
+    const why=await res.text().catch(()=>"")
+    throw new InternalServerError(
+        `Bunny upload failed${name ? ` for ${name}` : ""} (${res.status}${
+            res.statusText ? ` ${res.statusText}` : ""
+        })${why ? `: ${why.slice(0,200)}` : ""}`,
+    )
+}
+
 const storageUrl=(path:string)=>{
     return `https://${BUNNY_IMAGE_HOST}/${BUNNY_STORAGE}/${path}`
 }
@@ -41,7 +58,7 @@ export const avatarImageUpload=async(file:UploadFile)=>{
         body:new Uint8Array(file.buffer),
         signal:AbortSignal.timeout(30_000)
     })
-    if(!res.ok) throw new InternalServerError(`Bunny upload failed (${res.status})`)
+    if(!res.ok) await bunnyFailed(res,file.originalname)
     return path;
 }
 
@@ -54,7 +71,7 @@ export const bannerImageUpload=async(file:UploadFile)=>{
         body:new Uint8Array(file.buffer),
         signal:AbortSignal.timeout(30_000)
     })
-    if(!res.ok) throw new InternalServerError(`Bunny upload failed (${res.status})`)
+    if(!res.ok) await bunnyFailed(res,file.originalname)
     return path;
 }
 
@@ -68,7 +85,7 @@ export const uploadImage=async(listiningId:string,file:UploadFile)=>{
         body:new Uint8Array(file.buffer),
         signal:AbortSignal.timeout(30_000)
     })
-    if(!res.ok) throw new InternalServerError(`Bunny upload failed (${res.status})`)
+    if(!res.ok) await bunnyFailed(res,file.originalname)
     return path;
 }
 
@@ -81,7 +98,7 @@ export const uploadProjectImage=async(projectId:string,file:UploadFile)=>{
         body:new Uint8Array(file.buffer),
         signal:AbortSignal.timeout(30_000)
     })
-    if(!res.ok) throw new InternalServerError(`Bunny upload failed (${res.status})`)
+    if(!res.ok) await bunnyFailed(res,file.originalname)
     return path;
 }
 

@@ -257,7 +257,10 @@ export const imageUploadService=async(userId:string,listingId:string,images:Expr
  const listing=await prisma.listing.findUnique({where:{id:listingId}})
  if(!listing) throw new NotFoundError("listing not found")
  if(listing.ownerId !== userId) throw new BadRequestError("You can only add images to your own listings")
- const listingVideo=await prisma.listingVideos.findFirst({where:{listingId}})
+ // select, not a bare findFirst: this only needs to know WHETHER a video
+ // exists, and a full row drags in every column the client knows about —
+ // which is how a photo upload came to depend on listing_videos.reviewNote.
+ const listingVideo=await prisma.listingVideos.findFirst({where:{listingId},select:{id:true}})
  const existingCount = await prisma.listingImages.count({ where: { listingId } });
  const maxImages = listingVideo ? 9 : 10;
  const remaining = maxImages - existingCount;
