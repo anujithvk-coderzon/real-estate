@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import ApprovalDecision, {
   type Decision,
@@ -9,7 +10,6 @@ import ApprovalDecision, {
 } from "@/components/ApprovalDecision";
 import { apiMessage, focusable, goodButton, onDate } from "@/lib/ui";
 
-// One row of GET /admin/listing/approvals — the service's select, verbatim.
 type Pending = {
   id: string;
   slug: string | null;
@@ -45,12 +45,16 @@ type Pending = {
     position: number;
     approved: boolean;
     reviewNote: string | null;
+    createdAt: string;
+    updatedAt: string;
   }[];
   listingVideo: {
     id: string;
     url: string;
     approved: boolean;
     reviewNote: string | null;
+    createdAt: string;
+    updatedAt: string;
   } | null;
   amenities: { name: string; category: string }[];
   owner: {
@@ -73,16 +77,8 @@ type Pending = {
 };
 
 const TABS = [
-  // First and default. These listings are in search RIGHT NOW with their
-  // photographs hidden, so a buyer is looking at a property with no picture of
-  // it while the seller loses enquiries for a wait that is entirely ours.
   { key: "LIVE", label: "Live, photos hidden" },
-  // Not published. Nobody can see it, nobody is losing anything, and the
-  // seller is not blocked — they can publish whenever they like. Genuinely
-  // second, which is the opposite of how this page was first built.
   { key: "DRAFTS", label: "Drafts" },
-  // What we sent back. Kept visible so a decision can be looked up when the
-  // seller writes in about it.
   { key: "REJECTED", label: "Sent back" },
 ] as const;
 
@@ -106,18 +102,26 @@ const titleCase = (value: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
-// How long it has sat here. The queue is ordered by it, so it is the number an
-// operator triages on — and "3 days" lands differently from a date.
 const waiting = (since: string) => {
   const days = Math.floor((Date.now() - +new Date(since)) / 86_400_000);
   if (days >= 1) return `${days} day${days === 1 ? "" : "s"}`;
   const hours = Math.floor((Date.now() - +new Date(since)) / 3_600_000);
-  return hours >= 1 ? `${hours} hour${hours === 1 ? "" : "s"}` : "just now";
+  return hours >= 1 ? `${hours} hour${hours === 1 ? "" : "s"}` : "under an hour";
 };
 
-// The part of a decision subject that is the same whichever item it is aimed
-// at. Built in one place because the counts are what the approve preview reads,
-// and three copies of this expression is three chances to get them wrong.
+const photoAction =
+  ` disabled:opacity-40 sm:w-auto ${focusable}`;
+
+const PHONE_IN_TEXT = /(?:\+?91)?[6-9]\d{9}/;
+const LINK_IN_TEXT = /(https?:\/\/|www\.)/i;
+const textFlags = (description: string) => {
+  const compact = description.replace(/[\s\-()]/g, "");
+  return {
+    phone: PHONE_IN_TEXT.test(compact),
+    link: LINK_IN_TEXT.test(description),
+  };
+};
+
 const decisionSubject = (listing: Pending) => ({
   listingId: listing.id,
   title: listing.title,
@@ -132,7 +136,13 @@ const decisionSubject = (listing: Pending) => ({
 });
 
 const Page = () => {
-  const [tab, setTab] = useState<TabKey>("LIVE");
+  const router = useRouter();
+  const params = useSearchParams();
+  const fromUrl = params.get("tab");
+  const initial = TABS.some((t) => t.key === fromUrl)
+    ? (fromUrl as TabKey)
+    : "LIVE";
+  const [tab, setTab] = useState<TabKey>(initial);
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [asking, setAsking] = useState<{
@@ -144,6 +154,22 @@ const Page = () => {
     null,
   );
   const [failure, setFailure] = useState<string | null>(null);
+  const [openMedia, setOpenMedia] = useState<
+    Record<string, "photos" | "video" | undefined>
+  >({});
+  const [counts, setCounts] = useState<{
+    live: number;
+    drafts: number;
+    sentBack: number;
+  } | null>(null);
+
+  const readCounts = useCallback(() => {
+    api
+      .get("/admin/listing/approvals/count")
+      .then(({ data }) => setCounts(data?.counts ?? null))
+      .catch(() => {
+      });
+  }, []);
 
   const key = `${tab}:${attempt}`;
 
@@ -166,6 +192,8 @@ const Page = () => {
     };
   }, [tab, attempt]);
 
+  useEffect(readCounts, [readCounts]);
+
   const decide = async (note: string) => {
     if (!asking) return;
     const from = key;
@@ -173,12 +201,9 @@ const Page = () => {
     setWorking(subject.listingId);
     setFailure(null);
     try {
-      // Approve is keyed on the listing and clears everything waiting on it.
-      // Reject is keyed on the one photograph or video it is aimed at.
       const { data } =
         decision === "APPROVE"
           ? subject.target
-            // Undoing a rejection on one item, not clearing the listing.
             ? await api.patch(
                 `/admin/listing/media/allow/${subject.target.kind}/${subject.target.id}`,
               )
@@ -191,11 +216,8 @@ const Page = () => {
             );
       setAsking(null);
       setNotice({ ok: true, text: data.message ?? "Done" });
+      readCounts();
       if (decision === "APPROVE" && !subject.target) {
-        // Everything waiting on this listing is cleared, so it leaves this
-        // queue. Dropping the card beats refetching — the operator watches the
-        // list get shorter, which is the only feedback that matters in a queue
-        // you are working through.
         setResult((state) =>
           state && "rows" in state && state.key === from
             ? {
@@ -205,9 +227,6 @@ const Page = () => {
             : state,
         );
       } else {
-        // A rejection is aimed at ONE photograph, and the others on the card
-        // still need a decision — so the card stays and only that item moves.
-        // Removing the whole listing here would quietly skip them.
         setResult((state) =>
           state && "rows" in state && state.key === from
             ? {
@@ -234,7 +253,6 @@ const Page = () => {
         );
       }
     } catch (error) {
-      // The dialog stays open with the note still in it.
       setFailure(apiMessage(error, "Could not save that"));
     } finally {
       setWorking(null);
@@ -265,8 +283,6 @@ const Page = () => {
           The first tab is somebody&rsquo;s live listing with no picture on it.
         </p>
         <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-          Those are in search this minute, so a buyer is looking at a property
-          they cannot see and the seller is losing the enquiry. Clear those
           first; the drafts are not costing anyone anything. What you are
           looking for is a screenshot lifted from another site, a watermark, or
           a phone number painted across the picture — all of it on the card,
@@ -274,7 +290,6 @@ const Page = () => {
         </p>
       </div>
 
-      {/* ---------- tabs ---------- */}
       <div className="mt-6 -mx-4 flex gap-1.5 overflow-x-auto border-b border-line px-4 pb-px sm:mx-0 sm:px-0">
         {TABS.map((item) => {
           const active = tab === item.key;
@@ -285,6 +300,7 @@ const Page = () => {
               onClick={() => {
                 setTab(item.key);
                 setNotice(null);
+                router.replace(`/listings?tab=${item.key}`, { scroll: false });
               }}
               aria-current={active ? "true" : undefined}
               className={`-mb-px shrink-0 whitespace-nowrap rounded-t-lg border-b-2 px-3.5 py-2.5 text-[13.5px] font-medium transition-colors ${
@@ -294,6 +310,18 @@ const Page = () => {
               }`}
             >
               {item.label}
+              {(() => {
+                const n = counts
+                  ? item.key === "LIVE"
+                    ? counts.live
+                    : item.key === "DRAFTS"
+                      ? counts.drafts
+                      : counts.sentBack
+                  : null;
+                return typeof n === "number" && n > 0 ? (
+                  <span className="ml-1.5 tabular-nums opacity-70">{n}</span>
+                ) : null;
+              })()}
             </button>
           );
         })}
@@ -312,7 +340,6 @@ const Page = () => {
         </p>
       )}
 
-      {/* ---------- the queue ---------- */}
       {loading && (
         <div className="mt-6 space-y-4" aria-busy="true">
           {[0, 1].map((n) => (
@@ -349,73 +376,235 @@ const Page = () => {
       <div className="mt-6 space-y-5">
         {rows?.map((listing) => {
           const busy = working === listing.id;
-          const where = [listing.locality, listing.city, listing.district]
+          const where = [
+            ...new Set(
+              [listing.locality, listing.city, listing.district].filter(
+                Boolean,
+              ),
+            ),
+          ].join(", ");
+
+          const kind = [
+            listing.bedrooms ? `${listing.bedrooms} BHK` : null,
+            titleCase(listing.propertyType).toLowerCase(),
+          ]
+            .filter(Boolean)
+            .join(" ");
+          const headline = `${rupees(listing.price)} — ${kind}, ${listing.areaValue} ${listing.areaUnit.toLowerCase()}`;
+          const aside = [
+            listing.listingType === "SALE" ? "for sale" : "to rent",
+            `listed by ${titleCase(listing.postedBy).toLowerCase()}`,
+            listing.furnishing
+              ? titleCase(listing.furnishing).toLowerCase()
+              : null,
+          ]
             .filter(Boolean)
             .join(", ");
-          const facts = [
-            titleCase(listing.listingType),
-            titleCase(listing.propertyType),
-            listing.bedrooms ? `${listing.bedrooms} BHK` : null,
-            `${listing.areaValue} ${listing.areaUnit}`,
-            listing.furnishing ? titleCase(listing.furnishing) : null,
-            `By ${titleCase(listing.postedBy)}`,
-          ].filter(Boolean) as string[];
+
+          const live = listing.status !== "DRAFT";
 
           return (
             <article
               key={listing.id}
-              className="overflow-hidden rounded-xl border border-line bg-panel"
+              className="rounded-xl border border-line bg-panel"
             >
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-3.5 sm:px-5">
+              <div className="sticky top-[69px] z-10 flex flex-col gap-2.5 rounded-t-xl border-b border-line bg-panel/95 px-4 py-3 backdrop-blur-sm sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:px-5 lg:top-0">
                 <div className="min-w-0">
-                  <h2 className="font-display text-[18px] leading-snug break-words">
+                  <p className="flex items-center gap-1.5 text-[12px] font-medium">
+                    <span
+                      aria-hidden="true"
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        live ? "bg-good" : "bg-muted"
+                      }`}
+                    />
+                    <span className={live ? "text-good" : "text-muted"}>
+                      {live ? "In search now" : "Not published yet"}
+                    </span>
+                  </p>
+                  <h2 className="mt-1 break-words font-display text-[18px] leading-snug">
                     {listing.title}
                   </h2>
-                  <p className="mt-1 text-[13px] text-muted">
-                    {rupees(listing.price)} · {where || "No locality given"}
+                  <p className="mt-1 text-[13.5px]">{headline}</p>
+                  <p className="text-[13px] text-muted">
+                    {where || "No locality given"} · {aside}
                   </p>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
-                    {tab === "REJECTED" ? "Sent back" : "Waiting"}
-                  </p>
-                  <p className="text-[13.5px] font-medium tabular-nums">
-                    {waiting(listing.updatedAt)}
-                  </p>
+                <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                  {(() => {
+                    const media = [
+                      ...listing.listingImages,
+                      ...(listing.listingVideo ? [listing.listingVideo] : []),
+                    ];
+                    const back = media.filter(
+                      (m) => !m.approved && m.reviewNote,
+                    );
+                    if (tab === "REJECTED" && back.length > 0) {
+                      const when = back
+                        .map((m) => m.updatedAt)
+                        .sort()
+                        .at(-1) as string;
+                      return (
+                        <p className="text-[12.5px] text-muted sm:text-right">
+                          You sent {back.length === 1 ? "a photo" : `${back.length} items`} back{" "}
+                          <span className="font-medium tabular-nums text-ink">
+                            {waiting(when)}
+                          </span>{" "}
+                          ago
+                        </p>
+                      );
+                    }
+                    const pending = media.filter(
+                      (m) => !m.approved && !m.reviewNote,
+                    );
+                    if (pending.length === 0) {
+                      return (
+                        <p className="text-[12.5px] text-muted sm:text-right">
+                          Nothing is waiting on you
+                        </p>
+                      );
+                    }
+                    const oldest = pending
+                      .map((m) => m.createdAt)
+                      .sort()
+                      .at(0) as string;
+                    return (
+                      <p className="text-[12.5px] text-muted sm:text-right">
+                        Oldest has waited{" "}
+                        <span className="font-medium tabular-nums text-ink">
+                          {waiting(oldest)}
+                        </span>
+                      </p>
+                    );
+                  })()}
+                  <button
+                    type="button"
+                    disabled={
+                      busy ||
+                      (decisionSubject(listing).pendingImages === 0 &&
+                        !decisionSubject(listing).pendingVideo)
+                    }
+                    onClick={() => {
+                      setFailure(null);
+                      setAsking({
+                        decision: "APPROVE",
+                        subject: decisionSubject(listing),
+                      });
+                    }}
+                    className={`w-full justify-center sm:w-auto ${goodButton}`}
+                  >
+                    {(() => {
+                      const n = decisionSubject(listing).pendingImages;
+                      const v = decisionSubject(listing).pendingVideo;
+                      if (n > 0 && v) return `Show ${n} photos and the video`;
+                      if (v) return "Show the video";
+                      if (n > 0)
+                        return `Show ${n === 1 ? "this photo" : `these ${n} photos`}`;
+                      return "Nothing waiting";
+                    })()}
+                  </button>
                 </div>
               </div>
 
-              {/* ---------- media ----------
-                  The review itself. Horizontal scroll rather than a grid: a
-                  listing can carry ten of these, and a grid of ten pushes the
-                  decision buttons off the bottom of the screen. */}
-              {listing.listingImages.length > 0 ? (
-                <div className="flex gap-2 overflow-x-auto px-4 py-4 sm:px-5">
+              <div className="flex gap-1.5 border-t border-line px-4 py-2.5 sm:px-5">
+                {(
+                  [
+                    listing.listingImages.length > 0 && {
+                      label:
+                        listing.listingImages.length === 1
+                          ? "1 photo"
+                          : `${listing.listingImages.length} photos`,
+                      waiting: listing.listingImages.filter(
+                        (image) => !image.approved && !image.reviewNote,
+                      ).length,
+                      sentBack: listing.listingImages.filter(
+                        (image) => !image.approved && image.reviewNote,
+                      ).length,
+                    },
+                    listing.listingVideo && {
+                      label: "Video",
+                      waiting:
+                        !listing.listingVideo.approved &&
+                        !listing.listingVideo.reviewNote
+                          ? 1
+                          : 0,
+                      sentBack:
+                        !listing.listingVideo.approved &&
+                        listing.listingVideo.reviewNote
+                          ? 1
+                          : 0,
+                    },
+                  ] as const
+                )
+                  .filter(Boolean)
+                  .map((entry) => {
+                    const item = entry as {
+                      key: "photos" | "video";
+                      label: string;
+                      waiting: number;
+                      sentBack: number;
+                    };
+                    const open = openMedia[listing.id] === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        aria-expanded={open}
+                        onClick={() =>
+                          setOpenMedia((state) => ({
+                            ...state,
+                          }))
+                        }
+                        className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors ${focusable} ${
+                          open
+                        }`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`transition-transform ${open ? "rotate-90" : ""}`}
+                        >
+                          ▸
+                        </span>
+                        {item.label}
+                        {item.waiting > 0 && (
+                          <span className="rounded-full bg-warn/15 px-1.5 text-[11px] font-bold tabular-nums text-warn">
+                            {item.waiting} waiting
+                          </span>
+                        )}
+                        {item.sentBack > 0 && (
+                          <span className="rounded-full bg-danger/15 px-1.5 text-[11px] font-bold tabular-nums text-danger">
+                            {item.sentBack} sent back
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                {listing.listingImages.length === 0 && !listing.listingVideo && (
+                  <p className="text-[13px] text-muted">
+                    No photos or video on this listing.
+                  </p>
+                )}
+              </div>
+
+              {openMedia[listing.id] === "photos" &&
+              listing.listingImages.length > 0 ? (
+                <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-4 px-4 pb-4 pt-2 sm:px-5 sm:pt-3">
                   {listing.listingImages.map((image) => (
-                    <div key={image.id} className="shrink-0">
-                    <a href={image.path} target="_blank" rel="noreferrer">
-                      {/* object-contain, not cover, and a plain img rather
-                          than next/image — both copied from the flagged record
-                          page on purpose.
-                          
-                          Contain, because here the photo is the evidence: the
-                          commonest reason to send a listing back is something
-                          IN the image, and a queue that crops the image before
-                          the operator sees it is a queue that hides exactly
-                          the watermark or pasted phone number it exists to
-                          catch. Clicking opens the original at full size for
-                          the same reason — a number painted across a picture
-                          is often unreadable at this size.
-                          
-                          And a plain img because this panel has no
-                          images.remotePatterns configured, so next/image would
-                          refuse a Bunny URL outright. */}
+                    <div
+                      key={image.id}
+                      className="w-[72vw] max-w-72 shrink-0 snap-start sm:w-72"
+                    >
+                    <a
+                      href={image.path}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="relative block"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={image.path}
                         alt={`Photo ${image.position + 1} of ${listing.title}`}
                         loading="lazy"
-                        className={`h-40 w-56 rounded-lg bg-ground object-contain ring-1 transition-opacity hover:opacity-90 sm:h-48 sm:w-72 ${
+                        className={`h-44 w-full rounded-lg bg-ground object-contain ring-1 transition-opacity hover:opacity-90 sm:h-48 ${
                           image.approved
                             ? "ring-line"
                             : image.reviewNote
@@ -423,27 +612,31 @@ const Page = () => {
                               : "ring-warn/60"
                         }`}
                       />
-                    </a>
-                      {/* Three states, said in words. On a second visit the
-                          only other way to tell the new photo from the eight
-                          already passed is to remember, and nobody working a
-                          queue remembers. */}
-                      <div className="mt-1.5 flex w-56 flex-wrap items-start justify-between gap-x-2 gap-y-1 sm:w-72">
-                        <span
-                          className={`text-[11px] font-bold uppercase tracking-[0.1em] ${
-                            image.approved
-                              ? "text-muted"
-                              : image.reviewNote
-                                ? "text-danger"
-                                : "text-warn"
-                          }`}
-                        >
-                          {image.approved
-                            ? "Showing"
+
+                      <span
+                        className={`absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white backdrop-blur-sm ${
+                          image.approved
+                            ? "bg-good/90"
                             : image.reviewNote
-                              ? "Sent back"
-                              : `Photo ${image.position + 1} · hidden`}
+                              ? "bg-danger/90"
+                              : "bg-warn/90"
+                        }`}
+                      >
+                        {image.position + 1}
+                        <span aria-hidden="true">
+                          {image.approved ? "✓" : image.reviewNote ? "✕" : "·"}
                         </span>
+                        <span className="sr-only">
+                          {image.approved
+                            ? "showing"
+                            : image.reviewNote
+                              ? "sent back"
+                              : "waiting for a decision"}
+                        </span>
+                      </span>
+                    </a>
+
+                      <div className="mt-2 flex flex-col items-stretch gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                         {!image.approved && image.reviewNote && (
                           <button
                             type="button"
@@ -462,7 +655,7 @@ const Page = () => {
                                 },
                               });
                             }}
-                            className={`text-[11px] font-bold uppercase tracking-[0.1em] text-muted transition-colors hover:text-good ${focusable}`}
+                            className={`${photoAction} border-good/40 text-good hover:bg-good/10`}
                           >
                             Allow it
                           </button>
@@ -485,44 +678,49 @@ const Page = () => {
                                 },
                               });
                             }}
-                            className={`text-[11px] font-bold uppercase tracking-[0.1em] text-muted transition-colors hover:text-danger ${focusable}`}
+                            className={`${photoAction} border-line text-muted hover:border-danger/50 hover:text-danger`}
                           >
                             Send back
                           </button>
                         )}
                       </div>
                       {image.reviewNote && (
-                        <p className="mt-1 w-56 text-[12px] leading-relaxed text-muted sm:w-72">
+                        <p className="mt-1.5 break-words text-[12px] leading-relaxed text-muted">
                           {image.reviewNote}
                         </p>
                       )}
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="px-4 py-4 text-[13.5px] text-muted sm:px-5">
-                  No photos on this listing. Nothing here to decide — it is in
-                  this queue because of its video.
-                </p>
-              )}
+              ) : null}
 
-              {listing.listingVideo && (
+              {openMedia[listing.id] === "video" && listing.listingVideo && (
                 <div className="px-4 pb-4 sm:px-5">
                   <div className="mb-1.5 flex items-center gap-3">
                     <span
-                      className={`text-[11px] font-bold uppercase tracking-[0.1em] ${
+                      className={`inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11px] font-bold text-white ${
                         listing.listingVideo.approved
-                          ? "text-muted"
+                          ? "bg-good/90"
                           : listing.listingVideo.reviewNote
-                            ? "text-danger"
-                            : "text-warn"
+                            ? "bg-danger/90"
+                            : "bg-warn/90"
                       }`}
                     >
-                      {listing.listingVideo.approved
-                        ? "Video · showing"
-                        : listing.listingVideo.reviewNote
-                          ? "Video · sent back"
-                          : "Video · hidden"}
+                      Video
+                      <span aria-hidden="true">
+                        {listing.listingVideo.approved
+                          ? "✓"
+                          : listing.listingVideo.reviewNote
+                            ? "✕"
+                            : "·"}
+                      </span>
+                      <span className="sr-only">
+                        {listing.listingVideo.approved
+                          ? "showing"
+                          : listing.listingVideo.reviewNote
+                            ? "sent back"
+                            : "waiting for a decision"}
+                      </span>
                     </span>
                     {!listing.listingVideo.approved &&
                       !listing.listingVideo.reviewNote && (
@@ -564,24 +762,45 @@ const Page = () => {
                 </div>
               )}
 
-              {/* ---------- the listing in words ---------- */}
               <div className="border-t border-line px-4 py-4 sm:px-5">
-                <ul className="flex flex-wrap gap-x-2 gap-y-1.5 text-[12.5px] text-muted">
-                  {facts.map((fact) => (
-                    <li
-                      key={fact}
-                      className="rounded-full border border-line px-2.5 py-0.5"
+                {(() => {
+                  const flags = textFlags(listing.description);
+                  return (
+                    (flags.phone || flags.link) && (
+                      <p className="mb-2 inline-flex flex-wrap items-center gap-x-1.5 rounded-lg bg-warn/10 px-2.5 py-1 text-[12.5px] text-warn">
+                        <span aria-hidden="true">⚠</span>
+                        {flags.phone && flags.link
+                          ? "The description looks like it contains a phone number and a link"
+                          : flags.phone
+                            ? "The description looks like it contains a phone number"
+                            : "The description looks like it contains a link"}
+                      </p>
+                    )
+                  );
+                })()}
+
+                <details className="group/desc">
+                  <summary
+                    className={`cursor-pointer list-none whitespace-pre-line break-words text-[13.5px] leading-relaxed group-open/desc:line-clamp-none line-clamp-4 ${focusable}`}
+                  >
+                    {listing.description}
+                  </summary>
+                </details>
+
+                <details className="group mt-3">
+                  <summary
+                    className={`inline-flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-ink ${focusable}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="transition-transform group-open:rotate-90"
                     >
-                      {fact}
-                    </li>
-                  ))}
-                </ul>
+                      ▸
+                    </span>
+                    Address, contact and dates
+                  </summary>
 
-                <p className="mt-3 whitespace-pre-line break-words text-[13.5px] leading-relaxed">
-                  {listing.description}
-                </p>
-
-                <dl className="mt-4 grid gap-x-6 gap-y-2 break-words text-[13px] sm:grid-cols-2">
+                <dl className="mt-3 grid gap-x-6 gap-y-2 break-words text-[13px] sm:grid-cols-2">
                   <div>
                     <dt className="text-muted">Address given</dt>
                     <dd>
@@ -612,9 +831,6 @@ const Page = () => {
                           {listing.longitude.toFixed(5)}
                         </a>
                       ) : (
-                        // Worth saying out loud: without a pin the listing
-                        // cannot be found by a radius search at all, and the
-                        // owner's own checklist blocks publishing.
                         <span className="text-warn">
                           None — the owner cannot publish without it
                         </span>
@@ -640,11 +856,13 @@ const Page = () => {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted">Posted by</dt>
+                    <dt className="text-muted">Account</dt>
                     <dd>
-                      {listing.owner.name}{" "}
+                      {listing.contactName !== listing.owner.name && (
+                        <>{listing.owner.name} </>
+                      )}
                       <span className="text-muted">
-                        ({listing.owner.email})
+                        {listing.owner.email}
                       </span>
                       {listing.owner.accountType && (
                         <span className="text-muted">
@@ -652,10 +870,6 @@ const Page = () => {
                           · {titleCase(listing.owner.accountType)}
                         </span>
                       )}
-                      {/* The agent's own RERA, where there is one. Not a gate
-                          on anything — see the RERA queues for what it does
-                          buy — but an operator reading a broker's listing
-                          should be able to see it without leaving the page. */}
                       {listing.owner.agentReraNumber && (
                         <span className="text-muted">
                           {" "}
@@ -683,8 +897,7 @@ const Page = () => {
                     <dd>
                       {onDate(listing.createdAt)}
                       {listing.updatedAt !== listing.createdAt &&
-                        ` · last edited ${onDate(listing.updatedAt)}`}
-                      {` · status ${titleCase(listing.status)}`}
+                        `, last edited ${onDate(listing.updatedAt)}`}
                     </dd>
                   </div>
                 </dl>
@@ -694,36 +907,20 @@ const Page = () => {
                     Amenities: {listing.amenities.map((a) => a.name).join(", ")}
                   </p>
                 )}
-
+                </details>
               </div>
 
-              {/* ---------- the decision ---------- */}
-              <div className="flex flex-wrap items-center gap-2 border-t border-line px-4 py-3.5 [&>button]:grow sm:px-5 sm:[&>button]:grow-0">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setFailure(null);
-                    setAsking({
-                      decision: "APPROVE",
-                      subject: decisionSubject(listing),
-                    });
-                  }}
-                  className={goodButton}
-                >
-                  Approve what is waiting
-                </button>
-                {/* Only once it is live does it have a public page to look at.
-                    A draft has no slug and nothing to open. */}
-                {listing.slug && listing.status !== "DRAFT" && (
+                  the sticky header; a footer whose only job was to hold a
+              {listing.slug && listing.status !== "DRAFT" && (
+                <div className="rounded-b-xl border-t border-line px-4 py-2.5 sm:px-5">
                   <Link
-                    href={`/flagged/${listing.slug}`}
-                    className="ml-auto text-[13px] text-muted underline decoration-line underline-offset-2 hover:text-accent"
+                    href={`/flagged/${listing.slug}?from=listings&tab=${tab}`}
+                    className="text-[13px] text-muted underline decoration-line underline-offset-2 hover:text-accent"
                   >
-                    Open full record
+                    Open the full record
                   </Link>
-                )}
-              </div>
+                </div>
+              )}
             </article>
           );
         })}

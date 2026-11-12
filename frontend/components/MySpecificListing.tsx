@@ -151,21 +151,8 @@ const MySpecificListing = ({ id }: Props) => {
     ["Description of 30+ characters", listing.description.trim().length >= 30],
   ];
 
-  // Nothing on the approval side gates this. The checklist is the whole bar,
-  // and it is made of things the owner can actually go and do — which is why
-  // an earlier version of this page, with a dead button reading "Waiting for
-  // approval", was the wrong shape: it asked somebody to finish the work and
-  // then wait on us for the one thing they came to do.
   const readyToPublish = checklist.every(([, done]) => done);
 
-  // Which of their own photographs buyers cannot see yet. `approved` is sent
-  // on the owner's payload only, and an older cached response may not carry it
-  // at all — hence `=== false` rather than `!approved`, so an undefined flag
-  // counts as shown rather than silently reporting every photo as hidden.
-  // `=== false` rather than `!approved` throughout: the flag is sent on the
-  // owner's payload only, and an older cached response may not carry it at
-  // all. An undefined flag has to count as "showing", or every photo on a
-  // stale response is reported as hidden.
   const pendingPhotos = listing.listingImages.filter(
     (image) => image.approved === false && !image.reviewNote,
   ).length;
@@ -173,9 +160,6 @@ const MySpecificListing = ({ id }: Props) => {
     listing.listingVideo?.approved === false && !listing.listingVideo.reviewNote;
   const waitingMedia = pendingPhotos + (pendingVideo ? 1 : 0);
 
-  // Declined, with the reason. Each one names the photograph it is about,
-  // because "a photo was rejected" on a listing with ten of them is not
-  // something a seller can act on.
   const declined: { label: string; note: string }[] = [
     ...listing.listingImages
       .filter((image) => image.approved === false && image.reviewNote)
@@ -215,7 +199,6 @@ const MySpecificListing = ({ id }: Props) => {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-6 lg:px-8 lg:pt-8">
-      {/* ---------- owner bar ---------- */}
       {/* Static on a phone: stacked, this bar is ~130px tall, so sticking it over
           a 568px screen would cover a quarter of the page for the whole scroll.
           It only follows the reader once it fits on one line. */}
@@ -274,10 +257,6 @@ const MySpecificListing = ({ id }: Props) => {
         </div>
       </div>
 
-      {/* ---------- where this stands with us ----------
-          Above the photos rather than in the sidebar, because on a phone the
-          sidebar is below the whole listing and this is the answer to the only
-          question the owner of a draft has. */}
       {declined.length > 0 && (
         <section
           id="media-declined"
@@ -289,10 +268,6 @@ const MySpecificListing = ({ id }: Props) => {
               ? `${declined[0]!.label} cannot be shown yet`
               : `${declined.length} items cannot be shown yet`}
           </h2>
-          {/* The operator's own sentence, against the photograph it is about.
-              Not a paraphrase: this is the only instruction the seller gets,
-              and it is in their notifications too — kept here because a
-              notification is read once and then buried by the next one. */}
           <ul className="mt-2 space-y-2">
             {declined.map((item) => (
               <li
@@ -331,21 +306,13 @@ const MySpecificListing = ({ id }: Props) => {
                 : `${pendingPhotos} photo${pendingPhotos === 1 ? "" : "s"} ${pendingPhotos === 1 ? "is" : "are"} being checked`}
           </h2>
           <p className="mt-2 text-[14px] leading-relaxed text-muted">
-            {/* Said in this order on purpose: what is NOT affected first. The
-                fear this paragraph exists to answer is "is my listing
-                broken", and answering it in the second sentence is answering
-                it too late. */}
             {listing.status === "DRAFT"
               ? "This does not hold up publishing — publish whenever you are ready. Somebody looks at every photo before buyers see it, and we will notify you when yours go on."
               : "Your listing is live and buyers can find it in search. Somebody looks at every photo before buyers see it, and we will notify you when yours go on."}
           </p>
-          {/* No estimate. A number here is a promise made on somebody else's
-              behalf, and a seller told "within 24 hours" who waits 30 has been
-              lied to by this page. */}
         </section>
       )}
 
-      {/* ---------- photos ---------- */}
       <section className="mt-6">
         {listing.listingImages.length > 0 ? (
           <Gallery images={listing.listingImages} title={listing.title} />
@@ -361,7 +328,6 @@ const MySpecificListing = ({ id }: Props) => {
         )}
       </section>
 
-      {/* ---------- title and price ---------- */}
       <header className="mt-8 flex flex-col gap-6 border-b border-line pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <p className="text-[14px] font-medium text-accent">
@@ -406,7 +372,6 @@ const MySpecificListing = ({ id }: Props) => {
         </div>
       </header>
 
-      {/* ---------- key facts ---------- */}
       <ul className="flex flex-wrap gap-x-6 gap-y-4 border-b border-line py-6 sm:gap-x-10">
         {facts.map(([name, value]) => (
           <li key={name}>
@@ -417,7 +382,6 @@ const MySpecificListing = ({ id }: Props) => {
       </ul>
 
       <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_320px]">
-        {/* ---------- main column ---------- */}
         <div className="min-w-0 space-y-12">
           <section>
             <h2 className={sectionHeading}>About this property</h2>
@@ -511,7 +475,6 @@ const MySpecificListing = ({ id }: Props) => {
           </section>
         </div>
 
-        {/* ---------- sidebar ---------- */}
         <aside className="divide-y divide-line self-start rounded-xl bg-panel ring-1 ring-line lg:sticky lg:top-24">
           {listing.status === "DRAFT" && (
             <div className="p-5">

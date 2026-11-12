@@ -130,11 +130,6 @@ const ClearLocation = ({
 // — so they live out here rather than being written twice. Each copy needs its
 // own id: two <select>s sharing one would leave the second label pointing at
 // the first control.
-// Exported, because the signed-in home bar needs this control and had its own
-// copy of it. That copy is where the "border inside a border" came from: ring-1
-// on the container AND ring-1 on every button AND ring-1 ring-accent on the
-// selected one. Two implementations of one control is how they drift, so there
-// is one now.
 export const ModeGroup = ({
   value,
   onToggle,
@@ -155,17 +150,7 @@ export const ModeGroup = ({
   // is not a thing to leave a layout standing on.
   compact?: boolean;
   className?: string;
-  // Drops this control's own outline and rounding, for embedding in a bar that
-  // already has one. The padding stays either way: it is what holds the
-  // selected pill off the edge, and without it a filled button meets the outer
-  // bar's rounded corner as a square.
   bare?: boolean;
-  // Flush: no padding, no rounding on the buttons, and a hairline between
-  // them. For a cell in a grid rather than a control floating in a bar — the
-  // selected mode fills its half, and the divider it leaves runs the full
-  // height, so it lines up with the dividers of whatever sits in the row
-  // below. A pill inside 4px of padding cannot line up with anything: its
-  // edge is 4px short of the cell's at both ends.
   flush?: boolean;
 }) => (
   <div
@@ -686,7 +671,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
         {/* What you are looking for. Three controls side by side needs 768px;
             below that they stack, which is also the 320px layout. */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto_minmax(0,13rem)_minmax(0,10rem)] md:items-end">
-          {/* ---------- mode ---------- */}
           <fieldset>
             <legend className={labelClass}>Looking to</legend>
             {/* Butted into one control, like a scale bar: three positions of the
@@ -715,7 +699,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             </div>
           </fieldset>
 
-          {/* ---------- property type ---------- */}
           <div>
             <label htmlFor="search-type" className={labelClass}>
               Property type
@@ -743,7 +726,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             </select>
           </div>
 
-          {/* ---------- how far out ---------- */}
           <div>
             <label htmlFor="search-radius" className={labelClass}>
               Distance
@@ -767,7 +749,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
           </div>
         </div>
 
-        {/* ---------- where, and go ---------- */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div>
             <label htmlFor="search-location" className={labelClass}>
@@ -803,7 +784,6 @@ const SearchBar = ({ initialValues, variant = "card" }: Props) => {
             </div>
           </div>
 
-          {/* Disabled until a location is typed; the title explains why on hover. */}
           <button
             type="submit"
             disabled={!canSearch}

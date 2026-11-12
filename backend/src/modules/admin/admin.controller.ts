@@ -14,6 +14,7 @@ import {
   revokeProjectReraService,
   getListingComplaintsService,
   getListingApprovalsService,
+  getListingApprovalCountsService,
   approveListingMediaService,
   rejectListingMediaService,
   allowListingMediaService,
@@ -155,9 +156,12 @@ export const activateTakenDownListing=async(req:Request,res:Response)=>{
 }
 const APPROVAL_QUEUES=['LIVE','DRAFTS','REJECTED'] as const
 
+export const getListingApprovalCounts=async(_req:Request,res:Response)=>{
+    const counts=await getListingApprovalCountsService()
+    return res.status(200).json({message:"Fetched successfully",counts})
+}
+
 export const getListingApprovals=async(req:Request,res:Response)=>{
-    // LIVE by default: it is the queue with buyers on the other end of it,
-    // looking at a listing whose photographs are hidden.
     const queue=(req.query.queue ?? 'LIVE') as string
     if(!APPROVAL_QUEUES.includes(queue as ListingApprovalQueue)){
         throw new BadRequestError("Invalid queue")

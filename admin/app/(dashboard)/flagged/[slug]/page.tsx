@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import RestoreButton from "@/components/RestoreButton";
 import TakeDownDialog from "@/components/TakeDownDialog";
 import { api } from "@/lib/api";
@@ -111,9 +111,25 @@ const Fact = ({ label, value }: { label: string; value: React.ReactNode }) => (
   </div>
 );
 
+const ORIGINS = {
+  listings: { href: "/listings", label: "Photo approvals" },
+  flagged: { href: "/flagged", label: "Flagged content" },
+} as const;
+
 const Page = () => {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug;
+  const search = useSearchParams();
+  const from = search.get("from");
+  const tab = search.get("tab");
+  const base = from === "listings" ? ORIGINS.listings : ORIGINS.flagged;
+  const origin = {
+    ...base,
+    href:
+      from === "listings" && tab
+        ? `${base.href}?tab=${encodeURIComponent(tab)}`
+        : base.href,
+  };
   const [listing, setListing] = useState<Listing | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -165,8 +181,11 @@ const Page = () => {
   if (failure)
     return (
       <div className="mx-auto max-w-3xl">
-        <Link href="/flagged" className="text-[13px] text-muted hover:text-ink">
-          ← Flagged content
+        <Link
+          href={origin.href}
+          className="text-[13px] text-muted hover:text-ink"
+        >
+          ← {origin.label}
         </Link>
         <div className="mt-5 rounded-xl border border-line bg-panel p-6">
           <h1 className="font-display text-[20px]">
@@ -202,11 +221,10 @@ const Page = () => {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <Link href="/flagged" className="text-[13px] text-muted hover:text-ink">
-        ← Flagged content
+      <Link href={origin.href} className="text-[13px] text-muted hover:text-ink">
+        ← {origin.label}
       </Link>
 
-      {/* ---------- heading ---------- */}
       <div className="mt-4 flex flex-wrap items-start gap-x-4 gap-y-3">
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2">
@@ -287,7 +305,6 @@ const Page = () => {
         </p>
       )}
 
-      {/* ---------- photos ---------- */}
       <div className="mt-6">
         {listing.listingImages.length === 0 ? (
           <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-line bg-panel text-[13px] text-muted">
@@ -320,7 +337,6 @@ const Page = () => {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0">
-          {/* ---------- what was reported ---------- */}
           <section aria-labelledby="reports-heading">
             <h2
               id="reports-heading"
@@ -367,7 +383,6 @@ const Page = () => {
             )}
           </section>
 
-          {/* ---------- what the listing claims ---------- */}
           <section aria-labelledby="facts-heading" className="mt-8">
             <h2
               id="facts-heading"
@@ -413,7 +428,6 @@ const Page = () => {
             </dl>
           </section>
 
-          {/* ---------- the words a report is usually about ---------- */}
           <section aria-labelledby="description-heading" className="mt-8">
             <h2
               id="description-heading"
@@ -448,7 +462,6 @@ const Page = () => {
           )}
         </div>
 
-        {/* ---------- the side column: who, where, and the registration ---------- */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
           <div className="rounded-xl border border-line bg-panel px-4 py-3.5">
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">

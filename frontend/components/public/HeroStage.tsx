@@ -30,14 +30,12 @@ import {
 // The hero: a circular plate with the controls on it — looking to, property
 // type, distance, where, search — and the property types scattered in orbit
 // around it, gathered into a row by the scroll.
-//
 // The cards are decoration. They were links, and a photograph of a villa that
 // filters when pressed is a control you cannot tell is a control, sitting on
 // the same screen as the select that asks the same question. So the orbit
 // stays and the pressing does not: aria-hidden, pointer-events-none, and the
 // accent ring still following the chosen type because reflecting an answer is
 // information rather than interaction.
-//
 // The implementation is inverted from the reference's, on purpose. There, the
 // scattered position is measured and the row is computed every frame from
 // offsetLeft/offsetTop — which forces a layout recalculation on each scroll
@@ -159,18 +157,8 @@ type Orbit = {
 // and the browser's own chevron doing the "this opens" work.
 // This bar's labels and selects. Always-visible captions, unlike the card's,
 // which hide from md where the card itself names them.
-// A segment of the signed-in bar, not a field in a form: no ring, no rounding
-// and no background of its own, because the bar around it has all three. Those
-// were what made three controls read as three boxes.
 //
-// The focus ring is inset. The bar clips its children with overflow-hidden so
-// their square corners take its rounding, and an outline sitting OUTSIDE the
-// box would be clipped away with them — which is a control you cannot see you
-// have tabbed to.
 //
-// 16px at base, like every other select on this page: anything smaller and iOS
-// zooms the whole page in when the select opens, and on a 320px screen that
-// zoom puts the submit button off the edge.
 const BAR_SELECT =
   "h-11 w-full min-w-0 bg-transparent px-2 text-[16px] font-medium text-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent md:h-10 md:text-[15px]";
 
@@ -614,44 +602,13 @@ const HeroStage = () => {
             Where are you looking?
           </h1>
 
-          {/* ---------- narrowing it down ----------
-              ONE instrument with three segments, not three forms in a row.
-
-              What was here: three controls each with its own ring, each under
-              its own 10px uppercase tracked label, in a flex-wrap row. Four
-              outlines and three shouting labels for three choices — and the
-              mode group had a ring on the container, a ring on every button
-              and a third ring on the selected one, which is the border inside
-              a border. Borders go from four to one.
-
-              The labels are gone, not hidden for tidiness: every control here
-              says its own name already. The segment reads "Buy" and "Rent",
-              the type select sits at "Any type", the distance one at "Within
-              10 km" — and it keeps the word "Within" at every value, so it is
-              never a bare number. An earlier note here argued the labels had
-              to stay because "a bare 10 km beside a bare Any type is two
-              controls nobody can name"; that is true of bare values and is
-              what the option text was already written to avoid. They survive
-              as sr-only, so nothing is lost to a screen reader.
-
-              Base: the mode takes its own row at full width, then type and
-              distance split the next one. From sm all three sit on one line.
-              No wrapping into three ragged rows, which is what 320px did
-              before. */}
           <div className="mt-3 max-w-2xl overflow-hidden rounded-xl bg-panel ring-1 ring-line">
-            {/* A 2x2 grid at base, so the divider between Buy and Rent falls
-                on the same vertical line as the one between the two selects
-                below it. Both are at 50% of the same box, so they line up by
-                construction rather than by two numbers being kept in step.
-                One row from sm, where all four segments fit side by side. */}
             <div className="grid grid-cols-2 sm:flex">
               <div className="col-span-2 border-b border-line sm:col-span-1 sm:border-b-0 sm:border-r">
                 <ModeGroup
                   bare
                   flush
                   value={modeSelectValue(mode)}
-                  // Pressing the chosen one again clears it, so "any" stays
-                  // reachable without a third button.
                   onToggle={(value) =>
                     chooseMode(
                       value === modeSelectValue(mode) && mode !== "PG"
@@ -662,12 +619,6 @@ const HeroStage = () => {
                 />
               </div>
 
-              {/* Equal halves, which the alignment above requires: an uneven
-                  split would put this divider somewhere the Buy/Rent one is
-                  not. It costs the distance select a few pixels at 320px —
-                  "Within 10 km" with the native arrow is the longest thing in
-                  this bar — so the horizontal padding is trimmed to px-2 to
-                  pay for it. */}
               <div className="flex min-w-0 border-r border-line sm:flex-1">
                 <label htmlFor="hero-type" className="sr-only">
                   Property type
@@ -712,22 +663,12 @@ const HeroStage = () => {
             </div>
           </div>
 
-          {/* The place comes after the three above, which is the order asked
-              for: pick what you are looking for, then say where. An earlier
-              pass here had it the other way round, on the grounds that the
-              heading asks "where are you looking?" and the field answering it
-              should be the first thing under it. Both readings are defensible
-              and this is the one chosen. */}
           <div className="mt-3 max-w-2xl">
             <SearchBar
               // Keyed on the restored place: SearchBar seeds its own location
               // state once at mount, and the memory arrives after it.
               key={place}
               variant="compact"
-              // compact renders none of the three below, so they are passed:
-              // without them the form submits an empty mode, type and distance
-              // and the choices made underneath are dropped on the way to the
-              // results page.
               initialValues={{
                 listingType: mode,
                 propertyType: kind,
@@ -793,7 +734,6 @@ const HeroStage = () => {
         </p>
       </div>
 
-      {/* ---------- the stage ---------- */}
       {/* The 180px of top padding below is clearance for the card that orbits
           directly above the plate; the clip is because the ones on the flanks
           reach outside the content column on their way in and must not widen
@@ -1150,7 +1090,6 @@ const HeroStage = () => {
                         selected ? "ring-2 ring-accent" : "ring-line"
                       }`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={categoryPhoto(type.value)}
                         alt=""

@@ -11,7 +11,7 @@ import adminRoutes from './modules/admin/admin.route.js'
 import chatRoutes from './modules/chat/chat.routes.js'
 import promotionRoutes from './modules/promotion/promotion.routes.js'
 const app = express();
-
+app.set("trust proxy", 1);
 app.use(helmet());
 app.use(morgan("tiny"));
 app.use(cors({origin:process.env.FRONTEND_URL,credentials:true}));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { api, authReady, isSignedIn, setAccessToken } from "@/lib/api";
 
@@ -18,6 +18,8 @@ const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [operator, setOperator] = useState<Operator | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [waiting, setWaiting] = useState<number | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     let alive = true;
@@ -57,6 +59,26 @@ const AdminShell = ({ children }: { children: React.ReactNode }) => {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (!operator) return;
+    let alive = true;
+    const read = () => {
+      api
+        .get("/admin/listing/approvals/count")
+        .then(({ data }) => {
+          if (alive) setWaiting(data?.counts?.waiting ?? 0);
+        })
+        .catch(() => {
+        });
+    };
+    read();
+    window.addEventListener("focus", read);
+    return () => {
+      alive = false;
+      window.removeEventListener("focus", read);
+    };
+  }, [operator, pathname]);
+
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   useEffect(() => {
@@ -80,7 +102,6 @@ const AdminShell = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="lg:grid lg:min-h-dvh lg:grid-cols-[248px_minmax(0,1fr)]">
-      {/* ---------- phone: top bar ---------- */}
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-panel px-4 py-3 lg:hidden">
         <button
           type="button"
@@ -106,7 +127,6 @@ const AdminShell = ({ children }: { children: React.ReactNode }) => {
         </p>
       </header>
 
-      {/* ---------- phone: off-canvas drawer ---------- */}
       {/* Kept out of the tree when closed so its links are not reachable by
           keyboard behind the page. */}
       {drawerOpen && (
@@ -122,15 +142,14 @@ const AdminShell = ({ children }: { children: React.ReactNode }) => {
               operator={operator}
               onSignOut={signOut}
               onNavigate={closeDrawer}
+              waiting={waiting}
             />
           </div>
         </div>
       )}
 
-      {/* ---------- desktop: the rail ---------- */}
-      {/* sticky + h-dvh, so a long table scrolls under a sidebar that stays. */}
       <aside className="sticky top-0 hidden h-dvh border-r border-line lg:block">
-        <Sidebar operator={operator} onSignOut={signOut} />
+        <Sidebar operator={operator} onSignOut={signOut} waiting={waiting} />
       </aside>
 
       <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">

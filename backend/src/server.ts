@@ -5,7 +5,10 @@ import { redisConnect } from "./lib/redis.js";
 import { startChatSocketServer } from "./modules/chat/chat.socket.js";
 
 const PORT = process.env.PORT || 5001;
-await redisConnect();
+
+void redisConnect().catch((err) => {
+  console.error("[server] Redis unreachable at startup; caches bypassed and sign-in will fail until it returns", err);
+});
 
 const server=app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -5,7 +5,6 @@ import { prisma } from "../../lib/prisma.js"
 import { conversationSide } from "./chat.helper.js"
 import { sendToUser } from "./chat.socket.js"
 
-
 export const chatIntitializeService=async(slug:string,userId:string)=>{
     const listing=await prisma.listing.findUnique({where:{slug}})
     if(!listing) throw new NotFoundError("Listing not found")
@@ -16,21 +15,22 @@ export const chatIntitializeService=async(slug:string,userId:string)=>{
 }
 
 export const chatHaderFetchService=async(conversationId:string,userId:string)=>{
+  const side=await conversationSide(conversationId,userId)
+
   const conversation=await prisma.conversation.findUnique({where:{id:conversationId},
-   select:{buyerId:true,sellerId:true,buyer:{select:{avatarUrl:true,name:true}},seller:{select:{avatarUrl:true,name:true}},listing:{select:{title:true,price:true,slug:true},}}
+   select:{buyer:{select:{avatarUrl:true,name:true}},seller:{select:{avatarUrl:true,name:true}},listing:{select:{title:true,price:true,slug:true},}}
   })
   if(!conversation) throw new NotFoundError("Conversation not found")
- const other=conversation.buyerId === userId ?
-        conversation.seller : conversation.buyer
-  const result={
-  listing:conversation.listing,
-  user:{
-    name:other.name,
-    avatarUrl:avatarPublicUrl(other.avatarUrl)
-  },
-  type:conversation.sellerId===userId ? "Buyer":"Owner"
-}
-return result
+
+  const other=side==='buyer' ? conversation.seller : conversation.buyer
+  return {
+    listing:conversation.listing,
+    user:{
+      name:other.name,
+      avatarUrl:avatarPublicUrl(other.avatarUrl)
+    },
+    type:side==='buyer' ? "Owner" : "Buyer"
+  }
 }
 
 export const messageSendService=async(conversationId:string,userId:string,body:string)=>{
@@ -51,8 +51,6 @@ export const messageSendService=async(conversationId:string,userId:string,body:s
     ]) 
     const recipientId=side==='buyer'?conversation.sellerId:conversation.buyerId
     sendToUser(recipientId,{type:"message",conversationId,message})
-    console.log(message);
-    
     return message
 }
 

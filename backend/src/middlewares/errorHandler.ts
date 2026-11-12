@@ -8,15 +8,6 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
-  // A client that goes away mid-upload is not a server fault, and there is
-  // nobody left to answer. multer raises a plain `Error: Request aborted`,
-  // which matched none of the branches below and fell through to 500 Internal
-  // Server Error — so a dropped photo upload showed up in the browser as a
-  // backend crash, and in the log as a stack trace with no cause. That is what
-  // made this class of failure unreadable.
-  //
-  // Writing to a destroyed socket throws in its own right, so this answers
-  // nothing: it logs who went away and where, at warn, and stops.
   if (err?.message === "Request aborted" || req.destroyed || res.headersSent) {
     console.warn(
       `[abort] client went away during ${req.method} ${req.originalUrl}` +

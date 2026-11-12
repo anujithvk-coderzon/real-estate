@@ -2,6 +2,11 @@ import { createClient } from "redis";
 
 const redis = createClient({
   url: process.env.REDIS || "redis://localhost:6379",
+  disableOfflineQueue: true,
+  socket: {
+    connectTimeout: 5000,
+    reconnectStrategy: (retries) => Math.min(200 * (retries + 1), 5000),
+  },
 });
 
 redis.on("error", (err) => {

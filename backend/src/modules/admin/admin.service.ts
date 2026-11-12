@@ -16,7 +16,6 @@ export const adminRegisterService=async(name:string,email:string,pass:string)=>{
  return 'Admin Registered Successfully'
 }
 
-
 export const interestSaveService=async(id:string,slug:string)=>{
 const existingUser=await prisma.user.findUnique({where:{id}})
 if(!existingUser) throw new UnauthorizedError("Unauthorized")
@@ -70,7 +69,6 @@ export const reraVerficationRequestService=async(userId:string,type:Verification
 const requests=await prisma.user.findMany({where:{agentReraStatus:type,isVerified:true,NOT:{id:userId}},select:{id:true,name:true,email:true,accountType:true,agentReraName:true,agentReraState:true,agentReraNumber:true,agentReraVerifiedReason:true,agentReraVerifiedAt:true,}})
 return requests
 }
-
 
 export const projectReraRequestService=async(type:VerificationStatus)=>{
 const projects=await prisma.project.findMany({
@@ -163,7 +161,6 @@ await prisma.$transaction([
 return 'Verification withdrawn'
 }
 
-
 export const getListingComplaintsService=async(type?:string)=>{
   // Two different questions, so two different filters. PENDING and RESOLVED ask
   // about the complaint; TAKEN_DOWN asks about the listing, because once a
@@ -187,7 +184,6 @@ export const getListingComplaintsService=async(type?:string)=>{
   })
   return complaints
 }
-
 
 export const adminListingService=async(slug:string)=>{
   const listing=await prisma.listing.findUnique({
@@ -230,11 +226,6 @@ export const activateTakenDownListingService=async(listingId:string)=>{
   if(!listing) throw new BadRequestError("Listing not found")
   if(listing.status!=='TAKEN_DOWN') throw new BadRequestError("Listing is not taken down")
   await prisma.$transaction([
-    // Only the status. The photographs are deliberately NOT released here:
-    // restoring answers "may this listing be on the site", and if a photograph
-    // is why it came down then clearing it as a side effect of putting the
-    // listing back is exactly the wrong move. It reappears in the LIVE queue
-    // with its unapproved photos still waiting, which is correct.
     prisma.listing.update({where:{id:listingId},data:{status:'ACTIVE'}}),
     // Told, the same way the take-down was. Removing a listing sends a
     // notification and putting it back did not, so a seller who fixed what we
@@ -244,33 +235,9 @@ export const activateTakenDownListingService=async(listingId:string)=>{
   ])
   return 'Listing activated successfully'
 }
-// ---------------------------------------------------------------------------
-// Listing approval
-// ---------------------------------------------------------------------------
 
-// What the queue is FOR, now that publishing is not gated: photographs and
-// videos that are on the site's own pages but not yet shown to anybody.
-//
-// So the filter is "has unapproved media", not "approval is PENDING". A
-// listing with no photographs at all has nothing here to decide, and a queue
-// that lists it is a queue with work in it that cannot be done.
-//
-// LIVE     in search right now, with media still hidden. THE URGENT ONE, and
-//          the reason this list is cut this way round: real buyers are on
-//          that page this minute looking at a property with no photograph of
-//          it. Every hour here is lost enquiries for a seller who did
-//          everything asked of them.
-// DRAFTS   has unapproved media and has never been published. Nobody can see
-//          it, nobody is losing anything, and the seller is not blocked -
-//          they can publish whenever they like. Genuinely second.
-// REJECTED what we sent back. Kept visible because a decision an operator
-//          cannot look up again is a decision they cannot stand behind when
-//          the seller writes in about it.
 export type ListingApprovalQueue='LIVE'|'DRAFTS'|'REJECTED'
 
-// Waiting = nobody has looked at it yet. A declined item is NOT waiting: it is
-// with the seller, and listing it as work would mean an operator re-reading
-// their own rejection every time they open the queue.
 const waitingOnUs={
   OR:[
     {listingImages:{some:{approved:false,reviewNote:null}}},
@@ -278,7 +245,6 @@ const waitingOnUs={
   ],
 }
 
-// Declined, and still declined. The record of what we sent back.
 const sentBack={
   OR:[
     {listingImages:{some:{reviewNote:{not:null}}}},
@@ -286,22 +252,31 @@ const sentBack={
   ],
 }
 
+export const getListingApprovalCountsService=async()=>{
+  const live={...waitingOnUs,status:{in:['ACTIVE','SOLD','RENTED','EXPIRED'] as ListingStatus[]}}
+  const drafts={...waitingOnUs,status:'DRAFT' as const}
+  const [liveCount,draftCount,sentBackCount]=await Promise.all([
+    prisma.listing.count({where:live}),
+    prisma.listing.count({where:drafts}),
+    prisma.listing.count({where:sentBack}),
+  ])
+  return {
+    live:liveCount,
+    drafts:draftCount,
+    sentBack:sentBackCount,
+    waiting:liveCount+draftCount,
+  }
+}
+
 export const getListingApprovalsService=async(queue:ListingApprovalQueue)=>{
   const where=queue==='REJECTED'
     ? sentBack
     : queue==='DRAFTS'
       ? {...waitingOnUs,status:'DRAFT' as const}
-      // TAKEN_DOWN is left out: it has its own queue and its own action, and
-      // clearing its photographs here would change nothing, since only
-      // Restore puts the listing back in search.
       : {...waitingOnUs,status:{in:['ACTIVE','SOLD','RENTED','EXPIRED'] as ListingStatus[]}}
 
   const listings=await prisma.listing.findMany({
     where,
-    // Oldest first, which is the opposite of every other list in this panel.
-    // A queue is not a feed: the person who has waited longest is the one to
-    // serve next, and newest-first is how a listing at the bottom waits for
-    // ever.
     orderBy:{updatedAt:'asc'},
     select:{
       id:true,slug:true,title:true,description:true,
@@ -313,17 +288,8 @@ export const getListingApprovalsService=async(queue:ListingApprovalQueue)=>{
       contactName:true,contactPhone:true,
       status:true,
       createdAt:true,updatedAt:true,
-      // The media IS the review. Most of what gets a listing sent back is in
-      // the photos - a blurry screenshot of another site, a watermark, a phone
-      // number painted across the image - so an operator who has to click
-      // through to see them is an operator who approves without looking.
-      // Every photograph, cleared or not, with its flag. An operator looking
-      // at a listing for the second time needs to see what they already
-      // passed - otherwise the only way to tell the new photo from the old
-      // eight is to remember.
-      // Each photograph needs its own id now: a rejection is aimed at one.
-      listingImages:{orderBy:{position:'asc'},select:{id:true,path:true,position:true,approved:true,reviewNote:true}},
-      listingVideo:{select:{id:true,videoId:true,approved:true,reviewNote:true}},
+      listingImages:{orderBy:{position:'asc'},select:{id:true,path:true,position:true,approved:true,reviewNote:true,createdAt:true,updatedAt:true}},
+      listingVideo:{select:{id:true,videoId:true,approved:true,reviewNote:true,createdAt:true,updatedAt:true}},
       amenities:{select:{name:true,category:true}},
       owner:{select:{id:true,name:true,email:true,slug:true,avatarUrl:true,accountType:true,
                      agentReraNumber:true,agentReraStatus:true}},
@@ -333,22 +299,12 @@ export const getListingApprovalsService=async(queue:ListingApprovalQueue)=>{
 
   return listings.map((listing)=>({
     ...listing,
-    listingImages:listing.listingImages.map((image)=>({id:image.id,position:image.position,path:cdnUrl(image.path),approved:image.approved,reviewNote:image.reviewNote})),
-    listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo.videoId),approved:listing.listingVideo.approved,reviewNote:listing.listingVideo.reviewNote} : null,
+    listingImages:listing.listingImages.map((image)=>({id:image.id,position:image.position,path:cdnUrl(image.path),approved:image.approved,reviewNote:image.reviewNote,createdAt:image.createdAt,updatedAt:image.updatedAt})),
+    listingVideo:listing.listingVideo ? {id:listing.listingVideo.id,url:videoEmbedUrl(listing.listingVideo.videoId),approved:listing.listingVideo.approved,reviewNote:listing.listingVideo.reviewNote,createdAt:listing.listingVideo.createdAt,updatedAt:listing.listingVideo.updatedAt} : null,
     owner:{...listing.owner,avatarUrl:avatarPublicUrl(listing.owner.avatarUrl)},
   }))
 }
 
-// Approving releases everything on this listing that nobody has looked at yet.
-//
-// The operator has the whole set in front of them on one card; ten clicks to
-// say "yes" ten times is how a queue stops being read properly. A single bad
-// photograph is handled the other way round - reject that one, then approve
-// the rest.
-// No note on an approval. The only thing an operator is saying here is "yes",
-// and an optional free-text box beside a yes gets filled with "ok" for ever -
-// or worse, with something the seller then has to interpret. A rejection is
-// the one that needs words, because it is the one that asks them to act.
 export const approveListingMediaService=async(listingId:string)=>{
   const listing=await prisma.listing.findUnique({
     where:{id:listingId},
@@ -366,10 +322,6 @@ export const approveListingMediaService=async(listingId:string)=>{
     && listing.listingVideo.reviewNote===null
   if(images===0 && !video) throw new BadRequestError("Nothing on this listing is waiting to be looked at")
 
-  // Live or not decides the whole sentence. On a listing already in search the
-  // photographs appear the moment this runs, and telling somebody whose
-  // listing has been up for a week that they "will show when you publish" is
-  // sending them to look for a button that is not there.
   const live=listing.status!=='DRAFT'
   const one=images===1 && !video
   const what=images>0 && video
@@ -399,25 +351,6 @@ export const approveListingMediaService=async(listingId:string)=>{
   return live ? 'Showing to buyers now' : 'Cleared for when they publish'
 }
 
-// Declining ONE photograph, or the video.
-//
-// Aimed at a single item because that is how the problem arrives: nine photos
-// are fine and the first is a screenshot from another site. Declining the
-// whole set to deal with one of them hides eight innocent pictures and makes
-// the note unreadable - "which one?" is the first thing the seller asks.
-//
-// It takes nothing away. The listing stays where it is, everything already
-// approved keeps showing, and this item stays exactly where it was a moment
-// ago: hidden. What changes is that the seller is now told why.
-// Undo a rejection, on one item.
-//
-// Without this a mistaken "send back" is permanent: approveListingMediaService
-// deliberately only touches rows nobody has looked at (reviewNote null), so it
-// will not pick a rejected photo back up - and it must not, or the bulk button
-// would quietly re-approve the very things an operator just declined. The
-// normal flow still works without this, because a seller who replaces the
-// photo creates a fresh row, but an operator who declined the wrong one had no
-// way back.
 export const allowListingMediaService=async(
   kind:'image'|'video',
   mediaId:string,
@@ -464,10 +397,6 @@ export const rejectListingMediaService=async(
   mediaId:string,
   note:string,
 )=>{
-  // Two branches rather than one union. The shapes differ by a single column
-  // and TypeScript will not narrow `media.position` across them, so the
-  // version with a shared variable needed a cast - and a cast here would be
-  // hiding the one difference that matters to the sentence below.
   const target=kind==='image'
     ? await (async()=>{
         const image=await prisma.listingImages.findUnique({
@@ -475,8 +404,6 @@ export const rejectListingMediaService=async(
           select:{position:true,listing:{select:{title:true,ownerId:true}}},
         })
         if(!image) throw new NotFoundError("Photo not found")
-        // The seller counts from one, and sees their photographs in this order
-        // on their own page.
         return {which:`Photo ${image.position+1}`,listing:image.listing,title:"A Photo Needs Changing"}
       })()
     : await (async()=>{

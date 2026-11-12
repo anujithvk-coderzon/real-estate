@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "apparent-steering-asin-art.trycloudflare.com",
+    "kansas-wrapped-pine-mixed.trycloudflare.com",
   ],
 };
 

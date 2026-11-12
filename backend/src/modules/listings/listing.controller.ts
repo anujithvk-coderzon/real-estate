@@ -1,14 +1,12 @@
 import {  type Request, type Response } from "express";
 import { availabilityValidation, listTake, registeringValidation, searchPoint, searchRadius, updateValidation } from "./listing.validation.js";
-import { BadRequestError, UnauthorizedError} from "../../errors/Errors.js";
-import { listingAvailabilityService, sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService, similarListingService, complaintListingService } from "./listing.service.js";
+import { BadRequestError, NotFoundError, UnauthorizedError} from "../../errors/Errors.js";
+import { listingAvailabilityService, sellerListsFetchingService, createListingService, deleteListingService, fetchAmenitiesService, geoCodingService, imageFetchingService, imageUploadService, listingImageDeleteService, listingPublishingService, listingVideoDeleteService, listsFetchingService, OwnerListsFetchingService, OwnerSpecificListFetchingService, reverseGeoCodingService, searchService, SpecificListFetchingService, updateListingService, videoFetchingService, videoUploadService, similarListingService, complaintListingService, contactFetchingService } from "./listing.service.js";
 import type { ListingOrderBy } from "./listing.type.js";
 import { accessTokenVerification } from "../../middlewares/jwtTokens.js";
 import type { ListingType, PostedBy, PropertyType } from "../../generated/prisma/enums.js";
-import { normalizePlaceName } from "../../lib/placeNames.js";
 import { validateSize } from "../../lib/multer.js";
 // import { parseSearch} from "../../lib/searchProcessing.js";
-
 
 export const createListingPost=async(req:Request,res:Response)=>{
   const userId=req.user?.id as string;
@@ -44,15 +42,7 @@ export const uploadListingImages=async(req:Request,res:Response)=>{
     const listingId=req.params?.id as string;
     if(!listingId) throw new BadRequestError("listingId required")
     const images=req.files as Express.Multer.File[] | undefined
-    // `images?.length===0` was false when multer parsed no file field at all,
-    // so undefined used to flow straight through. It reached nothing that
-    // minded before; it reaches validateSize now, where it would be a
-    // TypeError and a 500 instead of a sentence the seller can read.
     if(!images || images.length===0) throw new BadRequestError("No Images to upload")
-    // lib/multer.ts has carried this since it was written and nothing ever
-    // called it, so the only size rule actually enforced was multer's own
-    // 30MB-per-file. The documented ones — 10MB an image, 60MB a request, one
-    // video — were enforced in the browser only, which means not at all.
     validateSize(images)
     const response=await imageUploadService(userId,listingId,images)
     return res.status(200).json({message:response})
@@ -64,8 +54,6 @@ export const uploadListingVideo=async(req:Request,res:Response)=>{
     if(!listingId) throw new BadRequestError("listingId required")
     const video=req.file as Express.Multer.File;
     if(!video) throw new BadRequestError("No Video to upload")
-    // Same call as the images route: it is the only place the one-video rule
-    // and the per-request total are checked outside the browser.
     validateSize([video])
     const response=await videoUploadService(userId,listingId,video)
     return res.status(200).json({message:response})
@@ -243,8 +231,10 @@ export const complaintListing=async(req:Request,res:Response)=>{
     return res.status(201).json({message:response})
 }
 
-
-export const testSearch=async(req:Request,_res:Response)=>{
-    const location=req.body.location as string;
-    normalizePlaceName(location)
+export const contactFetching=async(req:Request,res:Response)=>{
+    const userId=req.user?.id as string;
+    const slug=req.params.slug as string;
+    if(!slug) throw new NotFoundError("Slug required")
+    const number=await contactFetchingService(userId,slug)
+    return res.status(200).json({message:"Contact fetched",number})
 }

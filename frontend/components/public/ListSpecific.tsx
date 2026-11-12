@@ -163,16 +163,18 @@ const PriceAndContact = ({
   const here = usePathname();
   const router = useRouter();
   const [opening, setOpening] = useState(false);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
   const rental = isRental(listing.listingType);
   const pricePerSqft =
     !rental && Number(listing.areaSqft) > 0
       ? Math.round(Number(listing.price) / Number(listing.areaSqft))
       : null;
 
-  // The backend only sends contact fields to signed-in users.
-  const signedIn = "contactPhone" in listing;
-  // Phone numbers are stored as 10 digits; tel: and WhatsApp need the +91 country code.
-  const phone = listing.contactPhone?.replace(/\D/g, "").slice(-10);
+  // Stated by the server. This used to be `"contactPhone" in listing`, which
+  // broke the whole card the day the number left the payload: signedIn went
+  // permanently false and took the chat button with it.
+  const signedIn = listing.signedIn === true;
   // WhatsApp shows a prefilled message in a single-line input, so a 150-character
   // title pushes the actual question out of sight before the buyer can read it.
   const quoted =
@@ -193,13 +195,16 @@ const PriceAndContact = ({
   // needs an account, which is why a listing with no number still has one way in.
   const channels = contactChannels(listing);
   const gone = isUnavailable(listing.status);
-  const canCall = Boolean(phone) && channels.call;
-  const canWhatsapp = Boolean(phone) && channels.whatsapp;
+  // No longer gated on knowing the number: every ACTIVE listing has one,
+  // because publishing and reopening both refuse without it. The number
+  // arrives from GET /list/contact/:slug when the buyer asks for it.
+  const canCall = signedIn && channels.call;
+  const canWhatsapp = signedIn && channels.whatsapp;
   const canChat = signedIn && !listing.isOwner && channels.chat;
   // Phrased as the seller reads it, for the owner's own copy of this card.
   const ownerChannels = [
-    Boolean(phone) && channels.call && "call you",
-    Boolean(phone) && channels.whatsapp && "message you on WhatsApp",
+    channels.call && "call you",
+    channels.whatsapp && "message you on WhatsApp",
     channels.chat && "chat here",
   ].filter(Boolean) as string[];
 
@@ -211,6 +216,26 @@ const PriceAndContact = ({
   // on the side, and it must never delay or block the contact the buyer asked
   // for. Without the .catch it would raise an unhandled rejection in the
   // console on every flaky network.
+  // Fetched on request, never shipped with the page. Until the buyer asks,
+  // the seller's number is not in anything the browser received.
+  const revealContact = async () => {
+    if (phone || revealing) return;
+    setRevealing(true);
+    try {
+      const response = await api.get(`/list/contact/${listing.slug}`);
+      const digits = String(response.data?.number ?? "")
+        .replace(/\D/g, "")
+        .slice(-10);
+      if (!digits) throw new Error("no number");
+      setPhone(digits);
+      recordInterest();
+    } catch (error) {
+      errorToast(apiMessage(error));
+    } finally {
+      setRevealing(false);
+    }
+  };
+
   const recordInterest = () => {
     api.post(`/admin/interest/create/${listing.slug}`).catch(() => {});
   };
@@ -232,7 +257,6 @@ const PriceAndContact = ({
 
   return (
     <div className="overflow-hidden rounded-2xl bg-panel shadow-[0_10px_34px_-20px_rgba(48,32,68,0.35)] ring-1 ring-line">
-      {/* ---------- price ---------- */}
       <div className="p-5">
         <p className="text-[13px] text-muted">
           {rental ? "Monthly rent" : "Price"}
@@ -289,7 +313,6 @@ const PriceAndContact = ({
         )}
       </div>
 
-      {/* ---------- contact ---------- */}
       <div className="border-t border-line bg-accent-soft/50 p-5">
         <h2 className="font-display text-[15px]">Contact the seller</h2>
 
@@ -390,11 +413,24 @@ const PriceAndContact = ({
               </p>
             )}
 
-            {(canCall || canWhatsapp) && (
+            {(canCall || canWhatsapp) && !phone && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={revealContact}
+                  disabled={revealing}
+                  className={`flex w-full items-center justify-center gap-2 ${primaryButton}`}
+                >
+                  <PhoneIcon className="h-4 w-4" />
+                  {revealing ? "Getting the number…" : "Show contact number"}
+                </button>
+              </div>
+            )}
+
+            {(canCall || canWhatsapp) && phone && (
               <div className="mt-4 grid grid-cols-1 gap-2">
                 {canCall && (
                   <a
-                    onClick={recordInterest}
                     href={`tel:+91${phone}`}
                     className={`flex items-center justify-center gap-2 ${primaryButton}`}
                   >
@@ -404,7 +440,6 @@ const PriceAndContact = ({
                 )}
                 {canWhatsapp && (
                   <a
-                    onClick={recordInterest}
                     href={`https://wa.me/91${phone}?text=${whatsappText}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -457,7 +492,6 @@ const PriceAndContact = ({
           </button>
         )}
 
-        {/* Who is selling, and a way to see everything else they have listed. */}
         <div className="mt-4 border-t border-line pt-4">
           <p className="text-[13px] text-muted">
             Listed by{" "}
@@ -649,7 +683,6 @@ const ProjectBlock = ({
                 {rera.label}
               </span>
 
-              {/* The operator's own words, where the project was checked. */}
               {project.reraStatus === "VERIFIED" &&
               project.reraVerifiedReason ? (
                 <span className="mt-1 block text-[12.5px] leading-relaxed text-muted">
@@ -773,7 +806,6 @@ const ListSpecific = ({ slug }: Props) => {
           what the property is. The header stays first in the page's reading
           order, so screen readers always start with the title. */}
       <div className="mt-4 flex flex-col gap-6 lg:gap-8">
-        {/* ---------- what it is ---------- */}
         <header className="order-2 min-w-0 lg:order-1">
           <ul className="flex flex-wrap gap-2 text-[13px] font-medium">
             <li className="rounded-full bg-accent-soft px-3 py-1 text-accent">
@@ -799,23 +831,12 @@ const ListSpecific = ({ slug }: Props) => {
           </p>
         </header>
 
-        {/* ---------- photos ---------- */}
         <section aria-label="Photos" className="order-1 lg:order-2">
           {listing.listingImages.length > 0 ? (
             <Gallery images={listing.listingImages} title={listing.title} />
           ) : (
             <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-panel px-6 text-center text-[15px] text-muted ring-1 ring-line sm:aspect-[16/9] lg:max-h-[460px]">
-              {/* Two different facts, and the wrong one is a false statement
-                  about a real person on their own page. "The seller has not
-                  added photos" over a listing whose photographs are sitting in
-                  our own queue blames them for a wait that is ours.
 
-                  The pending wording stays vague on purpose. A buyer does not
-                  need to know that somebody here is checking the pictures, and
-                  "being reviewed" on a property page reads as a suspicion
-                  about the property. "Not available yet" is true, carries no
-                  accusation in either direction, and tells them the one useful
-                  thing: come back. */}
               {listing.photosPending
                 ? "Photos for this property are not available yet"
                 : "The seller has not added photos yet"}
@@ -827,7 +848,6 @@ const ListSpecific = ({ slug }: Props) => {
       {/* Price and contact come before the details in the reading order; on
           large screens they move to a sticky right column. */}
       <div className="mt-8 grid grid-cols-1 gap-x-12 gap-y-8 lg:grid-cols-[1fr_360px]">
-        {/* ---------- what it costs, who to call ---------- */}
         <aside
           aria-label="Price and contact"
           className="self-start lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
@@ -840,7 +860,6 @@ const ListSpecific = ({ slug }: Props) => {
           />
         </aside>
 
-        {/* ---------- the details ---------- */}
         <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
           <section aria-labelledby="glance-heading">
             <h2 id="glance-heading" className={sectionHeading}>
@@ -963,7 +982,6 @@ const ListSpecific = ({ slug }: Props) => {
                 <span className="h-fit rounded-lg bg-accent-soft p-2 text-accent">
                   <PinIcon />
                 </span>
-                {/* The house address stays private; buyers get it from the seller. */}
                 <address className="text-[15px] not-italic leading-relaxed">
                   {listing.landmark && (
                     <span className="block font-medium">
@@ -999,7 +1017,6 @@ const ListSpecific = ({ slug }: Props) => {
         </div>
       </div>
 
-      {/* Renders itself only when the API has something to suggest. */}
       <SimilarListings
         key={slug}
         slug={slug}

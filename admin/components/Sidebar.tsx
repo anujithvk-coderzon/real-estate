@@ -14,12 +14,8 @@ const icon = {
   interests:
     "M12 20s-7-4.4-7-9.3A4 4 0 0 1 12 8a4 4 0 0 1 7 2.7C19 15.6 12 20 12 20Z",
   promotions: "M4 10v4h3l5 4V6L7 10H4Zm12-2a5 5 0 0 1 0 8",
-  // A certificate with a tick: what the operator is checking and what they do
-  // to it.
   rera: "M6 3h9l4 4v14H6Zm3 10 2 2 4-4",
-  // Two towers: the project queue, beside the certificate above it.
   projects: "M4 20V9h6v11M14 20V4h6v16M6 12h2M6 15h2M16 7h2M16 10h2M16 13h2",
-  // A flag on a pole: what a visitor raises against a listing.
   flag: "M6 21V4m0 1h10l-1.5 3.5L16 12H6",
 } as const;
 
@@ -40,12 +36,6 @@ const Glyph = ({ d }: { d: string }) => (
 
 const NAV = [
   { href: "/home", label: "Home", d: icon.home },
-  // Second, directly under Home. Nobody is blocked by this queue any more —
-  // sellers publish when they like — but its first tab is listings that are in
-  // search with their photographs hidden, which costs the seller enquiries for
-  // every hour it sits there. The RERA queues decide a badge and the flagged
-  // one decides a removal; this one decides whether a buyer can see the
-  // property at all.
   { href: "/listings", label: "Photo approvals", d: icon.listings },
   { href: "/interests", label: "User interests", d: icon.interests },
   { href: "/promotions", label: "Promotions", d: icon.promotions },
@@ -60,12 +50,6 @@ const NAV = [
   { href: "/flagged", label: "Flagged content", d: icon.flag },
 ] as const;
 
-// Shown but not linked — a staff tool should say what it will hold, and a link
-// to a route that 404s is worse than a label that admits it is not ready.
-const SOON = [
-  { label: "Sellers", d: icon.users, note: "accounts and profiles" },
-] as const;
-
 const itemBase =
   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] transition-colors";
 
@@ -73,10 +57,12 @@ const Sidebar = ({
   operator,
   onSignOut,
   onNavigate,
+  waiting,
 }: {
   operator: { name: string; email: string } | null;
   onSignOut: () => void;
   onNavigate?: () => void;
+  waiting?: number | null;
 }) => {
   const pathname = usePathname();
 
@@ -108,31 +94,26 @@ const Sidebar = ({
                   }`}
                 >
                   <Glyph d={item.d} />
-                  <span className="min-w-0 truncate">{item.label}</span>
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+
+                  {item.href === "/listings" &&
+                    typeof waiting === "number" &&
+                    waiting > 0 && (
+                      <span
+                        aria-label={`${waiting} waiting`}
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
+                          current
+                            ? "bg-accent text-white"
+                            : "bg-warn/15 text-warn"
+                        }`}
+                      >
+                        {waiting > 99 ? "99+" : waiting}
+                      </span>
+                    )}
                 </Link>
               </li>
             );
           })}
-        </ul>
-
-        <p className="mt-6 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
-          Not built yet
-        </p>
-        <ul className="mt-1.5 space-y-0.5">
-          {SOON.map((item) => (
-            <li key={item.label}>
-              {/* A div, not a disabled button: there is nothing to press, and a
-                  disabled control in a nav list reads as broken rather than
-                  forthcoming. */}
-              <div
-                className={`${itemBase} cursor-default text-muted/70`}
-                title={item.note}
-              >
-                <Glyph d={item.d} />
-                <span className="truncate">{item.label}</span>
-              </div>
-            </li>
-          ))}
         </ul>
       </nav>
 

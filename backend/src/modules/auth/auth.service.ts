@@ -11,6 +11,7 @@ import {
 } from "../../middlewares/jwtTokens.js";
 import redis from "../../lib/redis.js";
 import { checkDisposableEmail } from "../../lib/disposible_email.js";
+import { publicAgentRera, publicRera } from "../../lib/rera.js";
 import { goolgeClient } from "../../lib/google.js";
 import { avatarImageUpload, avatarPublicUrl, cdnUrl,  isOwnAvatar } from "../../lib/bunny.js";
 import { listNameSluggify} from "../../lib/slug.js";
@@ -389,14 +390,8 @@ export const publicProfileService=async(slug:string)=>{
   avatarUrl:avatarPublicUrl(user.avatarUrl),
   description:user.description,
   accountType:user.accountType,
-  agentReraNumber:user.agentReraNumber,
-  agentReraState:user.agentReraState,
-  agentReraStatus:user.agentReraStatus,
-  // Only the approval note is public. The reason behind a rejection is between
-  // us and the agent: published here it would be an accusation sitting under
-  // their own name, for a number they may be in the middle of correcting.
-  agentReraVerifiedReason:user.agentReraStatus==='VERIFIED'?user.agentReraVerifiedReason:null,
-  agentReraVerifiedAt:user.agentReraStatus==='VERIFIED'?user.agentReraVerifiedAt:null,
+  ...publicAgentRera(user),
+  agentReraState:publicRera(user.agentReraStatus,user.agentReraState),
   memberSince:user.createdAt,
   listingCount:user._count.listings,
   // Only builders have projects, so an empty list simply hides the section.
