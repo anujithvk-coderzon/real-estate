@@ -56,14 +56,14 @@ export const generateRefreshToken = async (userId: string) => {
 export const refreshTokenVerification = async (token: string) => {
   const secret = process.env.REFRESH_JWT_SECRET;
   const key = new TextEncoder().encode(secret);
-  const { payload } = await jwtVerify(token, key);
+  const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
   return payload;
 };
 
 export const accessTokenVerification = async (token: string) => {
   const secret = process.env.ACCESS_JWT_SECRET;
   const key = new TextEncoder().encode(secret);
-  const { payload } = await jwtVerify(token, key);
+  const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
   return payload as AuthPayload;
 };
 
@@ -82,8 +82,7 @@ export const isAuthorized = async (
     const payload = await accessTokenVerification(token as string);
     req.user = payload;
     next();
-  } catch (err) {
-    console.log(err);
+  } catch {
     return res.status(401).json({ message: "Invalid Token" });
   }
 };

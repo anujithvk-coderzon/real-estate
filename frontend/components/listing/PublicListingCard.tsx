@@ -463,15 +463,17 @@ const PublicListingCard = ({
             // fill answers the cursor, so the whole card reads as one thing
             // you press. aria-hidden because the title above is already the
             // link; this is its visible promise, not a second one.
-            <span
+            <Link
+              href={`/property/${listing.slug}`}
               aria-hidden="true"
-              className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 text-[12.5px] font-semibold text-accent transition-colors duration-200 group-hover:bg-accent group-hover:text-white motion-reduce:transition-none"
+              tabIndex={-1}
+              className="relative z-10 flex h-8 shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-2.5 text-[12.5px] font-semibold text-accent transition-colors duration-200 group-hover:bg-accent group-hover:text-white motion-reduce:transition-none"
             >
               View
               <span className="transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none">
                 &#8599;
               </span>
-            </span>
+            </Link>
           )}
         </div>
       </div>

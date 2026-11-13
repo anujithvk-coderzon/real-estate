@@ -247,9 +247,29 @@ if (images.length > remaining) {
   });
   let position = (lastImage?.position ?? -1) + 1;
 
+ // Uploaded one at a time, so a failure names the file it failed on. The
+ // timings matter as much as the errors: the whole request travels through
+ // the Next proxy, which gives up after 30 seconds by default, and ten slow
+ // images will cross that line long before any of them errors.
+ let index = 0;
  for(const image of images){
- const url=await uploadImage(listingId,image)
- await prisma.listingImages.create({data:{path:url,listingId,position},select:{id:true}})
+ index++;
+ const startedAt = Date.now();
+ try {
+   const url=await uploadImage(listingId,image)
+   await prisma.listingImages.create({data:{path:url,listingId,position},select:{id:true}})
+   console.log(
+     `[upload] ${index}/${images.length} ok ${image.originalname} ` +
+       `${image.size}B in ${Date.now() - startedAt}ms`,
+   );
+ } catch (error) {
+   console.error(
+     `[upload] ${index}/${images.length} FAILED ${image.originalname} ` +
+       `${image.size}B after ${Date.now() - startedAt}ms:`,
+     error instanceof Error ? error.message : error,
+   );
+   throw error;
+ }
  position++;
 }
 return `images uploaded successfully`
@@ -446,8 +466,20 @@ export const SpecificListFetchingService=async(slug:string,userId?:string)=>{
 const signedIn=userId ? Boolean(await prisma.user.findUnique({where:{id:userId},select:{id:true}})) : false
 const listing=await prisma.listing.findUnique({
     where:{slug,status:{in:['ACTIVE','SOLD','RENTED']}},
-    omit:{projectId:true,contactPhone:true},
-    include:{
+    select:{
+        id:true,ownerId:true,
+        slug:true,title:true,description:true,
+        listingType:true,propertyType:true,postedBy:true,
+        price:true,isNegotiable:true,securityDeposit:true,maintenance:true,
+        areaUnit:true,areaValue:true,areaSqft:true,
+        bedrooms:true,bathrooms:true,balconies:true,furnishing:true,
+        floorNumber:true,totalFloors:true,propertyStatus:true,availableFrom:true,
+        landmark:true,locality:true,city:true,district:true,state:true,pincode:true,
+        latitude:true,longitude:true,
+        contactName:true,
+        contactPhoneVisibility:true,contactWatsappVisibility:true,contactInappVisibility:true,
+        status:true,expiresAt:true,createdAt:true,updatedAt:true,
+        projectNameText:true,projectReraText:true,projectReraAbsence:true,builderNameText:true,
         amenities:{select:{name:true,category:true}},
         project:{select:{name:true,slug:true,reraNumber:true,reraStatus:true,isReraExempt:true,
                          reraVerifiedReason:true,reraVerifiedAt:true,
@@ -520,7 +552,7 @@ export const listingVideoDeleteService=async(userId:string,videoId:string)=>{
   const listingVideo=await prisma.listingVideos.findUnique({where:{id:videoId,listing:{ownerId:userId}}})
   if(!listingVideo) throw new NotFoundError("Video not found")
   await prisma.listingVideos.delete({where:{id:videoId}})
-  await queueMediaCleanup({kind:"video",videoId:listingVideo.listingId})
+  await queueMediaCleanup({kind:"video",videoId:listingVideo.videoId})
   return 'Video deleted successfully'
 }
 

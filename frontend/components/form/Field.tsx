@@ -23,8 +23,17 @@ export const Field = ({
   <div>
     <label htmlFor={id} className={labelClass}>
       {label}
-      {optional && (
+      {optional ? (
         <span className="font-normal text-muted/70"> (optional)</span>
+      ) : (
+        <>
+          {/* The asterisk is decoration: colour and a glyph are no use to a
+              screen reader, so the word rides along hidden beside it. */}
+          <span aria-hidden="true" className="ml-0.5 text-danger">
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
+        </>
       )}
     </label>
     {children}

@@ -42,6 +42,19 @@ export const uploadListingImages=async(req:Request,res:Response)=>{
     const listingId=req.params?.id as string;
     if(!listingId) throw new BadRequestError("listingId required")
     const images=req.files as Express.Multer.File[] | undefined
+
+    // Multipart uploads fail in ways the response never shows: the body can be
+    // cut off in transit, so multer hands over fewer files than the browser
+    // sent, or none at all. Logging what arrived separates "the client never
+    // finished sending" from "we received it and then broke".
+    console.log(
+      `[upload] listing=${listingId} declared=${req.headers["content-length"] ?? "?"}B ` +
+        `received=${images?.length ?? 0} file(s)` +
+        (images?.length
+          ? ` [${images.map((f) => `${f.originalname} ${f.mimetype} ${f.size}B`).join(" | ")}]`
+          : ""),
+    );
+
     if(!images || images.length===0) throw new BadRequestError("No Images to upload")
     validateSize(images)
     const response=await imageUploadService(userId,listingId,images)

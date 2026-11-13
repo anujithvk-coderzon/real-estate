@@ -21,12 +21,9 @@ import redis from "../../lib/redis.js";
 import { prisma } from "../../lib/prisma.js";
 import { goolgeClient } from "../../lib/google.js";
 import { avatarPublicUrl } from "../../lib/bunny.js";
+import { randomBytes } from "crypto";
 
 const REFRESH_COOKIE = "refresh_real_estate";
-// The browser reaches this API through the frontend's own origin (/api, proxied
-// in next.config.ts), so the refresh cookie is first-party everywhere: locally,
-// through a tunnel, and in production. Hence constant values — only the hostnames
-// decide whether a cookie is cross-site, and NODE_ENV cannot know them.
 const refreshCookieOptions = {
   httpOnly: true,
   secure: true,
@@ -168,14 +165,28 @@ export const me = async (req: Request, res: Response) => {
 };
 
 export const googleLogin=(req:Request,res:Response)=>{
+  const state=randomBytes(16).toString('hex')
+  res.cookie("g_state",state,{
+    httpOnly:true,
+    secure:true,
+    sameSite:'lax',
+    maxAge:10*60*1000
+  })
   const url=goolgeClient.generateAuthUrl({
     scope:["openid","email","profile"],
-    prompt:"select_account"
+    prompt:"select_account",
+    state
   })
   res.redirect(url)
 }
 
 export const googleCallback=async(req:Request,res:Response)=>{
+    const sent=req.query.state as string | undefined
+    const saved= req.cookies["g_state"]
+    res.clearCookie("g_state")
+    if(!sent || !saved || sent !== saved){
+      return res.redirect(`${process.env.FRONTEND_URL}/auth/login?error=google`)
+    }
   try {
     const response=await googleLoginService(req.query.code as string);
     res.cookie(REFRESH_COOKIE, response.refreshToken, refreshCookieOptions)

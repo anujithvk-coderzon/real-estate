@@ -23,7 +23,12 @@ export type ListingStatus =
 export type LngLat = [number, number];
 
 // Where the current pin came from, so the page can explain how accurate it is.
-export type LocationSource = "gps" | "address" | "fallback" | "pin";
+export type LocationSource =
+  | "gps"
+  | "region"
+  | "address"
+  | "fallback"
+  | "pin";
 
 /* ---------- form state ---------- */
 

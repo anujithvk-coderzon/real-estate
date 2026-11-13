@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { usePathname } from "next/navigation";
 import ContourArt from "@/components/ContourArt";
 import ChatsDrawer from "@/components/layout/ChatsDrawer";
@@ -384,9 +385,20 @@ const Sidebar = () => {
             is no spare room beside the nav on a phone. */}
         <ContourArt className="pointer-events-none absolute -bottom-16 -right-24 -z-10 hidden h-[420px] w-[400px] text-line lg:block" />
 
+        {/* ---------- brand ----------
+            The signed-in app had no mark at all: the panel opened straight
+            into whoever was signed in. Brand on top, identity under it, is the
+            order the admin panel already uses. Collapsed, the pin stays and
+            the word goes — a 76px rail has room for one of them. */}
+        <div
+          className={`flex items-center border-b border-line px-4 py-3.5 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
+        >
+          <Logo markClass="h-7 w-7" textClass={`text-[19px] ${hideWhenCollapsed}`} />
+        </div>
+
         {/* ---------- user ---------- */}
         <div
-          className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-7 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
+          className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-5 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
         >
           <span
             title={collapsed ? user?.name : undefined}

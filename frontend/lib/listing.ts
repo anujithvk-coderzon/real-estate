@@ -1,3 +1,4 @@
+import { formatNumber } from "@/lib/format";
 import type {
   Listing,
   ListingFormData,
@@ -521,6 +522,188 @@ export const getMissingFields = (
   ];
 
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
+};
+
+/* ---------- suggested wording ---------- */
+
+// Sellers type place names however they type them — "thalassery", "KANNUR".
+// A listing that prints them back verbatim looks careless, and the place name
+// is the first thing a buyer reads.
+const properNoun = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/(^|[\s'\-])([a-z])/g, (_, lead: string, ch: string) => lead + ch.toUpperCase());
+
+// "a apartment" was the bug this exists to stop. Spelling, not phonetics: the
+// property types are a closed list and none of them is an "hour" or a "union".
+const article = (word: string) =>
+  /^[aeiou]/i.test(word.trim()) ? "an" : "a";
+
+const ordinal = (value: string) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value;
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+};
+
+const areaPhrase = (data: ListingFormData) =>
+  data.areaValue
+    ? `${formatNumber(data.areaValue)} ${data.areaUnit === "SQFT" ? "sq ft" : data.areaUnit.toLowerCase()}`
+    : "";
+
+const placePhrase = (data: ListingFormData) =>
+  [data.locality, data.city, data.district]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .map(properNoun)
+    .filter((part, index, all) => all.indexOf(part) === index)
+    .slice(0, 2)
+    .join(", ");
+
+// A title in the shape buyers already scan for: "2 BHK apartment for sale in
+// Thalassery, Kannur". Built only from answers the seller has given.
+//
+// Returns "" until there is enough to say something true — a half-built title
+// ("BHK for sale in") is worse than an empty box.
+export const suggestTitle = (data: ListingFormData) => {
+  if (!data.propertyType) return "";
+
+  const what = labelOf(categoryOf(data)).toLowerCase();
+  const beds =
+    isResidential(data.propertyType) && data.bedrooms
+      ? `${data.bedrooms} BHK `
+      : "";
+  const size =
+    !isResidential(data.propertyType) && data.areaValue
+      ? `${areaPhrase(data)} `
+      : "";
+  const purpose =
+    data.listingType === "SALE"
+      ? "for sale"
+      : data.listingType === "PG"
+        ? "available"
+        : "for rent";
+
+  const place = placePhrase(data);
+  const title = `${beds}${size}${what} ${purpose}${place ? ` in ${place}` : ""}`.trim();
+  return title.charAt(0).toUpperCase() + title.slice(1);
+};
+
+// A joined list that reads like a sentence: "a lift, covered parking and a
+// power backup" rather than "a lift, covered parking, a power backup".
+const sentenceList = (parts: string[]) => {
+  const items = parts.filter(Boolean);
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0] as string;
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+};
+
+// Small counts read as words in prose and as digits in a table. "It has two
+// bathrooms and a balcony" is a sentence; "It has 2 bathrooms and 1 balcony"
+// is a spec line that happens to have a verb in it. Area and money stay as
+// numerals, because those are figures a buyer compares rather than reads.
+const WORDS = [
+  "zero", "one", "two", "three", "four", "five",
+  "six", "seven", "eight", "nine", "ten",
+];
+const spell = (value: string) => {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 && n <= 10 ? (WORDS[n] as string) : value;
+};
+
+// A countable thing, written the way a person would: "a balcony", "two
+// balconies", "11 balconies".
+const count = (value: string, one: string, many: string) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  if (n === 1) return `${/^[aeiou]/i.test(one) ? "an" : "a"} ${one}`;
+  return `${spell(value)} ${many}`;
+};
+
+// A first draft of the listing's description.
+//
+// Written as flowing prose rather than a list, because this sits under a
+// heading that already says "About this property" and above an At a glance
+// table that already lists the specs. What it adds is the one thing a table
+// cannot: sentences a person reads.
+//
+// Every clause restates something the seller entered — nothing is invented on
+// their behalf, which matters because it is published under their name.
+//
+// Deliberately carries NO instructions. Anything written here goes out, so a
+// line telling them what to write next would be published too whenever they
+// forgot to delete it. That prompt lives under the field instead.
+export const suggestDescription = (
+  data: ListingFormData,
+  amenityNames: string[] = [],
+) => {
+  if (!data.propertyType) return "";
+
+  const what = labelOf(categoryOf(data)).toLowerCase();
+  const place = placePhrase(data);
+  const area = areaPhrase(data);
+  const furnished = data.furnishing ? labelOf(data.furnishing).toLowerCase() : "";
+  const residential = isResidential(data.propertyType);
+  const rental = isRental(data.listingType);
+
+  /* ---------- the opening sentence ---------- */
+  const noun = residential && data.bedrooms ? `${data.bedrooms} BHK ${what}` : what;
+  const lead = `${article(furnished || noun)} ${furnished ? `${furnished} ` : ""}${noun}`;
+  const floor =
+    data.floorNumber && data.totalFloors
+      ? ` on the ${ordinal(data.floorNumber)} floor of a ${spell(data.totalFloors)}-storey building`
+      : "";
+
+  const sentences: string[] = [
+    `${lead}${place ? ` in ${place}` : ""}${area ? `, set over ${area}` : ""}${floor}.`,
+  ];
+
+  /* ---------- what is in it, and what comes with it ---------- */
+  const inside = sentenceList([
+    residential ? count(data.bathrooms, "bathroom", "bathrooms") : "",
+    count(data.balconies, "balcony", "balconies"),
+  ]);
+  const shared = amenityNames.length
+    ? sentenceList(amenityNames.map((n) => n.toLowerCase()))
+    : "";
+
+  if (inside && shared) {
+    sentences.push(`It has ${inside}, and the building offers ${shared}.`);
+  } else if (inside) {
+    sentences.push(`It has ${inside}.`);
+  } else if (shared) {
+    sentences.push(`The building offers ${shared}.`);
+  }
+
+  /* ---------- terms, as one closing sentence ---------- */
+  const terms: string[] = [];
+  if (data.propertyStatus === "READY_TO_MOVE") terms.push("ready to move into");
+  else if (data.propertyStatus) terms.push(labelOf(data.propertyStatus).toLowerCase());
+  if (data.availableFrom) {
+    terms.push(
+      `available from ${new Date(data.availableFrom).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`,
+    );
+  }
+  if (terms.length) {
+    sentences.push(`${residential ? "The home" : "It"} is ${sentenceList(terms)}.`);
+  }
+
+  const money: string[] = [];
+  if (rental && data.securityDeposit) {
+    money.push(`a deposit of ₹${formatNumber(data.securityDeposit)} applies`);
+  }
+  if (data.isNegotiable) {
+    money.push(`the ${rental ? "rent" : "price"} is negotiable`);
+  }
+  if (money.length) {
+    const line = sentenceList(money);
+    sentences.push(line.charAt(0).toUpperCase() + line.slice(1) + ".");
+  }
+
+  const text = sentences.join(" ");
+  return text.charAt(0).toUpperCase() + text.slice(1) + "\n\n";
 };
 
 /* ---------- converting between the form and the API ---------- */

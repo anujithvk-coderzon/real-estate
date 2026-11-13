@@ -4,7 +4,7 @@
 // three times (layout, robots, sitemap), each with its own localhost fallback.
 // A name spelled out in six places is a name that eventually disagrees with
 // itself — and one of those six is now a message buyers send to sellers.
-export const SITE_NAME = "Properties";
+export const SITE_NAME = "PropsNear";
 
 // Absolute, because WhatsApp previews, OG images, robots.txt and the sitemap all
 // reject a relative URL. Set NEXT_PUBLIC_SITE_URL per environment; the fallback

@@ -283,7 +283,8 @@ const Page = () => {
           The first tab is somebody&rsquo;s live listing with no picture on it.
         </p>
         <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-          first; the drafts are not costing anyone anything. What you are
+          Clear those first; the drafts are not costing anyone anything. What
+          you are
           looking for is a screenshot lifted from another site, a watermark, or
           a phone number painted across the picture — all of it on the card,
           nothing to click through to.
@@ -505,10 +506,11 @@ const Page = () => {
                 </div>
               </div>
 
-              <div className="flex gap-1.5 border-t border-line px-4 py-2.5 sm:px-5">
+              <div className="flex flex-wrap gap-1.5 border-t border-line px-4 py-2.5 sm:px-5">
                 {(
                   [
                     listing.listingImages.length > 0 && {
+                      key: "photos" as const,
                       label:
                         listing.listingImages.length === 1
                           ? "1 photo"
@@ -521,6 +523,7 @@ const Page = () => {
                       ).length,
                     },
                     listing.listingVideo && {
+                      key: "video" as const,
                       label: "Video",
                       waiting:
                         !listing.listingVideo.approved &&
@@ -537,12 +540,14 @@ const Page = () => {
                 )
                   .filter(Boolean)
                   .map((entry) => {
-                    const item = entry as {
-                      key: "photos" | "video";
-                      label: string;
-                      waiting: number;
-                      sentBack: number;
-                    };
+                    // `as` is what hid the missing `key` on both literals
+                    // above: the cast promised a field neither object had, so
+                    // item.key was undefined, React had no key to render with
+                    // and the open/closed comparison could never match.
+                    // Narrowing by exclusion instead lets the compiler check
+                    // the objects rather than take our word for them.
+                    if (!entry) return null;
+                    const item = entry;
                     const open = openMedia[listing.id] === item.key;
                     return (
                       <button
@@ -552,10 +557,16 @@ const Page = () => {
                         onClick={() =>
                           setOpenMedia((state) => ({
                             ...state,
+                            // Clicking the open one closes it; clicking the
+                            // other switches across. One panel at a time, so
+                            // a card never grows taller than the screen.
+                            [listing.id]: open ? undefined : item.key,
                           }))
                         }
                         className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors ${focusable} ${
                           open
+                            ? "border-accent bg-accent-soft text-accent"
+                            : "border-line text-muted hover:text-ink"
                         }`}
                       >
                         <span
@@ -910,7 +921,6 @@ const Page = () => {
                 </details>
               </div>
 
-                  the sticky header; a footer whose only job was to hold a
               {listing.slug && listing.status !== "DRAFT" && (
                 <div className="rounded-b-xl border-t border-line px-4 py-2.5 sm:px-5">
                   <Link

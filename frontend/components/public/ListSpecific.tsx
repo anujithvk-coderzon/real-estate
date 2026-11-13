@@ -1,5 +1,6 @@
 "use client";
 
+import TypeGlyph from "@/components/public/TypeGlyph";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -835,11 +836,24 @@ const ListSpecific = ({ slug }: Props) => {
           {listing.listingImages.length > 0 ? (
             <Gallery images={listing.listingImages} title={listing.title} />
           ) : (
-            <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-panel px-6 text-center text-[15px] text-muted ring-1 ring-line sm:aspect-[16/9] lg:max-h-[460px]">
-
-              {listing.photosPending
-                ? "Photos for this property are not available yet"
-                : "The seller has not added photos yet"}
+            // The same empty state the cards use: the property-type glyph on
+            // the survey grid, rather than a sentence alone in a grey box. A
+            // listing with no photographs is still a property, and the page
+            // should look like one is missing rather than like it failed.
+            <div className="relative flex aspect-[4/3] flex-col items-center justify-center gap-3 overflow-hidden rounded-xl bg-panel px-6 text-center ring-1 ring-line sm:aspect-[16/9] lg:max-h-[460px]">
+              <div
+                aria-hidden="true"
+                className="survey-grid pointer-events-none absolute inset-0"
+              />
+              <TypeGlyph
+                type={listing.propertyType}
+                className="relative h-20 w-20 text-muted/70"
+              />
+              <p className="relative max-w-sm text-[15px] leading-relaxed text-muted">
+                {listing.photosPending
+                  ? "The photographs are being checked and will appear here shortly."
+                  : "No photographs yet. Ask the seller for pictures when you get in touch."}
+              </p>
             </div>
           )}
         </section>

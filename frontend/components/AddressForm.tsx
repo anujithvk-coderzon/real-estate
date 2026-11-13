@@ -80,15 +80,19 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
         <input {...input("locality", "Neighbourhood, then the street")} />
       </Field>
 
+      {/* Asked once on the details page, to build the suggested title, and
+          shown again here already filled in. They are part of the address, so
+          leaving them out of the address made it look incomplete — and the pin
+          can correct them, which the seller should be able to see happen. */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field id="city" label="City or town">
-          <input {...input("city", "")} />
-        </Field>
-        <Field id="state" label="State">
-          <input {...input("state", "")} />
+          <input {...input("city", "Your town or city")} />
         </Field>
         <Field id="district" label="District">
-          <input {...input("district", "")} />
+          <input {...input("district", "Your district")} />
+        </Field>
+        <Field id="state" label="State">
+          <input {...input("state", "Your state")} />
         </Field>
         <Field id="pincode" label="Pincode">
           <input

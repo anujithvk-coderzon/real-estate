@@ -14,7 +14,7 @@ import { checkDisposableEmail } from "../../lib/disposible_email.js";
 import { publicAgentRera, publicRera } from "../../lib/rera.js";
 import { goolgeClient } from "../../lib/google.js";
 import { avatarImageUpload, avatarPublicUrl, cdnUrl,  isOwnAvatar } from "../../lib/bunny.js";
-import { listNameSluggify} from "../../lib/slug.js";
+import { userSlug } from "../../lib/slug.js";
 import { queueEmail } from "../../queues/email.queue.js";
 import { queueMediaCleanup } from "../../queues/media.queue.js";
 
@@ -97,13 +97,12 @@ export const registerService = async (validatedData: regValidation) => {
   
   if (isDisposable)throw new BadRequestError("Disposable email addresses are not allowed. Please use a valid email address.",);
   const hashedPassword = await hash(validatedData.password, 10);
-  const name=`${validatedData.name}-${validatedData.email.split("@")[0]}`
   const user = await prisma.user.create({
     data: {
       name: validatedData.name,
       email: validatedData.email,
       password: hashedPassword,
-      slug:listNameSluggify(name)
+      slug:userSlug(validatedData.name)
     },
   });
   const token = await generateEmailToken(user.id);
@@ -186,17 +185,24 @@ export const googleLoginService=async(code:string)=>{
   })
   const google=ticket.getPayload();
   if(!google?.email||!google.email_verified) throw new BadRequestError("Google account has no verified email");
-   const name=`${google.name}-${google.email.split("@")[0]}`
+  const existing=await prisma.user.findUnique({
+    where:{email:google.email},
+    select:{isVerified:true},
+  })
   const user=await prisma.user.upsert({
     where:{email:google.email},
-    update:{googleId:google.sub,isVerified:true},
+    update:{
+      googleId:google.sub,
+      isVerified:true,
+      ...(existing && !existing.isVerified ? {password:null} : {}),
+    },
     create:{
       name:google.name ?? google.email,
       email:google.email,
       googleId:google.sub,
       avatarUrl:google.picture??null,
       isVerified:true,
-      slug:listNameSluggify(name)
+      slug:userSlug(google.name ?? "member")
     }
   })
   const accessToken=await generateAccessToken(user.id);

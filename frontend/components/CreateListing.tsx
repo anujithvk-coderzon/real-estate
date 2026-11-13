@@ -9,7 +9,7 @@ import ListingStart from "@/components/ListingStart";
 import ProjectPicker, { MANUAL, NONE } from "@/components/ProjectPicker";
 import PropertyDetailsForm from "@/components/PropertyDetailsForm";
 import { api } from "@/lib/api";
-import { addressFromPin } from "@/lib/geocode";
+import { addressFromPin, pinFromAddress } from "@/lib/geocode";
 import { buildListingPayload, getMissingFields } from "@/lib/listing";
 import { errorToast, successToast } from "@/lib/toast";
 import { labelOf } from "@/lib/listing";
@@ -31,6 +31,10 @@ const PIN_NOTES: Record<LocationSource, { heading: string; help: string }> = {
   gps: {
     heading: "Detected location",
     help: "Laptop location can be off by kilometres. Drag the pin to the exact spot, or open this page on your phone at the property and tap “Use my current location”.",
+  },
+  region: {
+    heading: "Centred on your town",
+    help: "This is only the town you named, not the property. Zoom in and tap the building to place the pin.",
   },
   address: {
     heading: "Found from the address",
@@ -121,6 +125,7 @@ const CreateListing = () => {
   const [source, setSource] = useState<LocationSource | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState<"details" | "contact">("details");
 
   const placePin = (next: LngLat, how: LocationSource) => {
     setLocation(next);
@@ -140,9 +145,39 @@ const CreateListing = () => {
     );
   };
 
-  // Whenever the pin moves, fill the address fields from it.
+  // Arriving at the map with no pin yet: open it over the town they named on
+  // the first page rather than over the whole country. Nominatim is asked for
+  // the town, not the property — the pin still has to be placed by hand, and
+  // the note under it says so.
   useEffect(() => {
-    if (!location) return;
+    if (step !== "contact" || location) return;
+    if (!data.city.trim() && !data.district.trim()) return;
+    let cancelled = false;
+    pinFromAddress(data)
+      .then((found) => {
+        if (cancelled || !found) return;
+        placePin(found, "region");
+        // Open the address fields too. The state, district and town they gave
+        // on the first page are already in `data`, so the form arrives filled
+        // in and they only have to add the street and the building.
+        setShowAddressForm(true);
+      })
+      .catch(() => {
+        // No pin, no harm: the map still opens and can be tapped.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Runs once on arriving at the map; re-running as they edit would fight
+    // a pin they have already placed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // Whenever the pin moves, fill the address fields from it — except when the
+  // pin came from the town they typed, where reverse geocoding would overwrite
+  // their own words with the geocoder's.
+  useEffect(() => {
+    if (!location || source === "region") return;
     addressFromPin(location)
       .then((address) => {
         setTyped((prev) => ({ ...prev, ...address }));
@@ -151,7 +186,7 @@ const CreateListing = () => {
       .catch(() => {
         // The broker can still type the address by hand.
       });
-  }, [location]);
+  }, [location, source]);
 
   // Builders and agents selling: the question is always asked, because a unit sold
   // off-plan needs the project's RERA number. "Not part of a project" is a valid
@@ -188,6 +223,23 @@ const CreateListing = () => {
     ...getMissingFields(data, location),
     ...(sellerSale && !projectAnswered ? ["project"] : []),
   ];
+
+  // What the second page is responsible for. Everything else belongs to the
+  // first — listed this way round so a check added to getMissingFields later
+  // surfaces on page one rather than vanishing between the two.
+  const PAGE_TWO = new Set([
+    "project",
+    "property name or number",
+    "locality",
+    "pincode",
+    "a pin on the map",
+    "a contact name",
+    "a contact phone number",
+    "at least one way for buyers to reach you",
+  ]);
+  const missingHere = missing.filter((name) =>
+    step === "contact" ? PAGE_TWO.has(name) : !PAGE_TWO.has(name),
+  );
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -243,7 +295,7 @@ const CreateListing = () => {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col px-5 py-8 lg:px-8 lg:py-10">
+    <main className="mx-auto flex w-full max-w-6xl flex-col px-4 py-6 sm:px-5 sm:py-8 lg:px-8 lg:py-10">
       <header className="max-w-xl">
         <h1 className="font-display text-[28px] leading-tight lg:text-[34px]">
           List a property
@@ -278,62 +330,81 @@ const CreateListing = () => {
         </p>
       )}
 
-      {sellerSale && (
-        <section className="mt-6 rounded-lg border border-line bg-panel p-5 lg:p-6">
-          <h2 className={sectionTitle}>Which project is this unit in?</h2>
-          <p className="mt-1 max-w-prose text-[14px] leading-relaxed text-muted">
-            {role === "BUILDER"
-              ? "A project carries the RERA registration number a sale advertisement needs, so every unit you list in it is covered by the same number. If the project is not registered here yet, type its name and number instead. A ready resale or a single plot needs no project."
-              : "Search the project this unit is in. If we do not have it yet, type its name and RERA number as the builder gave them to you. A resale or a plot needs no project."}
-          </p>
-
-          <div className="mt-5">
-            <ProjectPicker
-              mode={role === "BUILDER" ? "own" : "search"}
-              value={projectId}
-              onChange={setProjectId}
-              manualName={manual.manualName}
-              manualRera={manual.manualRera}
-              manualBuilder={manual.manualBuilder}
-              manualAbsence={manual.manualAbsence}
-              onManualChange={(field, value) =>
-                setManual((previous) => ({
-                  ...previous,
-                  [field]: value,
-                  // Typing a number withdraws the "it has none" answer, and
-                  // picking a reason clears the number. Leaving both set would
-                  // publish a number beside a line saying there is none.
-                  ...(field === "manualRera" && value
-                    ? { manualAbsence: "" }
-                    : {}),
-                  ...(field === "manualAbsence" && value
-                    ? { manualRera: "" }
-                    : {}),
-                }))
-              }
-              mustHaveProject={needsProject}
-            />
-          </div>
-        </section>
-      )}
-
-      <section className="mt-6 rounded-lg border border-line bg-panel p-5 lg:p-6">
+      {step === "details" && (
+      <>
+      <section className="mt-5 rounded-lg border border-line bg-panel p-4 sm:mt-6 sm:p-5 lg:p-6">
         <h2 className={sectionTitle}>Property details</h2>
         <p className="mt-1 text-[14px] text-muted">
           The questions change with what you are listing.
         </p>
         <div className="mt-6">
-          <PropertyDetailsForm data={data} setData={setData} hideTypeAndRole />
+          <PropertyDetailsForm
+            data={data}
+            setData={setData}
+            hideTypeAndRole
+            sections={[
+              "type",
+              "configuration",
+              "areaPrice",
+              "location",
+              "titleDescription",
+              "amenities",
+              "availability",
+            ]}
+          />
+        </div>
+      </section>
+      </>
+      )}
+
+      {step === "contact" && (
+      <>
+      <section className="mt-5 rounded-lg border border-line bg-panel p-4 sm:mt-6 sm:p-5 lg:p-6">
+        <h2 className={sectionTitle}>How buyers reach you</h2>
+        <div className="mt-6">
+          <PropertyDetailsForm
+            data={data}
+            setData={setData}
+            hideTypeAndRole
+            sections={["contact"]}
+          />
         </div>
       </section>
 
-      <h2 className={`mt-10 ${sectionTitle}`}>Where is the property?</h2>
+      {/* The pin is required but belongs to no Field, so it has no asterisk of
+          its own. Marking the heading is what carries that here. */}
+      <h2 className={`mt-8 sm:mt-10 ${sectionTitle}`}>
+        Where is the property?
+        <span aria-hidden="true" className="ml-0.5 text-danger">
+          *
+        </span>
+        <span className="sr-only"> (required)</span>
+      </h2>
       <p className="mt-1 max-w-xl text-[15px] leading-relaxed text-muted">
         Detect the location or type the address, then drag the pin to the exact
         spot. Buyers search by this pin.
       </p>
 
-      <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
+      {/* Said before the pin is placed, not after. A seller who only learns
+          that the pin is public once it is on their front door has been told
+          too late — and some of them have good reasons not to show it. The
+          wording offers the alternative rather than only the warning, because
+          a caution with no way out just makes people abandon the step. */}
+      <div className="mt-4 max-w-2xl rounded-lg border border-line bg-ground px-4 py-3.5">
+        <p className="text-[14px] font-medium text-ink">
+          Anyone viewing your listing sees this pin
+        </p>
+        <p className="mt-1 text-[14px] leading-relaxed text-muted">
+          It is shown to every visitor, not only to people you have spoken to.
+          Place it on the property if you want buyers to find it easily. If you
+          would rather not show the exact building, put the pin on the nearest
+          junction or landmark instead &mdash; your listing still appears in
+          searches for this area, and you can give the precise address when
+          someone contacts you.
+        </p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-5 sm:mt-5 lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-6">
         <section className="rounded-lg border border-line bg-panel p-5">
           {/* Shown before the choice, so people know the most accurate way first. */}
           <div className="mb-4 flex gap-3 rounded-lg bg-accent-soft px-3.5 py-3">
@@ -435,20 +506,87 @@ const CreateListing = () => {
         </section>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
+      {sellerSale && (
+        <section className="mt-5 rounded-lg border border-line bg-panel p-4 sm:mt-6 sm:p-5 lg:p-6">
+          <h2 className={sectionTitle}>Which project is this unit in?</h2>
+          <p className="mt-1 max-w-prose text-[14px] leading-relaxed text-muted">
+            {role === "BUILDER"
+              ? "A project carries the RERA registration number a sale advertisement needs, so every unit you list in it is covered by the same number. If the project is not registered here yet, type its name and number instead. A ready resale or a single plot needs no project."
+              : "Search the project this unit is in. If we do not have it yet, type its name and RERA number as the builder gave them to you. A resale or a plot needs no project."}
+          </p>
+
+          <div className="mt-5">
+            <ProjectPicker
+              mode={role === "BUILDER" ? "own" : "search"}
+              value={projectId}
+              onChange={setProjectId}
+              manualName={manual.manualName}
+              manualRera={manual.manualRera}
+              manualBuilder={manual.manualBuilder}
+              manualAbsence={manual.manualAbsence}
+              onManualChange={(field, value) =>
+                setManual((previous) => ({
+                  ...previous,
+                  [field]: value,
+                  // Typing a number withdraws the "it has none" answer, and
+                  // picking a reason clears the number. Leaving both set would
+                  // publish a number beside a line saying there is none.
+                  ...(field === "manualRera" && value
+                    ? { manualAbsence: "" }
+                    : {}),
+                  ...(field === "manualAbsence" && value
+                    ? { manualRera: "" }
+                    : {}),
+                }))
+              }
+              mustHaveProject={needsProject}
+            />
+          </div>
+        </section>
+      )}
+
+      </>
+      )}
+
+      <div className="mt-6 flex flex-col gap-3 border-t border-line pt-5 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
         <p className="text-[14px] text-muted">
-          {missing.length > 0
-            ? `Still needed: ${missing.join(", ")}`
+          {missingHere.length > 0
+            ? `Still needed: ${missingHere.join(", ")}`
             : "Everything needed is filled in."}
         </p>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={missing.length > 0 || submitting}
-          className={`w-full sm:w-auto ${primaryButton}`}
-        >
-          {submitting ? "Saving…" : "Proceed"}
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {step === "contact" && (
+            <button
+              type="button"
+              onClick={() => {
+                setStep("details");
+                window.scrollTo({ top: 0 });
+              }}
+              className={`w-full sm:w-auto ${secondaryButton}`}
+            >
+              Back
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (step === "details") {
+                setStep("contact");
+                window.scrollTo({ top: 0 });
+                return;
+              }
+              void handleSubmit();
+            }}
+            disabled={missingHere.length > 0 || submitting}
+            className={`w-full sm:w-auto ${primaryButton}`}
+          >
+            {step === "details"
+              ? "Continue"
+              : submitting
+                ? "Saving…"
+                : "Proceed"}
+          </button>
+        </div>
       </div>
     </main>
   );

@@ -12,4 +12,5 @@ export const slugify = (name: string) =>
 export const listNameSluggify = (name: string) => `${slugify(name)}-${Date.now()}`;
 
 
-export const userSlug = (name: string) => `${slugify(name)}-${randomBytes(3).toString("hex")}`;
+export const userSlug = (name: string) =>
+  `${slugify(name) || "member"}-${randomBytes(3).toString("hex")}`;

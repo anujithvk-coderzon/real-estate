@@ -7,7 +7,7 @@ export const ADMIN_CONTACT_MAIL =
 
 // Shared class names, so inputs and buttons look the same on every page.
 
-const focusRing =
+export const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 // 16px on phones is not a style choice: Mobile Safari zooms the whole page when

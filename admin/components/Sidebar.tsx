@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogoMark, Wordmark } from "@/components/Logo";
 
 // Icons are inline rather than a library: five 20px glyphs do not justify a
 // dependency, and these inherit currentColor so the active state tints them
@@ -69,9 +70,10 @@ const Sidebar = ({
   return (
     <div className="flex h-full flex-col bg-panel">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
-        <p className="font-display text-[18px] leading-none">
-          Properties<span className="text-accent">.</span>
-        </p>
+        <div className="flex items-center gap-2">
+          <LogoMark className="h-6 w-6" />
+          <Wordmark className="text-[18px] leading-none" />
+        </div>
         <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
           Staff
         </span>

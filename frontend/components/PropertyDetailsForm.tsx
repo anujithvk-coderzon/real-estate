@@ -18,17 +18,39 @@ import {
   isResidential,
   listingTypeOptions,
   propertyTypeOptions,
+  suggestTitle,
+  suggestDescription,
 } from "@/lib/listing";
 import { amountInput } from "@/lib/amount";
 import { formatNumber } from "@/lib/format";
 import type { ListingAmenity, ListingFormData } from "@/lib/types";
-import { inputClass } from "@/lib/ui";
+import { focusRing, inputClass } from "@/lib/ui";
+
+// The groups this form is made of, in the order they render. The stepped create
+// flow asks for a slice at a time; edit and the old single page ask for all of
+// them. Naming them here keeps the split in one place rather than in whichever
+// screen happens to be rendering.
+export const DETAIL_SECTIONS = [
+  "type",
+  "configuration",
+  "areaPrice",
+  "location",
+  "titleDescription",
+  "amenities",
+  "availability",
+  "contact",
+] as const;
+
+export type DetailSection = (typeof DETAIL_SECTIONS)[number];
 
 type Props = {
   data: ListingFormData;
   setData: React.Dispatch<React.SetStateAction<ListingFormData>>;
   // Create flow: the start screen already asked "for sale or rent" and "who are you".
   hideTypeAndRole?: boolean;
+  // Which groups to render. Omitted means all of them, so every existing caller
+  // keeps working untouched.
+  sections?: readonly DetailSection[];
 };
 
 type ChangeEvent = React.ChangeEvent<
@@ -66,21 +88,93 @@ const blurNumberInputOnWheel = (event: React.WheelEvent) => {
     target.blur();
 };
 
+
+// Name and phone, as one piece. They are asked at the top of the create flow,
+// beside the property type, because that row has spare width on a laptop and
+// because a listing cannot be published without them — better to collect them
+// while the seller is fresh than at the bottom of a long form. The edit screen
+// keeps them down in the contact group, where its own heading already explains
+// them.
+const ContactNamePhone = ({
+  data,
+  handleChange,
+}: {
+  data: ListingFormData;
+  handleChange: (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => void;
+}) => (
+  <>
+    {/* A buyer about to ring a stranger about a house wants to know who they
+        are asking for. The account name is not always the right answer — it
+        may be a caretaker, a spouse or an agent who shows the property — so it
+        is asked rather than assumed. */}
+    <Field id="contactName" label="Name">
+      <input
+        id="contactName"
+        name="contactName"
+        value={data.contactName}
+        onChange={handleChange}
+        placeholder="Who buyers should ask for"
+        className={inputClass}
+      />
+    </Field>
+    {/* Not marked optional: publishing is refused without it, so calling it
+        optional here would be a promise the API breaks. */}
+    <Field id="contactPhone" label="Phone">
+      <input
+        id="contactPhone"
+        name="contactPhone"
+        type="tel"
+        inputMode="numeric"
+        maxLength={10}
+        value={data.contactPhone}
+        onChange={handleChange}
+        placeholder="10-digit mobile number"
+        className={`${inputClass} tabular-nums tracking-[0.08em]`}
+      />
+    </Field>
+  </>
+);
+
 const PropertyDetailsForm = ({
   data,
   setData,
   hideTypeAndRole = false,
+  sections = DETAIL_SECTIONS,
 }: Props) => {
+  const show = (name: DetailSection) => sections.includes(name);
   const [amenities, setAmenities] = useState<ListingAmenity[]>([]);
+  // The last draft this form put in the box. While the text still matches it,
+  // the seller has not touched it and a newer draft may replace it. The moment
+  // they edit a word, it stops matching and we stop offering — their sentences
+  // are not ours to overwrite.
+  const [lastDraft, setLastDraft] = useState("");
+
+  const suggestedTitle = suggestTitle(data);
+  const suggestedDescription = suggestDescription(
+    data,
+    amenities
+      .filter((item) => data.amenityIds.includes(item.id))
+      .map((item) => item.name),
+  );
+
+  // Only when this instance is actually showing amenities. The stepped flow
+  // renders two slices of this form side by side, and without the guard both
+  // of them would fetch the same list.
+  const wantsAmenities = sections.includes("amenities");
 
   useEffect(() => {
+    if (!wantsAmenities) return;
     api
       .get("/list/amenities")
       .then((response) => setAmenities(response.data.amenities))
       .catch(() => {
         // The rest of the form still works without the amenity list.
       });
-  }, []);
+  }, [wantsAmenities]);
 
   const handleChange = (event: ChangeEvent) => {
     const { name, value, type } = event.target;
@@ -153,8 +247,12 @@ const PropertyDetailsForm = ({
       : "";
 
   return (
-    <div className="space-y-7" onWheelCapture={blurNumberInputOnWheel}>
+    <div
+      className="space-y-7 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0"
+      onWheelCapture={blurNumberInputOnWheel}
+    >
       {/* ---------- what is being listed ---------- */}
+      {show("type") && (
       <div className="space-y-4">
         <div
           className={`grid grid-cols-1 gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}
@@ -188,124 +286,12 @@ const PropertyDetailsForm = ({
             </Field>
           )}
         </div>
-
-        <Field id="title" label="Title" hint="At least 10 characters.">
-          <input
-            id="title"
-            name="title"
-            maxLength={150}
-            value={data.title}
-            onChange={handleChange}
-            placeholder="2 BHK apartment with covered parking"
-            className={inputClass}
-          />
-        </Field>
-
-        <Field
-          id="description"
-          label="Description"
-          hint={`${data.description.length}/5000 · at least 30 characters`}
-        >
-          <textarea
-            id="description"
-            name="description"
-            rows={4}
-            maxLength={5000}
-            value={data.description}
-            onChange={handleChange}
-            placeholder="Condition, water supply, road access, nearby schools and shops."
-            className={`${inputClass} resize-y`}
-          />
-        </Field>
       </div>
 
-      {/* ---------- area ---------- */}
-      <div className="space-y-4 border-t border-line pt-6">
-        <h3 className={groupTitle}>Area</h3>
-
-        <div className="max-w-sm">
-          <Field
-            id="areaValue"
-            label="Total area"
-            hint={areaInSqft && `About ${areaInSqft} sq ft`}
-          >
-            <div className="flex rounded-lg border border-line bg-panel focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
-              <input
-                {...numberInput(
-                  "areaValue",
-                  data.areaUnit === "ACRE"
-                    ? "0.5"
-                    : data.areaUnit === "CENT"
-                      ? "10"
-                      : "1200",
-                )}
-                step="any"
-                inputMode="decimal"
-                // min-w-0: without it the input refuses to shrink below its
-                // intrinsic 20-character width, and the row plus its unit select
-                // needs ~260px inside a 240px card — a sideways-scrolling page.
-                className="w-full min-w-0 rounded-l-md bg-transparent px-3 py-2 tabular-nums text-[16px] text-ink placeholder:text-muted/60 focus:outline-none sm:text-[15px]"
-              />
-              <select
-                name="areaUnit"
-                aria-label="Unit of measurement"
-                value={data.areaUnit}
-                onChange={handleChange}
-                className="shrink-0 rounded-r-md border-l border-line bg-transparent px-3 text-[16px] text-ink focus:outline-none sm:text-[15px]"
-              >
-                {AREA_UNITS.map((unit) => (
-                  <option key={unit.value} value={unit.value}>
-                    {unit.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </Field>
-        </div>
-      </div>
-
-      {/* ---------- price ---------- */}
-      <div className="space-y-4 border-t border-line pt-6">
-        <h3 className={groupTitle}>Price</h3>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field
-            id="price"
-            label={rental ? "Monthly rent (₹)" : "Price (₹)"}
-            hint={
-              listingType &&
-              (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")
-            }
-          >
-            <input {...moneyInput("price", rental ? "18,000" : "45,00,000")} />
-          </Field>
-
-          <label className="flex items-center gap-2 self-end pb-2.5 text-[15px] text-ink">
-            <input
-              name="isNegotiable"
-              type="checkbox"
-              checked={data.isNegotiable}
-              onChange={handleChange}
-              className="h-4 w-4 accent-accent"
-            />
-            Price is negotiable
-          </label>
-        </div>
-
-        {rental && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field id="securityDeposit" label="Security deposit (₹)">
-              <input {...moneyInput("securityDeposit", "50,000")} />
-            </Field>
-            <Field id="maintenance" label="Monthly maintenance (₹)" optional>
-              <input {...moneyInput("maintenance", "1,500")} />
-            </Field>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* ---------- configuration ---------- */}
-      {propertyType === "" ? (
+      {show("configuration") && (propertyType === "" ? (
         <p className="border-t border-line pt-6 text-[14px] text-muted">
           Choose a property type to see the remaining questions.
         </p>
@@ -366,10 +352,183 @@ const PropertyDetailsForm = ({
             </div>
           </div>
         )
+      ))}
+
+
+      {/* ---------- area and price, side by side ---------- */}
+      {show("areaPrice") && (
+      <div className="grid gap-5 border-t border-line pt-5 sm:pt-6 lg:grid-cols-2 lg:gap-6">
+        <div className="space-y-4">
+          <h3 className={groupTitle}>Area</h3>
+
+          <div className="max-w-sm">
+            <Field
+              id="areaValue"
+              label="Total area"
+              hint={areaInSqft && `About ${areaInSqft} sq ft`}
+            >
+              <div className="flex rounded-lg border border-line bg-panel focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
+                <input
+                  {...numberInput(
+                    "areaValue",
+                    data.areaUnit === "ACRE"
+                      ? "0.5"
+                      : data.areaUnit === "CENT"
+                        ? "10"
+                        : "1200",
+                  )}
+                  step="any"
+                  inputMode="decimal"
+                  // min-w-0: without it the input refuses to shrink below its
+                  // intrinsic 20-character width, and the row plus its unit select
+                  // needs ~260px inside a 240px card — a sideways-scrolling page.
+                  className="w-full min-w-0 rounded-l-md bg-transparent px-3 py-2 tabular-nums text-[16px] text-ink placeholder:text-muted/60 focus:outline-none sm:text-[15px]"
+                />
+                <select
+                  name="areaUnit"
+                  aria-label="Unit of measurement"
+                  value={data.areaUnit}
+                  onChange={handleChange}
+                  className="shrink-0 rounded-r-md border-l border-line bg-transparent px-3 text-[16px] text-ink focus:outline-none sm:text-[15px]"
+                >
+                  {AREA_UNITS.map((unit) => (
+                    <option key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </Field>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <h3 className={groupTitle}>Price</h3>
+
+          <div className="max-w-sm space-y-3">
+            <Field
+              id="price"
+              label={rental ? "Monthly rent (₹)" : "Price (₹)"}
+              hint={
+                listingType &&
+                (rental ? "Up to ₹10,00,000." : "At least ₹1,00,000.")
+              }
+            >
+              <input {...moneyInput("price", rental ? "18,000" : "45,00,000")} />
+            </Field>
+
+            <label className="flex items-center gap-2 text-[15px] text-ink">
+              <input
+                name="isNegotiable"
+                type="checkbox"
+                checked={data.isNegotiable}
+                onChange={handleChange}
+                className="h-4 w-4 accent-accent"
+              />
+              Price is negotiable
+            </label>
+          </div>
+
+          {rental && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="securityDeposit" label="Security deposit (₹)">
+                <input {...moneyInput("securityDeposit", "50,000")} />
+              </Field>
+              <Field id="maintenance" label="Monthly maintenance (₹)" optional>
+                <input {...moneyInput("maintenance", "1,500")} />
+              </Field>
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
+      {/* ---------- where, in words ---------- */}
+      {show("location") && (
+      <div className="space-y-4 border-t border-line pt-6">
+        <h3 className={groupTitle}>Location</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field id="state" label="State">
+            <input id="state" name="state" value={data.state} onChange={handleChange} placeholder="Your state" className={inputClass} />
+          </Field>
+          <Field id="district" label="District">
+            <input id="district" name="district" value={data.district} onChange={handleChange} placeholder="Your district" className={inputClass} />
+          </Field>
+          <Field id="city" label="City or town">
+            <input id="city" name="city" value={data.city} onChange={handleChange} placeholder="Your town or city" className={inputClass} />
+          </Field>
+        </div>
+      </div>
+      )}
+
+      {/* ---------- title and description ---------- */}
+      {show("titleDescription") && (
+      <div className="space-y-4 border-t border-line pt-6">
+        <Field id="title" label="Title" hint="At least 10 characters.">
+          <input
+            id="title"
+            name="title"
+            maxLength={150}
+            value={data.title}
+            onChange={handleChange}
+            placeholder="2 BHK apartment with covered parking"
+            className={inputClass}
+          />
+          {/* Offered, never applied behind their back: a title that rewrote
+              itself as they filled the rest of the form would overwrite words
+              they had chosen. Gone once it matches what is in the box. */}
+          {suggestedTitle && suggestedTitle !== data.title.trim() && (
+            <button
+              type="button"
+              onClick={() => setData((d) => ({ ...d, title: suggestedTitle }))}
+              className={`mt-2 max-w-full truncate rounded-lg bg-accent-soft px-2.5 py-1.5 text-left text-[13px] text-accent transition-colors hover:bg-accent hover:text-white ${focusRing}`}
+            >
+              Use: {suggestedTitle}
+            </button>
+          )}
+        </Field>
+
+        <Field
+          id="description"
+          label="Description"
+          hint={
+            data.description.trim() === ""
+              ? "Say what a photograph cannot: water supply, road access, who the neighbours are, and what is within walking distance."
+              : `${data.description.length}/5000 · at least 30 characters`
+          }
+        >
+          <textarea
+            id="description"
+            name="description"
+            rows={4}
+            maxLength={5000}
+            value={data.description}
+            onChange={handleChange}
+            placeholder="Condition, water supply, road access, nearby schools and shops."
+            className={`${inputClass} resize-y`}
+          />
+          {suggestedDescription &&
+            suggestedDescription.trim() !== data.description.trim() &&
+            (data.description.trim() === "" ||
+              data.description === lastDraft) && (
+            <button
+              type="button"
+              onClick={() => {
+                setData((d) => ({ ...d, description: suggestedDescription }));
+                setLastDraft(suggestedDescription);
+              }}
+              className={`mt-2 rounded-lg bg-accent-soft px-2.5 py-1.5 text-[13px] text-accent transition-colors hover:bg-accent hover:text-white ${focusRing}`}
+            >
+              {data.description.trim() === ""
+                ? "Start with the details I have given"
+                : "Update with the details I have given"}
+            </button>
+          )}
+        </Field>
+      </div>
       )}
 
       {/* ---------- amenities ---------- */}
-      {propertyType !== "" && amenities.length > 0 && (
+      {show("amenities") && propertyType !== "" && amenities.length > 0 && (
         <div className="space-y-4 border-t border-line pt-6">
           <div className="flex items-baseline justify-between gap-2">
             <h3 className={groupTitle}>
@@ -392,7 +551,7 @@ const PropertyDetailsForm = ({
       )}
 
       {/* ---------- availability ---------- */}
-      {(listingType === "SALE" && !isPlot) || rental ? (
+      {show("availability") && ((listingType === "SALE" && !isPlot) || rental) ? (
         <div className="space-y-4 border-t border-line pt-6">
           <h3 className={groupTitle}>Availability</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -424,6 +583,7 @@ const PropertyDetailsForm = ({
       ) : null}
 
       {/* ---------- contact ---------- */}
+      {show("contact") && (
       <div className="space-y-4 border-t border-line pt-6">
         <h3 className={groupTitle}>Contact for visits</h3>
         <p className="-mt-2 text-[13px] text-muted">
@@ -432,36 +592,7 @@ const PropertyDetailsForm = ({
           one.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* A buyer about to ring a stranger about a house wants to know who
-              they are asking for. The account name is not always the right
-              answer — it may be a caretaker, a spouse or an agent who shows
-              the property — so it is asked rather than assumed. */}
-          <Field id="contactName" label="Name">
-            <input
-              id="contactName"
-              name="contactName"
-              value={data.contactName}
-              onChange={handleChange}
-              placeholder="Who buyers should ask for"
-              className={inputClass}
-            />
-          </Field>
-          {/* Not marked optional any more: publishing is refused without it, so
-              calling it optional here would be a promise the API breaks. */}
-          <Field id="contactPhone" label="Phone">
-            <input
-              id="contactPhone"
-              name="contactPhone"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel-national"
-              maxLength={10}
-              value={data.contactPhone}
-              onChange={handleChange}
-              placeholder="10-digit mobile number"
-              className={monoInput}
-            />
-          </Field>
+          <ContactNamePhone data={data} handleChange={handleChange} />
         </div>
 
         {/* Which of those channels the listing actually offers. Both phone
@@ -515,6 +646,7 @@ const PropertyDetailsForm = ({
             )}
         </fieldset>
       </div>
+      )}
     </div>
   );
 };

@@ -43,6 +43,16 @@ async(error)=>{
             );
             setAccessToken(data.accessToken);
             original.headers.Authorization=`Bearer ${data.accessToken}`;
+            // A multipart body is split by a boundary string that the browser
+            // invents per request and writes into Content-Type. Replaying the
+            // config reuses the header from the first attempt while the new
+            // request generates a fresh boundary, so the server is told to
+            // look for a marker the body does not contain and parses nothing.
+            // Dropping the header makes the browser set a matching one.
+            if (typeof FormData !== "undefined" && original.data instanceof FormData) {
+              delete original.headers["Content-Type"];
+              delete original.headers["content-type"];
+            }
             return api(original)
         } catch {
             setAccessToken(null)

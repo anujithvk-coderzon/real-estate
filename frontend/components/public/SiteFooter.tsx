@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 // The footer every website has and this one did not. It is also the drawing
 // set's back page: the wordmark, what the sheet is, and the index of everything
@@ -66,9 +67,10 @@ const SiteFooter = () => (
               most. Now it is the thing it looked like. */}
           <Link
             href="/"
-            className="inline-block font-display text-[24px] leading-none transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            aria-label="PropsNear — home"
+            className="inline-flex items-center transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
-            Properties&#8599;
+            <Logo href={null} markClass="h-8 w-8" textClass="text-[24px]" />
           </Link>
           <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-muted">
             Homes, plots and rooms across India. Listed by the people who own
@@ -88,7 +90,7 @@ const SiteFooter = () => (
           India &middot; All prices in rupees
         </p>
         <p className="text-[13px] text-muted">
-          &copy; {new Date().getFullYear()} Properties
+          &copy; {new Date().getFullYear()} PropsNear
         </p>
       </div>
     </div>
