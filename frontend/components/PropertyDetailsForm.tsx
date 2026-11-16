@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AmenitiesPicker from "@/components/form/AmenitiesPicker";
+import ChoiceCards from "@/components/form/ChoiceCards";
 import { Field, Select } from "@/components/form/Field";
 import { api } from "@/lib/api";
 import {
@@ -51,13 +52,19 @@ type Props = {
   // Which groups to render. Omitted means all of them, so every existing caller
   // keeps working untouched.
   sections?: readonly DetailSection[];
+  // Each group in its own panel, instead of one long form divided by rules.
+  // A seller looking at eight hairline-separated groups sees one enormous
+  // form; the same groups as separate cards read as a short list of small
+  // tasks. Off by default so the edit screen, which already sits inside a
+  // card of its own, is untouched.
+  cards?: boolean;
 };
 
 type ChangeEvent = React.ChangeEvent<
   HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 >;
 
-const groupTitle = "text-[15px] font-semibold text-ink";
+const groupTitle = "card-title text-[15px] font-semibold text-ink";
 const monoInput = `${inputClass} tabular-nums`;
 
 // The three ways a buyer can open a conversation. Keyed by the form field so
@@ -144,7 +151,12 @@ const PropertyDetailsForm = ({
   setData,
   hideTypeAndRole = false,
   sections = DETAIL_SECTIONS,
+  cards = false,
 }: Props) => {
+  // One definition, applied to every group below.
+  const group = cards
+    ? "stack-card px-5 py-5 sm:px-7 sm:py-6"
+    : "border-t border-line pt-6";
   const show = (name: DetailSection) => sections.includes(name);
   const [amenities, setAmenities] = useState<ListingAmenity[]>([]);
   // The last draft this form put in the box. While the text still matches it,
@@ -248,14 +260,18 @@ const PropertyDetailsForm = ({
 
   return (
     <div
-      className="space-y-7 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0"
+      className={
+        cards
+          ? "space-y-5 sm:space-y-7"
+          : "space-y-7 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0"
+      }
       onWheelCapture={blurNumberInputOnWheel}
     >
       {/* ---------- what is being listed ---------- */}
       {show("type") && (
-      <div className="space-y-4">
+      <div className={cards ? `space-y-4 ${group}` : "space-y-4"}>
         <div
-          className={`grid grid-cols-1 gap-4 ${hideTypeAndRole ? "sm:max-w-sm" : "sm:grid-cols-3"}`}
+          className={`grid grid-cols-1 gap-4 ${hideTypeAndRole ? "" : "sm:grid-cols-3"}`}
         >
           {!hideTypeAndRole && (
             <Field id="listingType" label="Listing for">
@@ -268,12 +284,33 @@ const PropertyDetailsForm = ({
             </Field>
           )}
           <Field id="propertyType" label="Property type">
-            <Select
-              id="propertyType"
-              value={propertyType}
-              options={propertyTypeOptions(listingType)}
-              onChange={handleChange}
-            />
+            {/* Cards, not a select. This answer decides which questions the
+                rest of the form asks, so it is the one choice worth showing in
+                full instead of hiding behind a picker — and every type already
+                has a glyph, which is what a seller recognises before the word.
+                Falls back to the select on the edit screen, where the row is
+                shared with two other dropdowns and has no width to spare. */}
+            {hideTypeAndRole ? (
+              <ChoiceCards
+                name="Property type"
+                options={propertyTypeOptions(listingType)}
+                value={propertyType}
+                withGlyph
+                onChange={(next) =>
+                  setData((d) => ({
+                    ...d,
+                    propertyType: next as ListingFormData["propertyType"],
+                  }))
+                }
+              />
+            ) : (
+              <Select
+                id="propertyType"
+                value={propertyType}
+                options={propertyTypeOptions(listingType)}
+                onChange={handleChange}
+              />
+            )}
           </Field>
           {!hideTypeAndRole && (
             <Field id="postedBy" label="You are the">
@@ -286,18 +323,22 @@ const PropertyDetailsForm = ({
             </Field>
           )}
         </div>
+        {/* Directly under the tiles rather than heading the card below:
+            it is about the choice above it, and a seller who has not picked
+            a type should read it where they are looking. */}
+        {propertyType === "" && (
+          <p className="text-[14px] text-muted">
+            Choose a property type to see the remaining questions.
+          </p>
+        )}
       </div>
 
       )}
 
       {/* ---------- configuration ---------- */}
-      {show("configuration") && (propertyType === "" ? (
-        <p className="border-t border-line pt-6 text-[14px] text-muted">
-          Choose a property type to see the remaining questions.
-        </p>
-      ) : (
+      {show("configuration") && propertyType !== "" && (
         !isPlot && (
-          <div className="space-y-4 border-t border-line pt-6">
+          <div className={`space-y-4 ${group}`}>
             <h3 className={groupTitle}>Configuration</h3>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -352,12 +393,16 @@ const PropertyDetailsForm = ({
             </div>
           </div>
         )
-      ))}
+      )}
 
 
       {/* ---------- area and price, side by side ---------- */}
       {show("areaPrice") && (
-      <div className="grid gap-5 border-t border-line pt-5 sm:pt-6 lg:grid-cols-2 lg:gap-6">
+      <div
+        className={`grid gap-5 lg:grid-cols-2 lg:gap-6 ${
+          cards ? group : "border-t border-line pt-5 sm:pt-6"
+        }`}
+      >
         <div className="space-y-4">
           <h3 className={groupTitle}>Area</h3>
 
@@ -444,7 +489,7 @@ const PropertyDetailsForm = ({
 
       {/* ---------- where, in words ---------- */}
       {show("location") && (
-      <div className="space-y-4 border-t border-line pt-6">
+      <div className={`space-y-4 ${group}`}>
         <h3 className={groupTitle}>Location</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field id="state" label="State">
@@ -462,7 +507,7 @@ const PropertyDetailsForm = ({
 
       {/* ---------- title and description ---------- */}
       {show("titleDescription") && (
-      <div className="space-y-4 border-t border-line pt-6">
+      <div className={`space-y-4 ${group}`}>
         <Field id="title" label="Title" hint="At least 10 characters.">
           <input
             id="title"
@@ -529,7 +574,7 @@ const PropertyDetailsForm = ({
 
       {/* ---------- amenities ---------- */}
       {show("amenities") && propertyType !== "" && amenities.length > 0 && (
-        <div className="space-y-4 border-t border-line pt-6">
+        <div className={`space-y-4 ${group}`}>
           <div className="flex items-baseline justify-between gap-2">
             <h3 className={groupTitle}>
               Amenities{" "}
@@ -541,18 +586,20 @@ const PropertyDetailsForm = ({
               </p>
             )}
           </div>
+          <div className={cards ? "card-scroll" : ""}>
           <AmenitiesPicker
             amenities={amenities}
             categories={amenityCategoriesFor(listingType, propertyType)}
             selected={data.amenityIds}
             onToggle={toggleAmenity}
           />
+          </div>
         </div>
       )}
 
       {/* ---------- availability ---------- */}
       {show("availability") && ((listingType === "SALE" && !isPlot) || rental) ? (
-        <div className="space-y-4 border-t border-line pt-6">
+        <div className={`space-y-4 ${group}`}>
           <h3 className={groupTitle}>Availability</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {listingType === "SALE" && (
@@ -584,7 +631,7 @@ const PropertyDetailsForm = ({
 
       {/* ---------- contact ---------- */}
       {show("contact") && (
-      <div className="space-y-4 border-t border-line pt-6">
+      <div className={`space-y-4 ${group}`}>
         <h3 className={groupTitle}>Contact for visits</h3>
         <p className="-mt-2 text-[13px] text-muted">
           The phone number is the only way a buyer can reach you &mdash; your

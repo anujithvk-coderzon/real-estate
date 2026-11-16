@@ -260,3 +260,118 @@
     margin: 0;
   }
 }
+
+/* ---------- the stacked form deck ----------
+
+   Cards that pin and settle behind one another as the seller scrolls. The
+   transform is written by components/form/CardStack.tsx one frame at a time;
+   everything static about the card lives here.
+
+   The shade overlay is a pseudo-element rather than an opacity on the card
+   itself, because fading the card would fade its text with it — this lays a
+   tint over the top and leaves the card's own colours alone. */
+
+/* The page the deck sits on. White cards on a white page do not read as
+   cards at all — the lift comes from the paper being tinted and the glows
+   sitting behind the stack. Fixed attachment so the wash stays put while the
+   cards travel over it. */
+.form-paper {
+  background:
+    radial-gradient(ellipse at 4% 8%, #e5c4f7 0, transparent 42%),
+    radial-gradient(ellipse at 95% 26%, #eee0ff 0, transparent 40%),
+    linear-gradient(140deg, #faf7fe, #f5edfc);
+}
+
+.stack-card {
+  position: sticky;
+  top: var(--stack-top, 88px);
+  scroll-margin-top: var(--stack-top, 88px);
+  overflow: hidden;
+  border-radius: 17px;
+  border: 1px solid #ddc2eb;
+  background: linear-gradient(150deg, #ffffff 45%, #fdfaff);
+  box-shadow:
+    0 22px 55px #51116c18,
+    0 5px 13px #71228d0c,
+    0 1px 0 #ffffff inset;
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
+  transform: perspective(1500px) translate3d(0, var(--card-lift, 0px), 0)
+    rotateX(var(--card-tilt, 0deg)) scale(var(--card-scale, 1));
+  transition: border-color 0.25s ease;
+}
+
+/* A tint laid over the card, not an opacity on it: fading the card would
+   fade its text with it. */
+.stack-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #ead9f6;
+  opacity: var(--shade, 0);
+  pointer-events: none;
+}
+
+/* Each card's own heading. Heavier and tighter than the body scale, in the
+   deep purple their title colour uses. */
+.stack-card > h3,
+.stack-card h3.card-title {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+  color: #4c1668;
+}
+
+@media (min-width: 640px) {
+  .stack-card > h3,
+  .stack-card h3.card-title {
+    font-size: 23px;
+    letter-spacing: -0.6px;
+  }
+
+  /* One height for every card from tablet up. A deck whose cards are all
+     different sizes reads as a list that happens to overlap; matching them
+     is what makes it look like a stack of the same thing.
+     Deliberately NOT applied on a phone: there, a short card padded out to
+     260px is most of a screen spent on nothing, and the cards are read one
+     at a time anyway so the mismatch never shows. */
+  .stack-card {
+    min-height: 300px;
+  }
+}
+
+/* Keeps the deck to one size band.
+
+   A min-height alone only lifts the short cards; the tall ones still stand
+   out, which is what makes a stack look uneven. This caps the two that run
+   long and lets them scroll inside the card.
+
+   Scrolling inside a card is normally a bad idea in a form — a required field
+   hidden below a fold is a field nobody fills. It is fine for exactly these
+   two: the amenity list is a set of optional chips you browse, and the
+   description is a textarea whose own scrollbar is expected. Nothing required
+   is ever out of sight. */
+.stack-card .card-scroll {
+  max-height: 268px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+@media (min-width: 640px) {
+  .stack-card .card-scroll {
+    max-height: 300px;
+  }
+}
+
+/* Honour the system setting: CardStack already snaps its easing, and this
+   removes the perspective entirely so nothing tips. */
+@media (prefers-reduced-motion: reduce) {
+  .stack-card {
+    transform: none !important;
+  }
+  .stack-card::after {
+    opacity: 0 !important;
+  }
+}

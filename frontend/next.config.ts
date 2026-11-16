@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "192.168.1.5",
     "192.168.1.*",
-    "nick-flyer-various-kathy.trycloudflare.com",
+    "futures-strength-floor-granted.trycloudflare.com",
   ],
 };
 

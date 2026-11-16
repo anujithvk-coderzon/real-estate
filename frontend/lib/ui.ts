@@ -15,10 +15,16 @@ export const focusRing =
 // zoomed, sideways-scrolling page. Desktop keeps the 15px the design asks for.
 //
 // min-h-11 is 44px, the smallest target a finger hits reliably.
+// Taller, rounder, and with a soft ring on focus rather than a hairline that
+// changes colour. 48px is a comfortable target and reads as a field rather
+// than a box; the 3px tinted ring is what makes the focused field obvious at
+// a glance without the border doing all the work.
 export const inputClass =
-  "min-h-11 w-full rounded-lg border border-line bg-panel px-3 py-2 text-[16px] text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 sm:text-[15px]";
+  "min-h-12 w-full rounded-[10px] border border-line bg-panel px-[15px] py-2 text-[16px] text-ink placeholder:text-muted/60 transition-[border-color,box-shadow] duration-150 focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/15 sm:text-[15px]";
 
-export const labelClass = "mb-1.5 block text-[13px] font-medium text-muted";
+// Smaller and quieter than the value it labels: the field's content should be
+// the loudest thing in the row, not its name.
+export const labelClass = "mb-2 block text-[12.5px] font-medium text-muted";
 
 // The three solid buttons share min-h-11 so they line up and all clear 44px;
 // padding alone left them at 42.5px.

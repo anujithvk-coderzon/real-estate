@@ -13,18 +13,14 @@ export const registerSchema = z.object({
 });
 
 
+// Signing in checks a password against a stored hash; it does not re-judge
+// whether that password is a good one. Applying the strength rules here would
+// lock out anyone whose password predates them, and would announce the policy
+// to someone guessing — all without rejecting a single wrong password that
+// bcrypt would not reject anyway.
 export const loginSchema = z.object({
   email: z.email().min(1, "Email required").toLowerCase(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(
-      /[^A-Za-z0-9]/,
-      "Password must contain at least one special character",
-    ),
+  password: z.string().min(1, "Password required"),
 });
 
 

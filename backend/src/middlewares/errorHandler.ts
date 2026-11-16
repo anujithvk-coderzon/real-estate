@@ -8,9 +8,19 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
-  if (err?.message === "Request aborted" || req.destroyed || res.headersSent) {
+  // `req.destroyed` was in this condition and should never have been: Node
+  // destroys the request stream once its body has been fully read, so after
+  // express.json() it is true on EVERY POST — and every validation error on
+  // every POST was logged as an abort and answered with nothing at all. The
+  // browser saw a dead request and had no message to show.
+  //
+  // What actually matters here is whether a reply can still be written. If
+  // the headers are out, or the response is finished, there is nothing to do
+  // but note it; multer's "Request aborted" is the one error that names a
+  // genuine disconnect.
+  if (res.headersSent || res.writableEnded || err?.message === "Request aborted") {
     console.warn(
-      `[abort] client went away during ${req.method} ${req.originalUrl}` +
+      `[abort] no response possible for ${req.method} ${req.originalUrl}` +
         ` (${err?.message ?? "no message"})`,
     );
     return;

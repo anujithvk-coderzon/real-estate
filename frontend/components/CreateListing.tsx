@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AddressForm from "@/components/AddressForm";
 import MapPicker from "@/components/MapPicker";
 import AgentReraForm from "@/components/AgentReraForm";
+import CardStack from "@/components/form/CardStack";
 import ListingStart from "@/components/ListingStart";
 import ProjectPicker, { MANUAL, NONE } from "@/components/ProjectPicker";
 import PropertyDetailsForm from "@/components/PropertyDetailsForm";
@@ -295,7 +296,11 @@ const CreateListing = () => {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col px-4 py-6 sm:px-5 sm:py-8 lg:px-8 lg:py-10">
+    <main className="relative mx-auto flex w-full max-w-6xl flex-col px-4 py-6 sm:px-5 sm:py-8 lg:px-8 lg:py-10">
+      {/* The wash is a fixed layer behind the page rather than a background on
+          this column, which is centred and would have tinted only a strip down
+          the middle. */}
+      <div aria-hidden="true" className="form-paper fixed inset-0 -z-10" />
       <header className="max-w-xl">
         <h1 className="font-display text-[28px] leading-tight lg:text-[34px]">
           List a property
@@ -332,44 +337,42 @@ const CreateListing = () => {
 
       {step === "details" && (
       <>
-      <section className="mt-5 rounded-lg border border-line bg-panel p-4 sm:mt-6 sm:p-5 lg:p-6">
-        <h2 className={sectionTitle}>Property details</h2>
-        <p className="mt-1 text-[14px] text-muted">
-          The questions change with what you are listing.
-        </p>
-        <div className="mt-6">
-          <PropertyDetailsForm
-            data={data}
-            setData={setData}
-            hideTypeAndRole
-            sections={[
-              "type",
-              "configuration",
-              "areaPrice",
-              "location",
-              "titleDescription",
-              "amenities",
-              "availability",
-            ]}
-          />
-        </div>
-      </section>
+      {/* No wrapper panel: each group below is its own card, so one more box
+          around them would be a box inside a box. */}
+      <p className="mt-5 text-[14px] text-muted sm:mt-6">
+        The questions change with what you are listing.
+      </p>
+      <CardStack>
+        <PropertyDetailsForm
+          data={data}
+          setData={setData}
+          hideTypeAndRole
+          cards
+          sections={[
+            "type",
+            "configuration",
+            "areaPrice",
+            "location",
+            "titleDescription",
+            "amenities",
+            "availability",
+          ]}
+        />
+      </CardStack>
       </>
       )}
 
       {step === "contact" && (
       <>
-      <section className="mt-5 rounded-lg border border-line bg-panel p-4 sm:mt-6 sm:p-5 lg:p-6">
-        <h2 className={sectionTitle}>How buyers reach you</h2>
-        <div className="mt-6">
-          <PropertyDetailsForm
-            data={data}
-            setData={setData}
-            hideTypeAndRole
-            sections={["contact"]}
-          />
-        </div>
-      </section>
+      <div className="mt-5 sm:mt-6">
+        <PropertyDetailsForm
+          data={data}
+          setData={setData}
+          hideTypeAndRole
+          cards
+          sections={["contact"]}
+        />
+      </div>
 
       {/* The pin is required but belongs to no Field, so it has no asterisk of
           its own. Marking the heading is what carries that here. */}
