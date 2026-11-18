@@ -365,6 +365,24 @@
   }
 }
 
+/* On a phone the deck is a plain column of cards. Pinning works on a laptop
+   because a whole card fits on screen; on a phone, with the keyboard up, it
+   does not, and the next card slid over the fields still being filled in
+   (District and City disappeared under the Title card). There is also no
+   fixed header on a phone, so the 88px pin offset was empty space. The cards
+   keep their look; they just scroll. */
+@media (max-width: 639.98px) {
+  .stack-card {
+    position: relative;
+    top: auto;
+    scroll-margin-top: 16px;
+    transform: none !important;
+  }
+  .stack-card::after {
+    opacity: 0 !important;
+  }
+}
+
 /* Honour the system setting: CardStack already snaps its easing, and this
    removes the perspective entirely so nothing tips. */
 @media (prefers-reduced-motion: reduce) {

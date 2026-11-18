@@ -309,6 +309,36 @@ const CreateListing = () => {
           this column, which is centred and would have tinted only a strip down
           the middle. */}
       <div aria-hidden="true" className="form-paper fixed inset-0 -z-10" />
+
+      {/* Back is where a phone user looks for it: top left. On the details
+          step it returns to "who is listing", on the map step to the details;
+          what has been typed is kept either way, because this component stays
+          mounted while the question changes. */}
+      <button
+        type="button"
+        onClick={() => {
+          if (step === "contact") {
+            setStep("details");
+            window.scrollTo({ top: 0 });
+          } else router.push("/list/create");
+        }}
+        className="-ml-2 mb-3 inline-flex min-h-11 items-center gap-1.5 self-start rounded-lg px-2 text-[15px] font-medium text-muted transition-colors hover:text-ink"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="h-5 w-5"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        {step === "contact" ? "Back to details" : "Back"}
+      </button>
+
       <header className="max-w-xl">
         <h1 className="font-display text-[28px] leading-tight lg:text-[34px]">
           List a property
@@ -329,7 +359,8 @@ const CreateListing = () => {
         <button
           type="button"
           onClick={() => router.push("/list/create")}
-          className="font-medium text-muted underline underline-offset-2 hover:text-ink"
+          // A 44px-tall tap area around the word; the visible link stays small.
+          className="-my-2 inline-flex min-h-11 items-center px-1.5 font-medium text-muted underline underline-offset-2 hover:text-ink"
         >
           Change
         </button>
@@ -559,13 +590,17 @@ const CreateListing = () => {
       </>
       )}
 
-      <div className="mt-6 flex flex-col gap-3 border-t border-line pt-5 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
-        <p className="text-[14px] text-muted">
+      {/* On a phone this bar stays on screen at the bottom: the form is five
+          cards long, and Continue at the very end of it is out of reach for
+          most of the page. From 640px up it is the ordinary footer row it
+          always was. The bottom padding clears the iPhone home indicator. */}
+      <div className="sticky bottom-0 z-30 -mx-4 mt-6 flex flex-col gap-2.5 border-t border-line bg-panel/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:static sm:z-auto sm:mx-0 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:bg-transparent sm:px-0 sm:pt-6 sm:pb-0 sm:backdrop-blur-none">
+        <p className="line-clamp-2 text-[13px] leading-snug text-muted sm:line-clamp-none sm:text-[14px]">
           {missingHere.length > 0
             ? `Still needed: ${missingHere.join(", ")}`
             : "Everything needed is filled in."}
         </p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex gap-3 sm:items-center">
           {step === "contact" && (
             <button
               type="button"
@@ -573,7 +608,7 @@ const CreateListing = () => {
                 setStep("details");
                 window.scrollTo({ top: 0 });
               }}
-              className={`w-full sm:w-auto ${secondaryButton}`}
+              className={`shrink-0 ${secondaryButton}`}
             >
               Back
             </button>
@@ -589,7 +624,7 @@ const CreateListing = () => {
               void handleSubmit();
             }}
             disabled={missingHere.length > 0 || submitting}
-            className={`w-full sm:w-auto ${primaryButton}`}
+            className={`flex-1 sm:flex-none ${primaryButton}`}
           >
             {step === "details"
               ? "Continue"

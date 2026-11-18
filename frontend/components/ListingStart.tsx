@@ -149,7 +149,7 @@ const ListingStart = ({ defaultRole = "OWNER" }: Props) => {
           type="submit"
           disabled={!purpose}
           title={purpose ? undefined : "Choose sale, rent or PG"}
-          className={`mt-8 ${primaryButton}`}
+          className={`mt-8 w-full sm:w-auto ${primaryButton}`}
         >
           Continue
         </button>

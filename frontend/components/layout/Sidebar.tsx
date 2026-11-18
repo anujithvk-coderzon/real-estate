@@ -390,15 +390,83 @@ const Sidebar = () => {
             into whoever was signed in. Brand on top, identity under it, is the
             order the admin panel already uses. Collapsed, the pin stays and
             the word goes — a 76px rail has room for one of them. */}
+        {/* On a phone this row is the whole bar: the brand on the left, the
+            actions on the right. Who is signed in moves inside the menu - a
+            second row of name and email cost a sixth of the screen above
+            every page, and it is not something a seller needs to read on
+            each visit. */}
         <div
-          className={`flex items-center border-b border-line px-4 py-3.5 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
+          className={`flex items-center gap-2 border-b border-line px-4 py-2 lg:py-3.5 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
         >
           <Logo markClass="h-7 w-7" textClass={`text-[19px] ${hideWhenCollapsed}`} />
+
+          <div className="ml-auto flex items-center gap-2 lg:hidden">
+            {/* Messaging is the one thing that has to announce itself, so it
+                stays on the bar rather than behind the menu. */}
+            <button
+              type="button"
+              onClick={() => {
+                setChatsOpen(true);
+                setMenuOpen(false);
+              }}
+              aria-haspopup="dialog"
+              aria-expanded={chatsOpen}
+              aria-label={unread > 0 ? `Chats, ${unread} unread` : "Chats"}
+              className={`relative flex h-11 w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-accent-soft/60 hover:text-ink ${focusRing}`}
+            >
+              <ChatsIcon />
+              {unread > 0 && (
+                <span className="absolute right-0.5 top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </button>
+
+            {/* Only when there is something to report; an empty bell is in
+                the menu anyway. */}
+            {alerts > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAlertsOpen(true);
+                  setMenuOpen(false);
+                }}
+                aria-haspopup="dialog"
+                aria-expanded={alertsOpen}
+                aria-label={`Notifications, ${alerts} unread`}
+                className={`relative flex h-11 w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-accent-soft/60 hover:text-ink ${focusRing}`}
+              >
+                <BellIcon />
+                <span className="absolute right-0.5 top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
+                  {alerts > 9 ? "9+" : alerts}
+                </span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-expanded={menuOpen}
+              aria-controls="sidebar-menu"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              className={`flex h-11 w-11 items-center justify-center rounded-lg text-ink transition-colors hover:bg-accent-soft/60 ${focusRing}`}
+            >
+              <svg {...iconProps} className="h-6 w-6">
+                {menuOpen ? (
+                  <path d="M6 6l12 12M18 6 6 18" />
+                ) : (
+                  <path d="M4 7h16M4 12h16M4 17h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* ---------- user ---------- */}
+        {/* ---------- user ----------
+            Always on the desktop rail; on a phone, the first thing inside the
+            open menu. */}
         <div
-          className={`flex items-center gap-3 px-4 py-4 lg:pb-7 lg:pt-5 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
+          className={`${menuOpen ? "flex" : "hidden"} items-center gap-3 px-4 py-4 lg:flex lg:pb-7 lg:pt-5 ${collapsed ? "lg:justify-center lg:px-0" : "lg:px-5"}`}
         >
           <span
             title={collapsed ? user?.name : undefined}
@@ -437,60 +505,6 @@ const Sidebar = () => {
             )}
           </div>
 
-          {/* On phones the nav lives behind "Menu", which would hide the unread
-            badge behind a tap. Messaging is the one thing that has to announce
-            itself, so it gets its own always-visible trigger up here. */}
-          <button
-            type="button"
-            onClick={() => {
-              setChatsOpen(true);
-              setMenuOpen(false);
-            }}
-            aria-haspopup="dialog"
-            aria-expanded={chatsOpen}
-            aria-label={unread > 0 ? `Chats, ${unread} unread` : "Chats"}
-            className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-muted lg:hidden ${focusRing}`}
-          >
-            <ChatsIcon />
-            {unread > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            )}
-          </button>
-
-          {/* Unlike chats, this one appears only when it has something to
-            report. An always-present third button costs the name and email
-            beside it room they need on a 360px screen, and an empty bell is
-            reachable through Menu anyway. */}
-          {alerts > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setAlertsOpen(true);
-                setMenuOpen(false);
-              }}
-              aria-haspopup="dialog"
-              aria-expanded={alertsOpen}
-              aria-label={`Notifications, ${alerts} unread`}
-              className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-muted lg:hidden ${focusRing}`}
-            >
-              <BellIcon />
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white tabular-nums">
-                {alerts > 9 ? "9+" : alerts}
-              </span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-expanded={menuOpen}
-            aria-controls="sidebar-menu"
-            className={`min-h-11 rounded-lg border border-line px-3.5 py-2.5 text-[14px] font-medium lg:hidden ${focusRing}`}
-          >
-            {menuOpen ? "Close" : "Menu"}
-          </button>
         </div>
 
         <div

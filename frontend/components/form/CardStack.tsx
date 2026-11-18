@@ -29,6 +29,9 @@ const CardStack = ({ children }: { children: ReactNode }) => {
     if (!host) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Below 640px the deck is a plain column (globals.css), so measuring every
+    // card on every scroll there would be work nobody sees.
+    const wide = window.matchMedia("(min-width: 640px)");
     let cards: HTMLElement[] = [];
     let state: Motion[] = [];
     let target: Motion[] = [];
@@ -95,6 +98,7 @@ const CardStack = ({ children }: { children: ReactNode }) => {
     };
 
     const kick = () => {
+      if (!wide.matches) return;
       measure();
       if (!frame) frame = requestAnimationFrame(draw);
     };
