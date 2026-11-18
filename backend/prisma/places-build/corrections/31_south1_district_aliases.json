@@ -1,0 +1,118 @@
+{
+ "source": "District NIC sites (dk.nic.in, uttarakannada.nic.in, dharwad.nic.in, kodagu.nic.in, cuddalore.nic.in, tiruvannamalai.nic.in, bangalorerural.nic.in, bengaluruurban.nic.in), https://karnataka.gov.in/district/en, https://www.tn.gov.in/district_collector.php, https://py.gov.in/districts",
+ "why": "South-1 district audit: aliases claimed by more than one district are removed (the alias rule forbids them); headquarters towns added.",
+ "ops": [
+  {
+   "op": "district_drop_alias",
+   "state": "Tamil Nadu",
+   "district": "Vellore",
+   "alias": "North Arcot",
+   "why": "one name on two districts; North Arcot now spans Vellore, Tiruvannamalai, Ranipet and Tirupathur"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Tamil Nadu",
+   "district": "Tiruvannamalai",
+   "alias": "North Arcot",
+   "why": "one name on two districts; North Arcot now spans Vellore, Tiruvannamalai, Ranipet and Tirupathur"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Tamil Nadu",
+   "district": "Viluppuram",
+   "alias": "South Arcot",
+   "why": "cuddalore.nic.in/history: South Arcot was bifurcated in 1993; Cuddalore, the old HQ, keeps the name"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Bihar",
+   "district": "Bhojpur",
+   "alias": "Shahabad",
+   "why": "one name on four successor districts, none officially its sole successor"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Bihar",
+   "district": "Buxar",
+   "alias": "Shahabad",
+   "why": "one name on four successor districts, none officially its sole successor"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Bihar",
+   "district": "Kaimur",
+   "alias": "Shahabad",
+   "why": "one name on four successor districts, none officially its sole successor"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Bihar",
+   "district": "Rohtas",
+   "alias": "Shahabad",
+   "why": "one name on four successor districts, none officially its sole successor"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Karnataka",
+   "district": "Bengaluru Rural",
+   "alias": "Bengaluru North",
+   "why": "rename not in effect (bangalorerural.nic.in still 'Bangalore Rural District'); 'North' is a sub-division and taluk of Bengaluru Urban"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Karnataka",
+   "district": "Bengaluru Rural",
+   "alias": "Bangalore North"
+  },
+  {
+   "op": "district_aliases",
+   "state": "Karnataka",
+   "district": "Dakshina Kannada",
+   "add": [
+    "Mangalore",
+    "Mangaluru"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Karnataka",
+   "district": "Uttara Kannada",
+   "add": [
+    "Karwar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Karnataka",
+   "district": "Dharwad",
+   "add": [
+    "Hubli",
+    "Hubballi",
+    "Hubli-Dharwad"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Karnataka",
+   "district": "Kodagu",
+   "add": [
+    "Madikeri"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tamil Nadu",
+   "district": "Tiruvannamalai",
+   "add": [
+    "Tiruvannamalai Sambuvarayar"
+   ],
+   "why": "name at formation, 30 Sep 1989; https://tiruvannamalai.nic.in/history/"
+  },
+  {
+   "op": "district_note",
+   "state": "Puducherry",
+   "field": "disagreement",
+   "text": "The UT's own portal (https://py.gov.in/districts, 12 Nov 2026) says it has two districts, Puducherry and Karaikal, with Mahe and Yanam as administrative units run by Regional Administrators. They are kept as four here because each is a geographically separate enclave (Mahe inside Kerala, Yanam inside Andhra Pradesh): folding them into Puducherry would lose the address information without misfiling anything. Treat Mahe and Yanam as regions, not revenue districts."
+  }
+ ]
+}

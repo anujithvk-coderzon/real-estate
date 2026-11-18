@@ -25,6 +25,10 @@ export const pinFromAddress = async (data: ListingFormData): Promise<LngLat | nu
     params: {
       street: data.locality,
       city: data.city,
+      // The district is the rung the server falls back to when the town is
+      // misspelt or simply not on the map. Without it the ladder skips
+      // straight from the town to the whole state.
+      district: data.district,
       state: data.state,
       postalcode: data.pincode,
     },

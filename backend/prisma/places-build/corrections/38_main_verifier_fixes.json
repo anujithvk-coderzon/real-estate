@@ -1,0 +1,300 @@
+{
+ "source": "Main verifier report, checked against LGD sub-district feed, tnrd.tn.gov.in Census 2011 panchayat table (Nagapattinam), koderma.nic.in, idukki.nic.in, wayanad.gov.in, the Odisha gazette schedule",
+ "why": "Faults the main verifier found in the applied corrections: two census towns wrongly moved, two renames the sources do not support, missing aliases, and India Post rows left in the parent district after their town was added to the new district (the move merges each into the new row).",
+ "ops": [
+  {
+   "op": "move",
+   "state": "Tamil Nadu",
+   "from": "Mayiladuthurai",
+   "to": "Nagapattinam",
+   "city": "Poravacheri"
+  },
+  {
+   "op": "move",
+   "state": "Tamil Nadu",
+   "from": "Mayiladuthurai",
+   "to": "Nagapattinam",
+   "city": "Manjakollai"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Nuapada",
+   "city": "Khadial Road",
+   "to": "Khariar Road",
+   "why": "not in the gazette schedule (only Khariar -> KHADIAL); the Nuapada portal still lists NAC Khariar Road"
+  },
+  {
+   "op": "rename",
+   "state": "Jharkhand",
+   "district": "Koderma",
+   "city": "Domchach",
+   "to": "Domchanch",
+   "why": "koderma.nic.in 'Nagar Panchayat Domchanch'; LGD block 'Domchanch'"
+  },
+  {
+   "op": "add_alias",
+   "state": "Odisha",
+   "district": "Balangir",
+   "city": "Balangir",
+   "add": [
+    "Bolangir"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Sangli",
+   "city": "Kupwad",
+   "tier": "locality",
+   "why": "part of Sangli Miraj Kupwad MC, not a separate council (DMA register)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Sangli",
+   "city": "Miraj",
+   "tier": "locality",
+   "why": "as Kupwad"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Sangli",
+   "city": "Sangli",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Karnataka",
+   "district": "Dharwad",
+   "city": "Dharwad",
+   "tier": "corporation",
+   "why": "part of Hubballi-Dharwad Municipal Corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Vikarabad",
+   "city": "Vikarabad",
+   "tier": "municipality"
+  },
+  {
+   "op": "district_aliases",
+   "state": "Kerala",
+   "district": "Idukki",
+   "add": [
+    "Painavu"
+   ],
+   "why": "idukki.nic.in: Collectorate at Civil Station Idukki, Kuyilimala, Painavu"
+  },
+  {
+   "op": "district_aliases",
+   "state": "Kerala",
+   "district": "Wayanad",
+   "add": [
+    "Kalpetta"
+   ],
+   "why": "Collectorate at Civil Station, North Kalpetta P.O. (wayanad.gov.in, ecostat.kerala.gov.in)"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Gudamalani"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Samdari"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Sindhari"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Siwana"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Jasol"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Khairthal-Tijara",
+   "city": "Mundawar"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Kotputli-Behror",
+   "city": "Bansur"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Kotputli-Behror",
+   "city": "Mandhan"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Bharatpur",
+   "to": "Deeg",
+   "city": "Pahari"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Bharatpur",
+   "to": "Deeg",
+   "city": "Sikri"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Jodhpur",
+   "to": "Phalodi",
+   "city": "Bap"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Ajmer",
+   "to": "Beawar",
+   "city": "Masuda"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "NTR",
+   "city": "Nandigama"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "NTR",
+   "city": "Tiruvuru"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "West Godavari",
+   "to": "Eluru",
+   "city": "Jangareddygudem"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Kurnool",
+   "to": "Nandyal",
+   "city": "Nandikotkur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Kurnool",
+   "to": "Nandyal",
+   "city": "Atmakur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Ananthapuramu",
+   "to": "Sri Sathya Sai",
+   "city": "Puttaparthi"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Ananthapuramu",
+   "to": "Sri Sathya Sai",
+   "city": "Penukonda"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Ananthapuramu",
+   "to": "Sri Sathya Sai",
+   "city": "Madakasira"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Gollaprolu"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Yeleswaram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Dr. B.R. Ambedkar Konaseema",
+   "city": "Mummidivaram"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Nagarkurnool",
+   "city": "Kollapur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Hanumakonda",
+   "city": "Parkal"
+  },
+  {
+   "op": "move",
+   "state": "Uttarakhand",
+   "from": "Chamoli",
+   "to": "Rudraprayag",
+   "city": "Augustmuni"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Odisha",
+   "district": "Sundargarh",
+   "city": "Raurkela",
+   "alias": "Rourkela 10",
+   "why": "a postal sector name; the bare old spelling replaces it"
+  },
+  {
+   "op": "add_alias",
+   "state": "Odisha",
+   "district": "Sundargarh",
+   "city": "Raurkela",
+   "add": [
+    "Rourkela"
+   ]
+  }
+ ]
+}

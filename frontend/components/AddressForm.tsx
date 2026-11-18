@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Field } from "@/components/form/Field";
+import PlaceAutocomplete from "@/components/form/PlaceAutocomplete";
 import { pinFromAddress } from "@/lib/geocode";
 import { INDIA_CENTER } from "@/lib/listing";
 import { errorToast } from "@/lib/toast";
@@ -54,6 +55,13 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
     }
   };
 
+  // The autocompletes report a value rather than an event, but it still has
+  // to be cleaned and still has to clear the not-found notice.
+  const setPlace = (name: "state" | "district" | "city", value: string) => {
+    setNotFound(false);
+    setData((prev) => ({ ...prev, [name]: clean(name, value) }));
+  };
+
   const input = (name: keyof ListingFormData, placeholder: string) => ({
     id: name,
     name,
@@ -84,15 +92,61 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
           shown again here already filled in. They are part of the address, so
           leaving them out of the address made it look incomplete — and the pin
           can correct them, which the seller should be able to see happen. */}
+      {/* Widest first, then narrowing: state, its district, that district's
+          town, and the pincode last. Each list is scoped to the level above,
+          so a district can only be one of that state's. */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field id="city" label="City or town">
-          <input {...input("city", "Your town or city")} />
+        <Field id="state" label="State">
+          <PlaceAutocomplete
+            id="state"
+            name="state"
+            value={data.state}
+            placeholder="Your state"
+            path="/places/states"
+            onType={(state) => setPlace("state", state)}
+            onPick={(state) =>
+              setData((d) =>
+                d.state === state
+                  ? { ...d, state }
+                  : { ...d, state, district: "", city: "" },
+              )
+            }
+          />
         </Field>
         <Field id="district" label="District">
-          <input {...input("district", "Your district")} />
+          <PlaceAutocomplete
+            id="district"
+            name="district"
+            value={data.district}
+            placeholder="Your district"
+            path="/places/districts"
+            scope={{ state: data.state }}
+            disabled={!data.state.trim()}
+            disabledHint="Choose a state first"
+            onType={(district) => setPlace("district", district)}
+            onPick={(district) =>
+              setData((d) =>
+                d.district === district
+                  ? { ...d, district }
+                  : { ...d, district, city: "" },
+              )
+            }
+          />
         </Field>
-        <Field id="state" label="State">
-          <input {...input("state", "Your state")} />
+        <Field id="city" label="City or town">
+          <PlaceAutocomplete
+            id="city"
+            name="city"
+            value={data.city}
+            placeholder="Your town or city"
+            path="/places/cities"
+            scope={{ state: data.state, district: data.district }}
+            limit={8}
+            disabled={!data.state.trim() || !data.district.trim()}
+            disabledHint="Choose a district first"
+            onType={(city) => setPlace("city", city)}
+            onPick={(city) => setPlace("city", city)}
+          />
         </Field>
         <Field id="pincode" label="Pincode">
           <input

@@ -1,0 +1,101 @@
+{
+ "source": "as 20/21/22, plus the rows themselves",
+ "why": "A census or ULB row and an India Post row carrying the bare town name are one place: merged, the postal name kept as an alias. Pairs where the ULB's legal name could not be confirmed (Robertsganj/Sonbhadra, Naugarh/Siddharthnagar, the Mirzapur and Farrukhabad compounds) are deliberately left as two rows, which is not wrong.",
+ "ops": [
+  {
+   "op": "merge",
+   "state": "Tamil Nadu",
+   "district": "Thoothukudi",
+   "keep": "Thoothukudi",
+   "drop": "Tuticorin"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Nainital",
+   "city": "Haldwani-cum-Kathgodam",
+   "to": "Haldwani",
+   "why": "UDD register: 'Nagar Nigam Haldwani'. Absorbs the Haldwani post-office row; Kathgodam stays its own locality."
+  },
+  {
+   "op": "merge",
+   "state": "Uttarakhand",
+   "district": "Chamoli",
+   "keep": "Chamoli Gopeshwar",
+   "drop": "Gopeshwar"
+  },
+  {
+   "op": "merge",
+   "state": "Punjab",
+   "district": "Rupnagar",
+   "keep": "Rupnagar",
+   "drop": "Ropar"
+  },
+  {
+   "op": "merge",
+   "state": "Punjab",
+   "district": "Firozpur",
+   "keep": "Firozpur",
+   "drop": "Ferozepur"
+  },
+  {
+   "op": "merge",
+   "state": "Uttar Pradesh",
+   "district": "Mau",
+   "keep": "Maunath Bhanjan",
+   "drop": "Mau"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Bhadrak",
+   "city": "Basudebpur",
+   "to": "Basudevpur",
+   "why": "H&UD register: 'Basudevpur Municipality'"
+  },
+  {
+   "op": "add_town",
+   "state": "Odisha",
+   "district": "Angul",
+   "city": "Anugola",
+   "tier": "municipality",
+   "aka": [
+    "Angul"
+   ],
+   "src": [
+    "state-ulb-register"
+   ],
+   "why": "district HQ municipality, absent; gazette No. 2676 row ANUGOLA (Municipality); H&UD register"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Angul",
+   "city": "Anugola",
+   "tier": "municipality"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Boudh",
+   "city": "Baudhgarh",
+   "to": "Boudhagada",
+   "why": "gazette No. 2676: Boudhgarh -> BOUDHAGADA (Municipality)"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Jajpur",
+   "city": "Byasanagar",
+   "to": "Vyasanagar",
+   "why": "H&UD register: 'Vyasanagar Municipality'"
+  },
+  {
+   "op": "merge",
+   "state": "Himachal Pradesh",
+   "district": "Hamirpur",
+   "keep": "Sujanpur",
+   "drop": "Sujanpur Tira"
+  }
+ ]
+}

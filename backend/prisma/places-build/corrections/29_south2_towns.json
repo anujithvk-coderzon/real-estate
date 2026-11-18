@@ -1,0 +1,1794 @@
+{
+ "source": "CDMA Andhra Pradesh ULB directory https://cdma.ap.gov.in/ulb-web-directory (API apcmms.ap.gov.in ulbprofiles); AP district /mandals/ pages; Telangana CDMA ULB table https://emunicipal.telangana.gov.in/ and <district>.telangana.gov.in municipality/tehsil pages; https://kushavati.goa.gov.in/revenue-villages/ ; https://southandaman.nic.in/municipality/ ; https://andaman.nic.in/",
+ "why": "Towns still filed under the pre-2022 (AP) and pre-2016 (Telangana) parent districts, moved to the current district per each state's own ULB register.",
+ "ops": [
+  {
+   "op": "merge",
+   "state": "Andhra Pradesh",
+   "district": "Chittoor",
+   "keep": "Tirupati",
+   "drop": "Tirupati NMA"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "Prakasam",
+   "city": "Kanigiri U",
+   "to": "Kanigiri"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Ananthapuramu",
+   "to": "Sri Sathya Sai",
+   "city": "Dharmavaram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Ananthapuramu",
+   "to": "Sri Sathya Sai",
+   "city": "Kadiri"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Ananthapuramu",
+   "to": "Sri Sathya Sai",
+   "city": "Hindupur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Annamayya",
+   "city": "Madanapalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Annamayya",
+   "city": "Punganur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Annamayya",
+   "city": "Pileru"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Tirupati",
+   "city": "Tirupati"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Tirupati",
+   "city": "Srikalahasti"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Tirupati",
+   "city": "Puttur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Sri Potti Sriramulu Nellore",
+   "to": "Tirupati",
+   "city": "Venkatagiri"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Sri Potti Sriramulu Nellore",
+   "to": "Tirupati",
+   "city": "Sulluru"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Sri Potti Sriramulu Nellore",
+   "to": "Tirupati",
+   "city": "Sullurpeta"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Kakinada"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Peddapuram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Pithapuram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Samalkota"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Kakinada",
+   "city": "Tuni"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Dr. B.R. Ambedkar Konaseema",
+   "city": "Amalapuram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Dr. B.R. Ambedkar Konaseema",
+   "city": "Ramachandrapuram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "East Godavari",
+   "to": "Polavaram",
+   "city": "Rampachodavaram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "West Godavari",
+   "to": "East Godavari",
+   "city": "Kovvur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "West Godavari",
+   "to": "East Godavari",
+   "city": "Nidadavole"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "West Godavari",
+   "to": "Eluru",
+   "city": "Eluru"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "Eluru",
+   "city": "Nuzvid"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "NTR",
+   "city": "Vijayawada"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "NTR",
+   "city": "Jaggayyapeta"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "NTR",
+   "city": "Kondapalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Palnadu",
+   "city": "Chilakaluripet"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Palnadu",
+   "city": "Narasaraopet"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Palnadu",
+   "city": "Sattenapalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Palnadu",
+   "city": "Macherla"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Palnadu",
+   "city": "Piduguralla"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Palnadu",
+   "city": "Vinukonda"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Bapatla",
+   "city": "Bapatla"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Guntur",
+   "to": "Bapatla",
+   "city": "Repalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Bapatla",
+   "city": "Chirala"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Markapuram",
+   "city": "Markapuram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Markapuram",
+   "city": "Giddaluru"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Markapuram",
+   "city": "Cumbum"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Markapuram",
+   "city": "Podili"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Markapuram",
+   "city": "Kanigiri"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Prakasam",
+   "to": "Markapuram",
+   "city": "Pamur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Kurnool",
+   "to": "Nandyal",
+   "city": "Nandyal"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Kurnool",
+   "to": "Nandyal",
+   "city": "Dhone"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Kurnool",
+   "to": "Nandyal",
+   "city": "Bethamcherla"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Kurnool",
+   "to": "Nandyal",
+   "city": "Banaganapalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Srikakulam",
+   "to": "Parvathipuram Manyam",
+   "city": "Palakonda"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Srikakulam",
+   "to": "Vizianagaram",
+   "city": "Rajam"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Vizianagaram",
+   "to": "Parvathipuram Manyam",
+   "city": "Parvathipuram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Vizianagaram",
+   "to": "Parvathipuram Manyam",
+   "city": "Salur"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Visakhapatnam",
+   "to": "Anakapalli",
+   "city": "Anakapalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Visakhapatnam",
+   "to": "Anakapalli",
+   "city": "Narsipatnam"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Visakhapatnam",
+   "to": "Anakapalli",
+   "city": "Yelamanchili"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Visakhapatnam",
+   "to": "Anakapalli",
+   "city": "Chodavaram"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Visakhapatnam",
+   "to": "Anakapalli",
+   "city": "Payakaraopeta"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Visakhapatnam",
+   "to": "Alluri Sitharama Raju",
+   "city": "Chintapalle"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "YSR Kadapa",
+   "to": "Annamayya",
+   "city": "Rayachoti"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "city": "Kondapalle",
+   "to": "Kondapalli"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "city": "Kondapalli",
+   "tier": "municipality"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "East Godavari",
+   "city": "Nidadavole",
+   "to": "Nidadavolu"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "Eluru",
+   "city": "Nuzvid",
+   "to": "Nuzividu"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "Parvathipuram Manyam",
+   "city": "Salur",
+   "to": "Saluru"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "Ananthapuramu",
+   "city": "Kalyandurg",
+   "to": "Kalyanadurgam"
+  },
+  {
+   "op": "rename",
+   "state": "Andhra Pradesh",
+   "district": "Markapuram",
+   "city": "Markapuram",
+   "to": "Markapur"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Bethamcherla",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Prakasam",
+   "city": "Ongole",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Krishna",
+   "city": "Machilipatnam",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Vizianagaram",
+   "city": "Vizianagaram",
+   "tier": "corporation"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "city": "Nandigama",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "city": "Nandigama",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "city": "Tiruvuru",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "city": "Tiruvuru",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Krishna",
+   "city": "Vuyyuru",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Krishna",
+   "city": "Vuyyuru",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Eluru",
+   "city": "Jangareddygudem",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Eluru",
+   "city": "Jangareddygudem",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Eluru",
+   "city": "Chinthalapudi",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Eluru",
+   "city": "Chinthalapudi",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Palnadu",
+   "city": "Gurazala",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Palnadu",
+   "city": "Gurazala",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Palnadu",
+   "city": "Dachepalli",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Palnadu",
+   "city": "Dachepalli",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Allagadda",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Allagadda",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Nandikotkur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Nandikotkur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Atmakur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Nandyal",
+   "city": "Atmakur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Sri Potti Sriramulu Nellore",
+   "city": "Atmakur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Sri Potti Sriramulu Nellore",
+   "city": "Atmakur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Tirupati",
+   "city": "Naidupeta",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Tirupati",
+   "city": "Naidupeta",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "city": "Puttaparthi",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "city": "Puttaparthi",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "city": "Penukonda",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "city": "Penukonda",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "city": "Madakasira",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "city": "Madakasira",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Annamayya",
+   "city": "B. Kothakota",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Annamayya",
+   "city": "B. Kothakota",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Kakinada",
+   "city": "Gollaprolu",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Kakinada",
+   "city": "Gollaprolu",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Kakinada",
+   "city": "Yeleswaram",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Kakinada",
+   "city": "Yeleswaram",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Dr. B.R. Ambedkar Konaseema",
+   "city": "Mummidivaram",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Dr. B.R. Ambedkar Konaseema",
+   "city": "Mummidivaram",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Andhra Pradesh",
+   "district": "Prakasam",
+   "city": "Addanki",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Prakasam",
+   "city": "Addanki",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Mancherial",
+   "city": "Bellampalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Mancherial",
+   "city": "Mandamarri"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Mancherial",
+   "city": "Chennur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Mancherial",
+   "city": "Luxettipet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Mancherial",
+   "city": "Naspur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Mancherial",
+   "city": "Kyathampalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Nirmal",
+   "city": "Nirmal"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Nirmal",
+   "city": "Bhainsa"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Kumuram Bheem Asifabad",
+   "city": "Kagaznagar"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Kumuram Bheem Asifabad",
+   "city": "Asifabad"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Adilabad",
+   "to": "Kumuram Bheem Asifabad",
+   "city": "Jainoor"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Karimnagar",
+   "to": "Jagtial",
+   "city": "Jagtial"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Karimnagar",
+   "to": "Jagtial",
+   "city": "Metpalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Karimnagar",
+   "to": "Rajanna Sircilla",
+   "city": "Sircilla"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Karimnagar",
+   "to": "Rajanna Sircilla",
+   "city": "Vemulawada R"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Karimnagar",
+   "to": "Peddapalli",
+   "city": "Peddapalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Karimnagar",
+   "to": "Peddapalli",
+   "city": "Dharmaram (P.B)"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Kothagudem"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Palwancha"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Manugur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Yellandu"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Bhadrachalam"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Sarapaka"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Laxmidevipalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Khammam",
+   "to": "Bhadradri Kothagudem",
+   "city": "Chunchupalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Nagarkurnool",
+   "city": "Achampet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Nagarkurnool",
+   "city": "Kalwakurthy"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Nagarkurnool",
+   "city": "Nagarkurnool"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Wanaparthy",
+   "city": "Wanaparthy"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Wanaparthy",
+   "city": "Kothakota"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Wanaparthy",
+   "city": "Atmakur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Narayanpet",
+   "city": "Narayanpet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Rangareddy",
+   "city": "Farooqnagar"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Mahabubnagar",
+   "to": "Rangareddy",
+   "city": "Kothur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Sangareddy"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Zahirabad"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Sadasivpet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Narayankhed"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Jogipet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Ameenapur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Bollaram"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Sangareddy",
+   "city": "Isnapur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Siddipet",
+   "city": "Siddipet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Medak",
+   "to": "Siddipet",
+   "city": "Gajwel"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Suryapet",
+   "city": "Suryapet"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Suryapet",
+   "city": "Kodad"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Yadadri Bhuvanagiri",
+   "city": "Bibinagar"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Yadadri Bhuvanagiri",
+   "city": "Choutuppal"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Yadadri Bhuvanagiri",
+   "city": "Pochampalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Yadadri Bhuvanagiri",
+   "city": "Yadagirigutta"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nalgonda",
+   "to": "Yadadri Bhuvanagiri",
+   "city": "Ramannapeta"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nizamabad",
+   "to": "Kamareddy",
+   "city": "Kamareddy"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nizamabad",
+   "to": "Kamareddy",
+   "city": "Banswada"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Nizamabad",
+   "to": "Kamareddy",
+   "city": "Yellareddy"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Boduppal"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Jawaharnagar"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Medchal"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Peerzadguda"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Dundigal"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Kompalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Nagaram"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Medipalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Medchal-Malkajgiri",
+   "city": "Bachpalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Rangareddy",
+   "to": "Vikarabad",
+   "city": "Vicarabad"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Jangaon",
+   "city": "Jangaon"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Jangaon",
+   "city": "Ghanpur Station"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Jayashankar Bhupalpally",
+   "city": "Bhupalpalle"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Mahabubabad",
+   "city": "Mahabubabad"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Mahabubabad",
+   "city": "Dornakal"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Mahabubabad",
+   "city": "Thorrur"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Hanumakonda",
+   "city": "Bhimaram"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Hanumakonda",
+   "city": "Kadipikonda"
+  },
+  {
+   "op": "move",
+   "state": "Telangana",
+   "from": "Warangal",
+   "to": "Hanumakonda",
+   "city": "Kamalapuram"
+  },
+  {
+   "op": "merge",
+   "state": "Telangana",
+   "district": "Vikarabad",
+   "keep": "Vikarabad",
+   "drop": "Vicarabad"
+  },
+  {
+   "op": "rename",
+   "state": "Telangana",
+   "district": "Rajanna Sircilla",
+   "city": "Vemulawada R",
+   "to": "Vemulawada"
+  },
+  {
+   "op": "rename",
+   "state": "Telangana",
+   "district": "Hanumakonda",
+   "city": "Kamalapuram",
+   "to": "Kamalapur"
+  },
+  {
+   "op": "rename",
+   "state": "Telangana",
+   "district": "Rangareddy",
+   "city": "Farooqnagar",
+   "to": "Shadnagar"
+  },
+  {
+   "op": "rename",
+   "state": "Telangana",
+   "district": "Jagtial",
+   "city": "Koratla",
+   "to": "Korutla"
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Khammam",
+   "city": "Khammam",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Peddapalli",
+   "city": "Ramagundam",
+   "tier": "corporation"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Karimnagar",
+   "city": "Huzurabad",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Karimnagar",
+   "city": "Huzurabad",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Karimnagar",
+   "city": "Jammikunta",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Karimnagar",
+   "city": "Jammikunta",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Suryapet",
+   "city": "Huzurnagar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Suryapet",
+   "city": "Huzurnagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Suryapet",
+   "city": "Nereducherla",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Suryapet",
+   "city": "Nereducherla",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Nagarkurnool",
+   "city": "Kollapur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Nagarkurnool",
+   "city": "Kollapur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Vikarabad",
+   "city": "Kodangal",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Vikarabad",
+   "city": "Kodangal",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Khammam",
+   "city": "Wyra",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Khammam",
+   "city": "Wyra",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Mulugu",
+   "city": "Mulugu",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Mulugu",
+   "city": "Mulugu",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Siddipet",
+   "city": "Husnabad",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Siddipet",
+   "city": "Husnabad",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Siddipet",
+   "city": "Dubbak",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Siddipet",
+   "city": "Dubbak",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Peddapalli",
+   "city": "Sultanabad",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Peddapalli",
+   "city": "Sultanabad",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Peddapalli",
+   "city": "Manthani",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Peddapalli",
+   "city": "Manthani",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Medak",
+   "city": "Toopran",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Medak",
+   "city": "Toopran",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Nirmal",
+   "city": "Khanapur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Nirmal",
+   "city": "Khanapur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Warangal",
+   "city": "Wardhannapet",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Warangal",
+   "city": "Wardhannapet",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Yadadri Bhuvanagiri",
+   "city": "Alair",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Yadadri Bhuvanagiri",
+   "city": "Alair",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Telangana",
+   "district": "Hanumakonda",
+   "city": "Parkal",
+   "tier": "municipality",
+   "aka": [
+    "Parakala"
+   ],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Telangana",
+   "district": "Hanumakonda",
+   "city": "Parkal",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Goa",
+   "from": "South Goa",
+   "to": "Kushavati",
+   "city": "Sanvordem"
+  },
+  {
+   "op": "move",
+   "state": "Goa",
+   "from": "South Goa",
+   "to": "Kushavati",
+   "city": "Xeldem"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Goa",
+   "district": "North Goa",
+   "city": "Penha de Franca",
+   "alias": "Penha De France"
+  },
+  {
+   "op": "rename",
+   "state": "Andaman and Nicobar Islands",
+   "district": "South Andaman",
+   "city": "Port Blair",
+   "to": "Sri Vijaya Puram"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andaman and Nicobar Islands",
+   "district": "South Andaman",
+   "city": "Sri Vijaya Puram",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andaman and Nicobar Islands",
+   "district": "South Andaman",
+   "city": "Garacharama",
+   "tier": "census town"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andaman and Nicobar Islands",
+   "district": "South Andaman",
+   "city": "Bambooflat",
+   "tier": "census town"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "city": "Brahmapur",
+   "alias": "Berhampore Odisha"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Chittoor",
+   "city": "Chittoor",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Andhra Pradesh",
+   "district": "Srikakulam",
+   "city": "Srikakulam",
+   "tier": "corporation"
+  }
+ ]
+}

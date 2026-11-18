@@ -1,0 +1,2950 @@
+{
+ "source": "Rajasthan SEC ULB list (SEP 2026 round) https://sec.rajasthan.gov.in/ChairpersonNomination.aspx?code=CEM ; Gujarat CMA municipalities https://communi.gujarat.gov.in/Home/listofmunicipalities and UD&UH corporations https://udd.gujarat.gov.in/corporations.php ; MP district NIC municipality pages ; https://pune.gov.in/ ; https://www.pcmcindia.gov.in/ ; https://nwcmc.gov.in/",
+ "why": "Towns still filed under the parent district after Rajasthan's 2023/2024, Gujarat's 2025 and MP's 2013-2023 reorganisations; statutory ULBs missing; phantom corporation rows.",
+ "ops": [
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Balotra"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Barmer",
+   "to": "Balotra",
+   "city": "Dhorimanna"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Ajmer",
+   "to": "Beawar",
+   "city": "Beawar"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Ajmer",
+   "to": "Beawar",
+   "city": "Vijainagar"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Pali",
+   "to": "Beawar",
+   "city": "Jaitaran"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Bharatpur",
+   "to": "Deeg",
+   "city": "Deeg"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Bharatpur",
+   "to": "Deeg",
+   "city": "Kaman"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Bharatpur",
+   "to": "Deeg",
+   "city": "Kumher"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Didwana"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Kuchaman City"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Ladnu"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Makrana"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Nawa"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Parbatsar"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Nagaur",
+   "to": "Didwana-Kuchaman",
+   "city": "Borawar"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Khairthal-Tijara",
+   "city": "Bhiwadi"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Khairthal-Tijara",
+   "city": "Khairthal"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Khairthal-Tijara",
+   "city": "Tijara"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Khairthal-Tijara",
+   "city": "Kishangarh"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Khairthal-Tijara",
+   "city": "Tapookra"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Kotputli-Behror",
+   "city": "Behror"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Alwar",
+   "to": "Kotputli-Behror",
+   "city": "Neemrana"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Jaipur",
+   "to": "Kotputli-Behror",
+   "city": "Kotputli"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Jaipur",
+   "to": "Kotputli-Behror",
+   "city": "Viratnagar"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Jodhpur",
+   "to": "Phalodi",
+   "city": "Phalodi"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Udaipur",
+   "to": "Salumbar",
+   "city": "Salumbar"
+  },
+  {
+   "op": "rename",
+   "state": "Rajasthan",
+   "district": "Khairthal-Tijara",
+   "city": "Kishangarh",
+   "to": "Kishangarh Bas"
+  },
+  {
+   "op": "rename",
+   "state": "Rajasthan",
+   "district": "Chittorgarh",
+   "city": "Chittaurgarh",
+   "to": "Chittorgarh"
+  },
+  {
+   "op": "rename",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Dungargarh",
+   "to": "Sri Dungargarh"
+  },
+  {
+   "op": "rename",
+   "state": "Rajasthan",
+   "district": "Jalore",
+   "city": "Jalor",
+   "to": "Jalore"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Neem-Ka-Thana",
+   "alias": "Neem"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Neem-Ka-Thana",
+   "alias": "Thana"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Sangariya",
+   "alias": "Sangaria"
+  },
+  {
+   "op": "add_alias",
+   "state": "Rajasthan",
+   "district": "Sri Ganganagar",
+   "city": "Vijainagar",
+   "add": [
+    "Sri Vijaynagar"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Reengus",
+   "add": [
+    "Ringus"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Govindgarh",
+   "add": [
+    "Govindgarh-Rambas"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Rajasthan",
+   "district": "Pali",
+   "city": "Falna",
+   "add": [
+    "Khudala-Falna"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Rajasthan",
+   "district": "Sirohi",
+   "city": "Mount Abu",
+   "add": [
+    "Mt Abu"
+   ]
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Ajmer",
+   "city": "Peesangan",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Ajmer",
+   "city": "Peesangan",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Ajmer",
+   "city": "Tantoti",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Ajmer",
+   "city": "Tantoti",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Ajmer",
+   "city": "Sawar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Ajmer",
+   "city": "Sawar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Bahadurpur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Bahadurpur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Barodamev",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Barodamev",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Kathumar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Kathumar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Laxmangarh",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Laxmangarh",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Malakheda",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Malakheda",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Naugaon",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Naugaon",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Thanagazi",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Alwar",
+   "city": "Thanagazi",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Baran",
+   "city": "Siswali",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Baran",
+   "city": "Siswali",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Barmer",
+   "city": "Chohtan",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Barmer",
+   "city": "Chohtan",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bharatpur",
+   "city": "Roopwas",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bharatpur",
+   "city": "Roopwas",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bharatpur",
+   "city": "Uchhain",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bharatpur",
+   "city": "Uchhain",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bhilwara",
+   "city": "Banera",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bhilwara",
+   "city": "Banera",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bhilwara",
+   "city": "Bigod",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bhilwara",
+   "city": "Bigod",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Khajuwala",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Khajuwala",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Lunkaransar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Lunkaransar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Napasar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bikaner",
+   "city": "Napasar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bundi",
+   "city": "Dei",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bundi",
+   "city": "Dei",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Bundi",
+   "city": "Hindoli",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Bundi",
+   "city": "Hindoli",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Chittorgarh",
+   "city": "Aakola",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Chittorgarh",
+   "city": "Aakola",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Churu",
+   "city": "Sahawa",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Churu",
+   "city": "Sahawa",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Baswa",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Baswa",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Bhandarej",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Bhandarej",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Lawan",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Lawan",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Ramgarh Pachwara",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Ramgarh Pachwara",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Sikray",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dausa",
+   "city": "Sikray",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dholpur",
+   "city": "Baseri",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dholpur",
+   "city": "Baseri",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dholpur",
+   "city": "Maniya",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dholpur",
+   "city": "Maniya",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Dholpur",
+   "city": "Saipau",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Dholpur",
+   "city": "Saipau",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sri Ganganagar",
+   "city": "Gharsana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sri Ganganagar",
+   "city": "Gharsana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Hanumangarh",
+   "city": "Goluwala",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Hanumangarh",
+   "city": "Goluwala",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Hanumangarh",
+   "city": "Tibbi",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Hanumangarh",
+   "city": "Tibbi",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Dudu",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Dudu",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Kaladera",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Kaladera",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Khejroli",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Khejroli",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Narayana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Narayana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Phagi",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Phagi",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Vatika",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jaipur",
+   "city": "Vatika",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jalore",
+   "city": "Sayla",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jalore",
+   "city": "Sayla",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jhalawar",
+   "city": "Dag",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jhalawar",
+   "city": "Dag",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Buhana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Buhana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Dundlod",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Dundlod",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Jakhal",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Jakhal",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Mandrela",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Mandrela",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Sultana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jhunjhunu",
+   "city": "Sultana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Balesar Sattah",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Balesar Sattah",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Bhopalgarh",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Bhopalgarh",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Mathaniya",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Mathaniya",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Tiwari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Jodhpur",
+   "city": "Tiwari",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Karauli",
+   "city": "Mandrayal",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Karauli",
+   "city": "Mandrayal",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Karauli",
+   "city": "Suroth",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Karauli",
+   "city": "Suroth",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kota",
+   "city": "Itawa",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kota",
+   "city": "Itawa",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kota",
+   "city": "Sultanpur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kota",
+   "city": "Sultanpur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Nagaur",
+   "city": "Degana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Nagaur",
+   "city": "Degana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Nagaur",
+   "city": "Jayal",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Nagaur",
+   "city": "Jayal",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Nagaur",
+   "city": "Riyanbari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Nagaur",
+   "city": "Riyanbari",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Pratapgarh",
+   "city": "Arnod",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Pratapgarh",
+   "city": "Arnod",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sawai Madhopur",
+   "city": "Bamanwas",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sawai Madhopur",
+   "city": "Bamanwas",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sawai Madhopur",
+   "city": "Khandar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sawai Madhopur",
+   "city": "Khandar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sawai Madhopur",
+   "city": "Wazirpur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sawai Madhopur",
+   "city": "Wazirpur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Dhod",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Dhod",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Khatushyamji",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Khatushyamji",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Palsana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sikar",
+   "city": "Palsana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Sirohi",
+   "city": "Mandar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Sirohi",
+   "city": "Mandar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Diggi",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Diggi",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Dooni",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Dooni",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Lambahari Singh",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Lambahari Singh",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Peeplu",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Tonk",
+   "city": "Peeplu",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Udaipur",
+   "city": "Vallabhnagar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Udaipur",
+   "city": "Vallabhnagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Gudamalani",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Gudamalani",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Jasol",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Jasol",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Samdari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Samdari",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Sindhari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Sindhari",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Siwana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Balotra",
+   "city": "Siwana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Beawar",
+   "city": "Masuda",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Beawar",
+   "city": "Masuda",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Beawar",
+   "city": "Raipur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Beawar",
+   "city": "Raipur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Didwana-Kuchaman",
+   "city": "Khatu Khurd",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Didwana-Kuchaman",
+   "city": "Khatu Khurd",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Deeg",
+   "city": "Brijnagar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Deeg",
+   "city": "Brijnagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Deeg",
+   "city": "Pahari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Deeg",
+   "city": "Pahari",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Deeg",
+   "city": "Sikri",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Deeg",
+   "city": "Sikri",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Khairthal-Tijara",
+   "city": "Kotkasim",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Khairthal-Tijara",
+   "city": "Kotkasim",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Khairthal-Tijara",
+   "city": "Mundawar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Khairthal-Tijara",
+   "city": "Mundawar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Bansur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Bansur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Bardod",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Bardod",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Mandhan",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Mandhan",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Narayanpur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Narayanpur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Pawta Pragpura",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Kotputli-Behror",
+   "city": "Pawta Pragpura",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Rajasthan",
+   "district": "Phalodi",
+   "city": "Bap",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Rajasthan",
+   "district": "Phalodi",
+   "city": "Bap",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Gujarat",
+   "from": "Banaskantha",
+   "to": "Vav-Tharad",
+   "city": "Tharad"
+  },
+  {
+   "op": "move",
+   "state": "Gujarat",
+   "from": "Banaskantha",
+   "to": "Vav-Tharad",
+   "city": "Bhabhar"
+  },
+  {
+   "op": "move",
+   "state": "Gujarat",
+   "from": "Banaskantha",
+   "to": "Vav-Tharad",
+   "city": "Deodar"
+  },
+  {
+   "op": "move",
+   "state": "Gujarat",
+   "from": "Jamnagar",
+   "to": "Devbhumi Dwarka",
+   "city": "Raval"
+  },
+  {
+   "op": "rename",
+   "state": "Gujarat",
+   "district": "Chhota Udaipur",
+   "city": "Chhota Udaipur",
+   "to": "Chhota Udepur"
+  },
+  {
+   "op": "rename",
+   "state": "Gujarat",
+   "district": "Gir Somnath",
+   "city": "Veraval",
+   "to": "Veraval-Patan"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Gir Somnath",
+   "city": "Veraval-Patan",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Mehsana",
+   "city": "Becharaji",
+   "tier": "municipality"
+  },
+  {
+   "op": "rename",
+   "state": "Gujarat",
+   "district": "Kutch",
+   "city": "Mundra",
+   "to": "Mundra",
+   "why": "the town people write is Mundra (LGD sub-district 3730); the municipality is Mundra-Baroi"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Kutch",
+   "city": "Mundra",
+   "tier": "municipality"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Gujarat",
+   "district": "Vadodara",
+   "city": "Petro-Chemical Complex INA",
+   "alias": "Petro"
+  },
+  {
+   "op": "add_alias",
+   "state": "Gujarat",
+   "district": "Chhota Udaipur",
+   "city": "Chhota Udepur",
+   "add": [
+    "Chhotaudepur"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Gujarat",
+   "district": "Bharuch",
+   "city": "Bharuch",
+   "add": [
+    "Broach"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Jamnagar",
+   "city": "Reliance Complex",
+   "tier": "census town"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Jamnagar",
+   "city": "Gsfc",
+   "tier": "census town"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Dang",
+   "city": "Saputara",
+   "tier": "census town"
+  },
+  {
+   "op": "add_town",
+   "state": "Gujarat",
+   "district": "Anand",
+   "city": "Tarapur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Anand",
+   "city": "Tarapur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Gujarat",
+   "district": "Kutch",
+   "city": "Nakhatrana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Kutch",
+   "city": "Nakhatrana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Gujarat",
+   "district": "Morbi",
+   "city": "Tankara",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Morbi",
+   "city": "Tankara",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Gujarat",
+   "district": "Amreli",
+   "city": "Dhari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Amreli",
+   "city": "Dhari",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Gandhinagar",
+   "city": "Gandhinagar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Navsari",
+   "city": "Navsari",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Kheda",
+   "city": "Nadiad",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Anand",
+   "city": "Anand",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Mehsana",
+   "city": "Mehsana",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Morbi",
+   "city": "Morbi",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Kutch",
+   "city": "Gandhidham",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Surendranagar",
+   "city": "Surendranagar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Porbandar",
+   "city": "Porbandar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Gujarat",
+   "district": "Valsad",
+   "city": "Vapi",
+   "tier": "corporation"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Agar"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Badagaon"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Badod"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Kanad"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Nalkheda"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Soyatkalan"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Shajapur",
+   "to": "Agar Malwa",
+   "city": "Susner"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Satna",
+   "to": "Maihar",
+   "city": "Maihar"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Satna",
+   "to": "Maihar",
+   "city": "Amarpatan"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Rewa",
+   "to": "Mauganj",
+   "city": "Mauganj"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Rewa",
+   "to": "Mauganj",
+   "city": "Hanumana"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Rewa",
+   "to": "Mauganj",
+   "city": "Naigarhi"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Tikamgarh",
+   "to": "Niwari",
+   "city": "Niwari"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Tikamgarh",
+   "to": "Niwari",
+   "city": "Orchha"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Tikamgarh",
+   "to": "Niwari",
+   "city": "Prithvipur"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Tikamgarh",
+   "to": "Niwari",
+   "city": "Tarichar Kalan"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Tikamgarh",
+   "to": "Niwari",
+   "city": "Jeron Khalsa"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Chhindwara",
+   "to": "Pandhurna",
+   "city": "Pandhurna"
+  },
+  {
+   "op": "move",
+   "state": "Madhya Pradesh",
+   "from": "Chhindwara",
+   "to": "Pandhurna",
+   "city": "Sausar"
+  },
+  {
+   "op": "rename",
+   "state": "Madhya Pradesh",
+   "district": "Narsinghpur",
+   "city": "Narsimhapur",
+   "to": "Narsinghpur"
+  },
+  {
+   "op": "rename",
+   "state": "Madhya Pradesh",
+   "district": "Chhindwara",
+   "city": "Jamai",
+   "to": "Junnardeo"
+  },
+  {
+   "op": "rename",
+   "state": "Madhya Pradesh",
+   "district": "Betul",
+   "city": "Ghoda Dongri Ryt",
+   "to": "Ghoradongri"
+  },
+  {
+   "op": "rename",
+   "state": "Madhya Pradesh",
+   "district": "Raisen",
+   "city": "Baraily",
+   "to": "Bereli"
+  },
+  {
+   "op": "rename",
+   "state": "Madhya Pradesh",
+   "district": "Khargone",
+   "city": "Barwaha",
+   "to": "Barwah"
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Betul",
+   "city": "Ghoda Dongri Ryt",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Panna",
+   "city": "Ajaigarh",
+   "add": [
+    "Ajaygarh"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Katni",
+   "city": "Kymore",
+   "add": [
+    "Kemore"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Kukdeshwar",
+   "add": [
+    "Kukreswar"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Ujjain",
+   "city": "Khacharod",
+   "add": [
+    "Khachrod"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Seoni",
+   "city": "Lakhnadon",
+   "add": [
+    "Lakhnadaun"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Sagar",
+   "city": "Sagar",
+   "add": [
+    "Saugor"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Madhya Pradesh",
+   "district": "Khandwa",
+   "city": "Chhanera",
+   "add": [
+    "Harsud",
+    "New Harsud"
+   ]
+  },
+  {
+   "op": "drop_alias",
+   "state": "Madhya Pradesh",
+   "district": "Damoh",
+   "city": "Patharia",
+   "alias": "Pateriya"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Madhya Pradesh",
+   "district": "Narmadapuram",
+   "city": "Seoni-Malwa",
+   "alias": "Seoni"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Madhya Pradesh",
+   "district": "Narmadapuram",
+   "city": "Seoni-Malwa",
+   "alias": "Malwa"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Madhya Pradesh",
+   "district": "Betul",
+   "city": "Betul-Bazar",
+   "alias": "Bazar"
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Morena",
+   "city": "Morena",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Chhindwara",
+   "city": "Chhindwara",
+   "tier": "corporation"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Damoh",
+   "city": "Patera",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Damoh",
+   "city": "Patera",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Narsinghpur",
+   "city": "Saikheda",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Narsinghpur",
+   "city": "Saikheda",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Narsinghpur",
+   "city": "Salichouka",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Narsinghpur",
+   "city": "Salichouka",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Gwalior",
+   "city": "Mohana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Gwalior",
+   "city": "Mohana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Bairad",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Bairad",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Magrouni",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Magrouni",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Pohari",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Pohari",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Rannod",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Shivpuri",
+   "city": "Rannod",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Betul",
+   "city": "Shahpur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Betul",
+   "city": "Shahpur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Chhindwara",
+   "city": "Bichhua",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Chhindwara",
+   "city": "Bichhua",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Khargone",
+   "city": "Karhi Padlya",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Khargone",
+   "city": "Karhi Padlya",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Panna",
+   "city": "Gunnor",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Panna",
+   "city": "Gunnor",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Athana",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Athana",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Nayagaon",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Nayagaon",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Sarwania Maharaj",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Neemuch",
+   "city": "Sarwania Maharaj",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Harda",
+   "city": "Sirali",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Harda",
+   "city": "Sirali",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Madhya Pradesh",
+   "district": "Maihar",
+   "city": "Ramnagar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Madhya Pradesh",
+   "district": "Maihar",
+   "city": "Ramnagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Amravati",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Amravati",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Chhatrapati Sambhajinagar",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Chhatrapati Sambhajinagar",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Nandurbar",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Nandurbar",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Nashik",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Nashik",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Satara",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Satara",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Solapur",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Solapur",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Yavatmal",
+   "city": "Pimpri",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Yavatmal",
+   "city": "Pimpri",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Kolhapur",
+   "city": "Chinchwad",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "indiapost"
+   ],
+   "why": "an ordinary India Post village of this name; only its 'corporation' tier was wrong (copied from PCMC by the compound-name stage)"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Kolhapur",
+   "city": "Chinchwad",
+   "tier": "locality"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Maharashtra",
+   "district": "Dhule",
+   "city": "Dondaicha-Warwade",
+   "alias": "Warwade"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Maharashtra",
+   "district": "Dhule",
+   "city": "Shirpur-Warwade",
+   "alias": "Warwade"
+  },
+  {
+   "op": "add_alias",
+   "state": "Maharashtra",
+   "district": "Pune",
+   "city": "Pimpri-Chinchwad",
+   "add": [
+    "PCMC"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Maharashtra",
+   "district": "Nashik",
+   "city": "Nashik",
+   "add": [
+    "Nasik"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Maharashtra",
+   "district": "Solapur",
+   "city": "Solapur",
+   "add": [
+    "Sholapur"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "city": "Thane",
+   "add": [
+    "Thana"
+   ]
+  }
+ ]
+}

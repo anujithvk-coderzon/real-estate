@@ -1,0 +1,345 @@
+{
+ "source": "Directorate of Municipal Administration, Maharashtra: corporation register https://mahadma.maharashtra.gov.in/en/list-of-corporation-2/ and council register https://mahadma.maharashtra.gov.in/en/list-of-councils-2/",
+ "why": "Official ULB spellings, missing ULBs, and the 29 Municipal Corporations.",
+ "ops": [
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Buldhana",
+   "city": "Buldana",
+   "to": "Buldhana"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Nashik",
+   "city": "Yevla",
+   "to": "Yeola"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Beed",
+   "city": "Parli",
+   "to": "Parali Vaijnath"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Nanded",
+   "city": "Degloor",
+   "to": "Deglur"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Gadchiroli",
+   "city": "Armori",
+   "to": "Aarmori"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Nagpur",
+   "city": "Hingna",
+   "to": "Hingana"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Sindhudurg",
+   "city": "Devgad",
+   "to": "Devgad-Jamsande"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Washim",
+   "city": "Malegaon",
+   "to": "Malegaon Jahangir"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Nagpur",
+   "city": "Butibori",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Nagpur",
+   "city": "Butibori",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Ratnagiri",
+   "city": "Dapoli",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Ratnagiri",
+   "city": "Dapoli",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Chandrapur",
+   "city": "Chimur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Chandrapur",
+   "city": "Chimur",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Jalgaon",
+   "city": "Muktainagar",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Jalgaon",
+   "city": "Muktainagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Raigad",
+   "city": "Mangaon",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Raigad",
+   "city": "Mangaon",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Maharashtra",
+   "district": "Yavatmal",
+   "city": "Arni",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Yavatmal",
+   "city": "Arni",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Ahilyanagar",
+   "city": "Ahilyanagar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Akola",
+   "city": "Akola",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Amravati",
+   "city": "Amravati",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "city": "Bhiwandi",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Mumbai City",
+   "city": "Mumbai",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Chandrapur",
+   "city": "Chandrapur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Chhatrapati Sambhajinagar",
+   "city": "Chhatrapati Sambhajinagar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Dhule",
+   "city": "Dhule",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Kolhapur",
+   "city": "Ichalkaranji",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Jalgaon",
+   "city": "Jalgaon",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Jalna",
+   "city": "Jalna",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Kolhapur",
+   "city": "Kolhapur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Latur",
+   "city": "Latur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Nashik",
+   "city": "Malegaon",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Nagpur",
+   "city": "Nagpur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Nashik",
+   "city": "Nashik",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "city": "Navi Mumbai",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Raigad",
+   "city": "Panvel",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Parbhani",
+   "city": "Parbhani",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Pune",
+   "city": "Pimpri-Chinchwad",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Pune",
+   "city": "Pune",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Solapur",
+   "city": "Solapur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "city": "Thane",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "city": "Ulhasnagar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Maharashtra",
+   "district": "Palghar",
+   "city": "Vasai-Virar City",
+   "tier": "corporation"
+  }
+ ]
+}

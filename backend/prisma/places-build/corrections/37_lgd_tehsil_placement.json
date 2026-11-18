@@ -1,0 +1,210 @@
+{
+ "source": "Local Government Directory sub-district feed https://lgdirectory.gov.in/webservices/lgd/napix/subdistricts/v1/status/active (parent district code per tehsil), mapped through the district feed",
+ "why": "A town whose same-named tehsil exists in exactly one district, while the town is filed (uniquely) in a different district, is misfiled. Each candidate was checked against the regional audits; nine same-name places were rejected: Jalah, Sangameshwar, Palwancha, Bandlaguda, Narsingi, Allapur, Jalalabad (different places sharing a name) and Mahe, Yanam (kept as separate regions by design). Gaurela, Pendra, Marwahi (GPM) and Mohla, Manpur, Ambagarh Chouki (MMC) are LGD tehsils of the 2020/2022 districts; their towns were placed by hand because namesakes elsewhere in the state (Pendra in Gariaband, Manpur in Kanker) block the automatic rule.",
+ "ops": [
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Tirupati",
+   "city": "Narayanavanam"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Chittoor",
+   "to": "Tirupati",
+   "city": "Renigunta"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "West Godavari",
+   "to": "Eluru",
+   "city": "Dwarakatirumala"
+  },
+  {
+   "op": "move",
+   "state": "Andhra Pradesh",
+   "from": "Krishna",
+   "to": "NTR",
+   "city": "Ibrahimpatnam"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Bilaspur",
+   "to": "Mungeli",
+   "city": "Sargaon"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Janjgir-Champa",
+   "to": "Sakti",
+   "city": "Adbhar"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Janjgir-Champa",
+   "to": "Sakti",
+   "city": "Chandrapur"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Janjgir-Champa",
+   "to": "Sakti",
+   "city": "Naya Baradwar"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Janjgir-Champa",
+   "to": "Sakti",
+   "city": "Sakti"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Rajnandgaon",
+   "to": "Khairagarh-Chhuikhadan-Gandai",
+   "city": "Chhuikhadan"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Rajnandgaon",
+   "to": "Khairagarh-Chhuikhadan-Gandai",
+   "city": "Gandai"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Rajnandgaon",
+   "to": "Khairagarh-Chhuikhadan-Gandai",
+   "city": "Khairagarh"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Koriya",
+   "to": "Manendragarh-Chirmiri-Bharatpur",
+   "city": "Chirmiri"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Koriya",
+   "to": "Manendragarh-Chirmiri-Bharatpur",
+   "city": "Manendragarh"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Dantewada",
+   "to": "Sukma",
+   "city": "Dornapal"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Chandel",
+   "to": "Tengnoupal",
+   "city": "Moreh"
+  },
+  {
+   "op": "move",
+   "state": "Rajasthan",
+   "from": "Udaipur",
+   "to": "Salumbar",
+   "city": "Semari"
+  },
+  {
+   "op": "move",
+   "state": "Tamil Nadu",
+   "from": "Kancheepuram",
+   "to": "Chengalpattu",
+   "city": "Pallavaram"
+  },
+  {
+   "op": "move",
+   "state": "Tamil Nadu",
+   "from": "Kancheepuram",
+   "to": "Chengalpattu",
+   "city": "Vandalur"
+  },
+  {
+   "op": "move",
+   "state": "Tamil Nadu",
+   "from": "Tiruvallur",
+   "to": "Chennai",
+   "city": "Maduravoyal"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Bilaspur",
+   "to": "Gaurela-Pendra-Marwahi",
+   "city": "Gaurella"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Bilaspur",
+   "to": "Gaurela-Pendra-Marwahi",
+   "city": "Pendra"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Bilaspur",
+   "to": "Gaurela-Pendra-Marwahi",
+   "city": "Pendra Road"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Bilaspur",
+   "to": "Gaurela-Pendra-Marwahi",
+   "city": "Pendra Road Sanotorium"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Bilaspur",
+   "to": "Gaurela-Pendra-Marwahi",
+   "city": "Marwahi"
+  },
+  {
+   "op": "rename",
+   "state": "Chhattisgarh",
+   "district": "Gaurela-Pendra-Marwahi",
+   "city": "Gaurella",
+   "to": "Gaurela",
+   "why": "one L, as the district itself is spelled (LGD, cgstate)"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Rajnandgaon",
+   "to": "Mohla-Manpur-Ambagarh Chowki",
+   "city": "Ambagarh Chowki"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Rajnandgaon",
+   "to": "Mohla-Manpur-Ambagarh Chowki",
+   "city": "Mohla"
+  },
+  {
+   "op": "move",
+   "state": "Chhattisgarh",
+   "from": "Rajnandgaon",
+   "to": "Mohla-Manpur-Ambagarh Chowki",
+   "city": "Manpur"
+  }
+ ]
+}

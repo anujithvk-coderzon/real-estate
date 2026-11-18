@@ -174,11 +174,19 @@ const CreateListing = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  // Whenever the pin moves, fill the address fields from it — except when the
-  // pin came from the town they typed, where reverse geocoding would overwrite
-  // their own words with the geocoder's.
+  // Whenever the pin moves, fill the address fields from it — but only when
+  // the pin is the new information.
+  //
+  // "region" and "address" pins were both DERIVED from what the seller typed,
+  // so reading an address back out of them is circular: it replaces their
+  // words with the geocoder's guess at the same place. That is how correcting
+  // "Trivandrum" to "Thiruvananthapuram" and pressing "Move pin to this
+  // address" rewrote the whole form to a village in Madhya Pradesh.
+  //
+  // A pin from GPS or one dragged by hand IS new information, and those still
+  // fill the fields.
   useEffect(() => {
-    if (!location || source === "region") return;
+    if (!location || source === "region" || source === "address") return;
     addressFromPin(location)
       .then((address) => {
         setTyped((prev) => ({ ...prev, ...address }));

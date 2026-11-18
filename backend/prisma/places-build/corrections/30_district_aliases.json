@@ -1,0 +1,1100 @@
+{
+ "source": "Each district's own government site, the state portals' district tables (e.g. https://meghalaya.gov.in/districts), gazettes S.O. 180/2026 (Ladakh) and Arunachal Act 2 of 2024, and Delhi Gazette Table-I",
+ "why": "Headquarters towns, former names and romanisations people type into the District field. Names two districts could claim (Imphal, Garo Hills, Siang, Badli, Akbarpur) are deliberately left out.",
+ "ops": [
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "South East Delhi",
+   "add": [
+    "Jangpura",
+    "Kalkaji",
+    "Badarpur",
+    "South East"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "Old Delhi",
+   "add": [
+    "Sadar Bazar",
+    "Chandni Chowk"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "North Delhi",
+   "add": [
+    "Burari",
+    "Adarsh Nagar",
+    "North"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "New Delhi",
+   "add": [
+    "Delhi Cantt"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "Central Delhi",
+   "add": [
+    "Patel Nagar",
+    "Karol Bagh",
+    "Central"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "Central North Delhi",
+   "add": [
+    "Shakur Basti",
+    "Shalimar Bagh",
+    "Model Town",
+    "Central North"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "South West Delhi",
+   "add": [
+    "Najafgarh",
+    "Matiala",
+    "Dwarka",
+    "Bijwasan",
+    "South West"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "Outer North Delhi",
+   "add": [
+    "Mundka",
+    "Narela",
+    "Bawana",
+    "Outer North"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "North West Delhi",
+   "add": [
+    "Kirari",
+    "Nangloi Jat",
+    "Rohini",
+    "North West"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "North East Delhi",
+   "add": [
+    "Karawal Nagar",
+    "Gokalpur",
+    "Yamuna Vihar",
+    "North East"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "East Delhi",
+   "add": [
+    "Gandhi Nagar",
+    "Vishwas Nagar",
+    "Patparganj",
+    "East"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "South Delhi",
+   "add": [
+    "Chhatarpur",
+    "Malviya Nagar",
+    "Deoli",
+    "Mehrauli",
+    "South"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Delhi",
+   "district": "West Delhi",
+   "add": [
+    "Vikaspuri",
+    "Janakpuri",
+    "Rajouri Garden",
+    "West"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Rae Bareli",
+   "add": [
+    "Raebareli"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Kushinagar",
+   "add": [
+    "Kushi Nagar",
+    "Padrauna"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Siddharthnagar",
+   "add": [
+    "Siddharth Nagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Muzaffarnagar",
+   "add": [
+    "Muzaffar Nagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Ambedkar Nagar",
+   "add": [
+    "Ambedkarnagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Barabanki",
+   "add": [
+    "Bara Banki"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Bhadohi",
+   "add": [
+    "Sant Ravidasnagar",
+    "Gyanpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Jalaun",
+   "add": [
+    "Orai"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Kaushambi",
+   "add": [
+    "Manjhanpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Sonbhadra",
+   "add": [
+    "Robertsganj"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Amethi",
+   "add": [
+    "Gauriganj"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Shravasti",
+   "add": [
+    "Bhinga"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Sambhal",
+   "add": [
+    "Bahjoi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Chitrakoot",
+   "add": [
+    "Chitrakoot Dham",
+    "Karwi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Pratapgarh",
+   "add": [
+    "Bela",
+    "Bela Pratapgarh"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttar Pradesh",
+   "district": "Gautam Buddha Nagar",
+   "add": [
+    "Greater Noida"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Udham Singh Nagar",
+   "add": [
+    "Rudrapur",
+    "Kashipur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Dehradun",
+   "add": [
+    "Mussoorie"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Haridwar",
+   "add": [
+    "Roorkee"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Nainital",
+   "add": [
+    "Haldwani"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Pauri Garhwal",
+   "add": [
+    "Kotdwar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "add": [
+    "Ranikhet"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Pithoragarh",
+   "add": [
+    "Didihat"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Uttarakhand",
+   "district": "Uttarkashi",
+   "add": [
+    "Yamunotri",
+    "Barkot"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Yamunanagar",
+   "add": [
+    "Yamuna Nagar",
+    "Jagadhri"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Kurukshetra",
+   "add": [
+    "Thanesar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Sonipat",
+   "add": [
+    "Gohana"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Faridabad",
+   "add": [
+    "Ballabgarh"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Jhajjar",
+   "add": [
+    "Bahadurgarh"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Fatehabad",
+   "add": [
+    "Tohana"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Palwal",
+   "add": [
+    "Hodal"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Panchkula",
+   "add": [
+    "Kalka",
+    "Pinjore"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Haryana",
+   "district": "Sirsa",
+   "add": [
+    "Mandi Dabwali"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Malerkotla",
+   "add": [
+    "Maler Kotla"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Sahibzada Ajit Singh Nagar",
+   "add": [
+    "S.A.S Nagar",
+    "S.A.S. Nagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Fatehgarh Sahib",
+   "add": [
+    "Sirhind-Fategarh",
+    "Mandi Gobindgarh"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Rupnagar",
+   "add": [
+    "Anandpur Sahib",
+    "Sri Anandpur Sahib",
+    "Nangal"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Kapurthala",
+   "add": [
+    "Phagwara"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Fazilka",
+   "add": [
+    "Abohar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Ludhiana",
+   "add": [
+    "Khanna",
+    "Jagraon"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Patiala",
+   "add": [
+    "Rajpura"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Punjab",
+   "district": "Gurdaspur",
+   "add": [
+    "Batala"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Kangra",
+   "add": [
+    "Dharamshala",
+    "Palampur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Sirmaur",
+   "add": [
+    "Nahan"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Lahaul and Spiti",
+   "add": [
+    "Keylong",
+    "Kyelang"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Kinnaur",
+   "add": [
+    "Reckong Peo",
+    "Rekong Peo"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Kullu",
+   "add": [
+    "Manali"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Chamba",
+   "add": [
+    "Dalhousie"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Himachal Pradesh",
+   "district": "Solan",
+   "add": [
+    "Baddi",
+    "Parwanoo",
+    "Kasauli"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "West Godavari",
+   "add": [
+    "Bhimavaram"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Krishna",
+   "add": [
+    "Masulipatnam"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "NTR",
+   "add": [
+    "Bezawada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Sri Potti Sriramulu Nellore",
+   "add": [
+    "SPS Nellore"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Alluri Sitharama Raju",
+   "add": [
+    "Alluri Sitharamaraju",
+    "Alluri Seetharama Raju"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Sri Sathya Sai",
+   "add": [
+    "Sri Sathyasai"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Dr. B.R. Ambedkar Konaseema",
+   "add": [
+    "Dr. B. R. Ambedkar Konaseema"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Eluru",
+   "add": [
+    "Eluru Town"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andhra Pradesh",
+   "district": "Palnadu",
+   "add": [
+    "Narasaraopeta"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Telangana",
+   "district": "Hyderabad",
+   "add": [
+    "Secunderabad"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Telangana",
+   "district": "Nagarkurnool",
+   "add": [
+    "Nagar Kurnool"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Telangana",
+   "district": "Kumuram Bheem Asifabad",
+   "add": [
+    "Komaram Bheem",
+    "Komaram Bheem Asifabad"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Telangana",
+   "district": "Medchal-Malkajgiri",
+   "add": [
+    "Medchal Malkajgiri"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Telangana",
+   "district": "Mahabubnagar",
+   "add": [
+    "Palamoor"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "add": [
+    "Berhampur",
+    "Brahmapur",
+    "Chhatrapur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Khordha",
+   "add": [
+    "Bhubaneswar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Sundargarh",
+   "add": [
+    "Rourkela",
+    "Raurkela",
+    "Sundaragada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Mayurbhanj",
+   "add": [
+    "Baripada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Kalahandi",
+   "add": [
+    "Bhawanipatna"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Gajapati",
+   "add": [
+    "Paralakhemundi",
+    "Parlakhemundi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Koraput",
+   "add": [
+    "Jeypore",
+    "Jayapur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Kendujhar",
+   "add": [
+    "Keonjhargarh"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Angul",
+   "add": [
+    "Talcher",
+    "Talacher",
+    "Anugola"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Cuttack",
+   "add": [
+    "Kataka"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Bargarh",
+   "add": [
+    "Baragada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Deogarh",
+   "add": [
+    "Debagada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Kandhamal",
+   "add": [
+    "Kandhamala"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Kendrapara",
+   "add": [
+    "Kendrapada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Odisha",
+   "district": "Nayagarh",
+   "add": [
+    "Nayagada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andaman and Nicobar Islands",
+   "district": "South Andaman",
+   "add": [
+    "Srivijayapuram",
+    "Sri Vijayapuram"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Assam",
+   "district": "Charaideo",
+   "add": [
+    "Sonari"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Assam",
+   "district": "Majuli",
+   "add": [
+    "Garamur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Assam",
+   "district": "South Salmara-Mankachar",
+   "add": [
+    "Hatsingimari",
+    "South Salmara Mankachar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Assam",
+   "district": "Hojai",
+   "add": [
+    "Srimanta Sankardev Nagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Assam",
+   "district": "Baksa",
+   "add": [
+    "Mushalpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Assam",
+   "district": "Chirang",
+   "add": [
+    "Kajalgaon"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Arunachal Pradesh",
+   "district": "Papum Pare",
+   "add": [
+    "Itanagar Capital Complex",
+    "Naharlagun",
+    "Papumpare"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Arunachal Pradesh",
+   "district": "Shi-Yomi",
+   "add": [
+    "Shi Yomi",
+    "Shiyomi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Arunachal Pradesh",
+   "district": "Kra Daadi",
+   "add": [
+    "Kra-Daadi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Arunachal Pradesh",
+   "district": "Leparada",
+   "add": [
+    "Lepa Rada",
+    "Lepa-Rada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Arunachal Pradesh",
+   "district": "Pakke-Kessang",
+   "add": [
+    "Pakke Kessang"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Arunachal Pradesh",
+   "district": "Keyi Panyor",
+   "add": [
+    "Ter Gapin-Sam Sath"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Nagaland",
+   "district": "Chumoukedima",
+   "add": [
+    "Chümoukedima"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Nagaland",
+   "district": "Tseminyu",
+   "add": [
+    "Tseminyü"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Nagaland",
+   "district": "Zunheboto",
+   "add": [
+    "Zünheboto"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Manipur",
+   "district": "Imphal East",
+   "add": [
+    "Imphal-East"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Manipur",
+   "district": "Imphal West",
+   "add": [
+    "Imphal-West"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Manipur",
+   "district": "Senapati",
+   "add": [
+    "Mao",
+    "Mao Maram"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "East Garo Hills",
+   "add": [
+    "Williamnagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "East Jaintia Hills",
+   "add": [
+    "Khliehriat"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "North Garo Hills",
+   "add": [
+    "Resubelpara"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "Ri-Bhoi",
+   "add": [
+    "Nongpoh",
+    "Ribhoi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "South Garo Hills",
+   "add": [
+    "Baghmara"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "South West Garo Hills",
+   "add": [
+    "Ampati"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "South West Khasi Hills",
+   "add": [
+    "Mawkyrwat"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "West Garo Hills",
+   "add": [
+    "Tura"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "West Jaintia Hills",
+   "add": [
+    "Jowai"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Meghalaya",
+   "district": "West Khasi Hills",
+   "add": [
+    "Nongstoin"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tripura",
+   "district": "West Tripura",
+   "add": [
+    "Agartala"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tripura",
+   "district": "Gomati",
+   "add": [
+    "Udaipur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tripura",
+   "district": "South Tripura",
+   "add": [
+    "Belonia"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tripura",
+   "district": "Unakoti",
+   "add": [
+    "Kailashahar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tripura",
+   "district": "Dhalai",
+   "add": [
+    "Ambassa"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Tripura",
+   "district": "Sepahijala",
+   "add": [
+    "Bishramganj"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Ladakh",
+   "district": "Drass",
+   "add": [
+    "Drass-Ranbirpura"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Ladakh",
+   "district": "Nubra",
+   "add": [
+    "Nubra Valley"
+   ]
+  }
+ ]
+}

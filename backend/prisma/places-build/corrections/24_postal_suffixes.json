@@ -1,0 +1,191 @@
+{
+ "source": "India Post directory itself: 'ED' = Extra-Departmental post office, a postal designation, not part of the place name",
+ "why": "Post-office names that are not place names (Block Area, Factories Ward, Taluk Office) are dropped; postal suffixes are stripped, merging where the plain name already exists.",
+ "ops": [
+  {
+   "op": "drop_town",
+   "state": "Andhra Pradesh",
+   "district": "Prakasam",
+   "city": "Block Area"
+  },
+  {
+   "op": "drop_town",
+   "state": "Andhra Pradesh",
+   "district": "Guntur",
+   "city": "Factories Ward"
+  },
+  {
+   "op": "drop_town",
+   "state": "Telangana",
+   "district": "Bhadradri Kothagudem",
+   "city": "Taluk Office"
+  },
+  {
+   "op": "drop_town",
+   "state": "Rajasthan",
+   "district": "Sri Ganganagar",
+   "city": "Block Area"
+  },
+  {
+   "op": "rename",
+   "state": "Haryana",
+   "district": "Sonipat",
+   "city": "Garhi Sisana ED",
+   "to": "Garhi Sisana"
+  },
+  {
+   "op": "rename",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "city": "Shantinagar E.D",
+   "to": "Shantinagar"
+  },
+  {
+   "op": "rename",
+   "state": "Rajasthan",
+   "district": "Baran",
+   "city": "Harnawda Shaji ED",
+   "to": "Harnawda Shaji"
+  },
+  {
+   "op": "rename",
+   "state": "Uttar Pradesh",
+   "district": "Prayagraj",
+   "city": "Muratganj ED",
+   "to": "Muratganj"
+  },
+  {
+   "op": "rename",
+   "state": "Uttar Pradesh",
+   "district": "Prayagraj",
+   "city": "Nahwai ED",
+   "to": "Nahwai"
+  },
+  {
+   "op": "rename",
+   "state": "Uttar Pradesh",
+   "district": "Prayagraj",
+   "city": "Nari Bari ED",
+   "to": "Nari Bari"
+  },
+  {
+   "op": "rename",
+   "state": "Uttar Pradesh",
+   "district": "Prayagraj",
+   "city": "Pura Mufti ED",
+   "to": "Pura Mufti"
+  },
+  {
+   "op": "rename",
+   "state": "Uttar Pradesh",
+   "district": "Kaushambi",
+   "city": "Ajhuwa Bazar ED",
+   "to": "Ajhuwa Bazar"
+  },
+  {
+   "op": "rename",
+   "state": "Uttar Pradesh",
+   "district": "Kaushambi",
+   "city": "Shahjadpur ED",
+   "to": "Shahjadpur"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Asgoli ED",
+   "to": "Asgoli"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Bhagtola ED",
+   "to": "Bhagtola"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Bhainsori ED",
+   "to": "Bhainsori"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Bhanoli ED",
+   "to": "Bhanoli"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Dhauladevi ED",
+   "to": "Dhauladevi"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Dhaulchhina ED",
+   "to": "Dhaulchhina"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Jalali ED",
+   "to": "Jalali"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Kafara ED",
+   "to": "Kafara"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Pilkholi ED",
+   "to": "Pilkholi"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Almora",
+   "city": "Uprari ED",
+   "to": "Uprari"
+  },
+  {
+   "op": "rename",
+   "state": "Uttarakhand",
+   "district": "Bageshwar",
+   "city": "Gagarigole ED",
+   "to": "Gagarigole"
+  },
+  {
+   "op": "merge",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "keep": "Badlapur",
+   "drop": "Badlapur E.D"
+  },
+  {
+   "op": "merge",
+   "state": "Maharashtra",
+   "district": "Thane",
+   "keep": "Vashind",
+   "drop": "Vashind E.D"
+  },
+  {
+   "op": "merge",
+   "state": "Uttar Pradesh",
+   "district": "Prayagraj",
+   "keep": "Shukulpur",
+   "drop": "Shukulpur ED"
+  }
+ ]
+}

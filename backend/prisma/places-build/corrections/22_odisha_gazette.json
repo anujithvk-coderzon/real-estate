@@ -1,0 +1,328 @@
+{
+ "source": "Odisha Gazette Extraordinary No. 2676, 22 Jun 2026, R&DM Dept notification 26277-RDM-DRC-POLICY-0003/2025/R&DM, https://revenue.odisha.gov.in/sites/default/files/2026-06/2676-Gazette%20Notification.pdf ; H&UD ULB list https://urban.odisha.gov.in/en/more/district-wise-ULBs-and-population ; Puri MC notification 7365 of 10 Mar 2026",
+ "why": "Only the 42 Schedule rows that cover an urban local body rename a TOWN; the 22 block/tahasil-only rows are deliberately not applied to towns. Old spellings stay as aliases.",
+ "ops": [
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Angul",
+   "city": "Pallahara",
+   "to": "Palalahada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Angul",
+   "city": "Talcher",
+   "to": "Talacher"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Balangir",
+   "city": "Bolangir",
+   "to": "Balangir"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Balasore",
+   "city": "Balasore",
+   "to": "Baleshwar"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Balasore",
+   "city": "Nilgiri",
+   "to": "Nilagiri"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Balasore",
+   "city": "Soro",
+   "to": "Sora"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Bargarh",
+   "city": "Bargarh",
+   "to": "Baragada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Cuttack",
+   "city": "Cuttack",
+   "to": "Kataka"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Cuttack",
+   "city": "Salipur",
+   "to": "Salepur"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Cuttack",
+   "city": "Baramba",
+   "to": "Badamba"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Cuttack",
+   "city": "Athagarh",
+   "to": "Athagada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Deogarh",
+   "city": "Deogarh",
+   "to": "Debagada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "city": "Berhampur",
+   "to": "Brahmapur"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "city": "Hinjilicut",
+   "to": "Hinjilikatu"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "city": "Aska",
+   "to": "Asika"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "city": "Surada",
+   "to": "Sorada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Jharsuguda",
+   "city": "Belpahar",
+   "to": "Belpahad"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kalahandi",
+   "city": "Junagarh",
+   "to": "Junagada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kalahandi",
+   "city": "Dharamgarh",
+   "to": "Dharmagada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kalahandi",
+   "city": "Jaipatna",
+   "to": "Jayapatana"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kalahandi",
+   "city": "Bhawanipatna",
+   "to": "Bhabanipatana"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kendrapara",
+   "city": "Kendrapara",
+   "to": "Kendrapada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kendujhar",
+   "city": "Barbil",
+   "to": "Badabil"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Kendujhar",
+   "city": "Keonjhargarh",
+   "to": "Kendujhargada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Khordha",
+   "city": "Khurda",
+   "to": "Khordha"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Khordha",
+   "city": "Banpur",
+   "to": "Banapur"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Khordha",
+   "city": "Jatni",
+   "to": "Jatani"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Koraput",
+   "city": "Jeypore",
+   "to": "Jayapur"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Mayurbhanj",
+   "city": "Betnoti",
+   "to": "Betanati"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Mayurbhanj",
+   "city": "Rasgovindpur",
+   "to": "Rasagobindapur"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Nabarangpur",
+   "city": "Umerkote",
+   "to": "Umarkot"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Nayagarh",
+   "city": "Nayagarh",
+   "to": "Nayagada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Nayagarh",
+   "city": "Daspalla",
+   "to": "Dashapalla"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Nuapada",
+   "city": "Khariar",
+   "to": "Khadial"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Puri",
+   "city": "Nimapara",
+   "to": "Nimapada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Sambalpur",
+   "city": "Rairakhol",
+   "to": "Redhakhol"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Subarnapur",
+   "city": "Sonepur",
+   "to": "Sonpur"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Subarnapur",
+   "city": "Binka",
+   "to": "Binika"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Sundargarh",
+   "city": "Sundargarh",
+   "to": "Sundaragada"
+  },
+  {
+   "op": "rename",
+   "state": "Odisha",
+   "district": "Sundargarh",
+   "city": "Rourkela",
+   "to": "Raurkela"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Khordha",
+   "city": "Bhubaneswar",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Cuttack",
+   "city": "Kataka",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Ganjam",
+   "city": "Brahmapur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Sundargarh",
+   "city": "Raurkela",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Sambalpur",
+   "city": "Sambalpur",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Odisha",
+   "district": "Puri",
+   "city": "Puri",
+   "tier": "corporation"
+  }
+ ]
+}

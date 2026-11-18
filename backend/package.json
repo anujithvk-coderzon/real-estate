@@ -10,7 +10,9 @@
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "seed:places": "tsx prisma/seedPlaces.ts",
+    "rewrite:places": "tsx prisma/rewritePlaces.ts"
   },
   "keywords": [],
   "author": "",

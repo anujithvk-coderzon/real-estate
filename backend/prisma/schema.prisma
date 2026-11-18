@@ -378,3 +378,14 @@ model Complaints {
   @@unique([userId, listingId, createdAt])
   @@map("complaints")
 }
+
+model Place {
+  id        Int      @id @default(autoincrement())
+  state     String
+  district  String
+  city      String
+  aka       String[]
+  @@unique([state, district, city])
+  @@index([state, district, city])
+  @@map("places")
+}

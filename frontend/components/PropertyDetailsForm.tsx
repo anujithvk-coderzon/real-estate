@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AmenitiesPicker from "@/components/form/AmenitiesPicker";
 import ChoiceCards from "@/components/form/ChoiceCards";
+import PlaceAutocomplete from "@/components/form/PlaceAutocomplete";
 import { Field, Select } from "@/components/form/Field";
 import { api } from "@/lib/api";
 import {
@@ -492,14 +493,61 @@ const PropertyDetailsForm = ({
       <div className={`space-y-4 ${group}`}>
         <h3 className={groupTitle}>Location</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Each level is scoped to the one above it, so a district can only
+              be one of that state's and a town only one of that district's.
+              Picking a new state or district clears what sat below it; free
+              typing does not, so a place we have not listed is still allowed. */}
           <Field id="state" label="State">
-            <input id="state" name="state" value={data.state} onChange={handleChange} placeholder="Your state" className={inputClass} />
+            <PlaceAutocomplete
+              id="state"
+              name="state"
+              value={data.state}
+              placeholder="Your state"
+              path="/places/states"
+              onType={(state) => setData((d) => ({ ...d, state }))}
+              onPick={(state) =>
+                setData((d) =>
+                  d.state === state
+                    ? { ...d, state }
+                    : { ...d, state, district: "", city: "" },
+                )
+              }
+            />
           </Field>
           <Field id="district" label="District">
-            <input id="district" name="district" value={data.district} onChange={handleChange} placeholder="Your district" className={inputClass} />
+            <PlaceAutocomplete
+              id="district"
+              name="district"
+              value={data.district}
+              placeholder="Your district"
+              path="/places/districts"
+              scope={{ state: data.state }}
+              disabled={!data.state.trim()}
+              disabledHint="Choose a state first"
+              onType={(district) => setData((d) => ({ ...d, district }))}
+              onPick={(district) =>
+                setData((d) =>
+                  d.district === district
+                    ? { ...d, district }
+                    : { ...d, district, city: "" },
+                )
+              }
+            />
           </Field>
           <Field id="city" label="City or town">
-            <input id="city" name="city" value={data.city} onChange={handleChange} placeholder="Your town or city" className={inputClass} />
+            <PlaceAutocomplete
+              id="city"
+              name="city"
+              value={data.city}
+              placeholder="Your town or city"
+              path="/places/cities"
+              scope={{ state: data.state, district: data.district }}
+              limit={8}
+              disabled={!data.state.trim() || !data.district.trim()}
+              disabledHint="Choose a district first"
+              onType={(city) => setData((d) => ({ ...d, city }))}
+              onPick={(city) => setData((d) => ({ ...d, city }))}
+            />
           </Field>
         </div>
       </div>

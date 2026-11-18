@@ -1,0 +1,165 @@
+{
+ "source": "https://www.maharashtra.gov.in/Site/1529/Districts ; Maharashtra Gazette 13 Mar 2025 (ZPA-2025/C.R.04/Panra-1) ; https://anyror.gujarat.gov.in/ ; district NIC sites (banaskantha, sabarkantha, devbhumidwarka, girsomnath, mahisagar, arvalli, dangs, tapi, kachchh .nic.in) ; Rajasthan Board of Revenue lists 22-01-2026 ; https://mpdistricts.nic.in/ ; https://ddd.gov.in/",
+ "why": "West district audit: two aliases that named more than one district removed; headquarters towns added.",
+ "ops": [
+  {
+   "op": "district_drop_alias",
+   "state": "Maharashtra",
+   "district": "Mumbai City",
+   "alias": "Mumbai",
+   "why": "names both Mumbai City and Mumbai Suburban; typing it now offers both"
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Maharashtra",
+   "district": "Mumbai City",
+   "alias": "Bombay",
+   "why": "as Mumbai"
+  },
+  {
+   "op": "district_aliases",
+   "state": "Maharashtra",
+   "district": "Mumbai City",
+   "add": [
+    "Bombay City"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Maharashtra",
+   "district": "Mumbai Suburban",
+   "add": [
+    "Bombay Suburban",
+    "Mumbai Suburbs",
+    "Bombay Suburbs"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Maharashtra",
+   "district": "Sindhudurg",
+   "add": [
+    "Sindhudurg Nagari"
+   ]
+  },
+  {
+   "op": "district_drop_alias",
+   "state": "Rajasthan",
+   "district": "Bhilwara",
+   "alias": "Shahpura",
+   "why": "a second Shahpura is a tehsil and SDO of Jaipur (Board of Revenue lists, 22-01-2026)"
+  },
+  {
+   "op": "district_aliases",
+   "state": "Rajasthan",
+   "district": "Phalodi",
+   "add": [
+    "Phalaudi"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Banaskantha",
+   "add": [
+    "Palanpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Sabarkantha",
+   "add": [
+    "Himatnagar",
+    "Himmatnagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Devbhumi Dwarka",
+   "add": [
+    "Jam Khambhalia",
+    "Khambhalia"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Gir Somnath",
+   "add": [
+    "Veraval"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Mahisagar",
+   "add": [
+    "Lunawada"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Aravalli",
+   "add": [
+    "Modasa"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Dang",
+   "add": [
+    "Ahwa"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Tapi",
+   "add": [
+    "Vyara"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Gujarat",
+   "district": "Kutch",
+   "add": [
+    "Bhuj"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Madhya Pradesh",
+   "district": "Singrauli",
+   "add": [
+    "Singrouli"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Madhya Pradesh",
+   "district": "Alirajpur",
+   "add": [
+    "Aalirajpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Dadra and Nagar Haveli and Daman and Diu",
+   "district": "Dadra and Nagar Haveli",
+   "add": [
+    "Dadra"
+   ]
+  },
+  {
+   "op": "district_note",
+   "state": "Maharashtra",
+   "field": "disagreement",
+   "text": "36 districts, matching https://www.maharashtra.gov.in/Site/1529/Districts. Ahilyanagar is the legal DISTRICT name: Revenue & Forests notification TLC-2024/C.R.146/M-10 of 8 Oct 2024, recited in the Maharashtra Gazette Extraordinary of 13 Mar 2025, renamed the district and taluka, and the Zilla Parishad was renamed on that basis. Ahmednagar is an alias only. Bare 'Mumbai'/'Bombay' are not aliases of either Mumbai district: they name both, and the search offers both."
+  }
+ ]
+}

@@ -10,6 +10,7 @@ import projectRoutes from "./modules/projects/project.routes.js"
 import adminRoutes from './modules/admin/admin.route.js'
 import chatRoutes from './modules/chat/chat.routes.js'
 import promotionRoutes from './modules/promotion/promotion.routes.js'
+import placeRoutes from './modules/places/place.routes.js'
 const app = express();
 app.set("trust proxy", 1);
 app.use(helmet());
@@ -29,6 +30,7 @@ app.use("/project", projectRoutes)
 app.use('/admin',adminRoutes)
 app.use('/chat',chatRoutes)
 app.use('/promotion',promotionRoutes)
+app.use('/places',placeRoutes)
 
 
 app.use(errorHandler);

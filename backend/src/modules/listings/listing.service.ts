@@ -579,8 +579,18 @@ const searchGeoKey = (location: string) =>
 
 export const coordinates=(response:any[],postalcode:string)=>{
   if (response.length === 0) return null
+  // `"anything".includes("")` is true, so with no pincode this filter kept
+  // every result and the "best match" became whatever Nominatim happened to
+  // list first. Only narrow by pincode when there is one.
+  const pin = (postalcode ?? "").trim()
+  if (!pin) {
+    return {
+      lat: Number(response[0].lat),
+      lon: Number(response[0].lon),
+    }
+  }
     const matching = response.filter((result: any) => {
-  return result.display_name.includes(postalcode);
+  return result.display_name.includes(pin);
 });
 if (matching.length>0) {
   return {
@@ -596,37 +606,95 @@ else{
 }
 }
 
-export const geoCodingService=async(street:string|undefined,city:string,state:string,postalcode:string)=>{
-   let response;
-   const cached=await cacheGet(`geoLocation:${street}|${city}|${state}|${postalcode}`)
-   if(cached){
-    return JSON.parse(cached)
-   }
-    response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
-    timeout:5000,
-    params:{street,city,state,postalcode,country:NOMINATIM_COUNTRY,
-    format:"jsonv2"
+// Address to coordinates, narrowing by steps.
+//
+// A seller types what they know, and some of it will be wrong — a misspelt
+// town, a district named the way locals say it rather than the way the map
+// records it. Asking Nominatim one question and giving up turns every such
+// typo into "no location at all".
+//
+// So it asks a ladder of questions, widest answer last:
+//
+//   1. street + town + district + state + pincode   the exact place
+//   2. town + state                                 the town
+//   3. district + state                             the district town
+//   4. state                                        the state
+//
+// The first hit wins, and each rung is a worse-but-honest answer: landing on
+// the district town is a map the seller can drag a pin on; landing in Madhya
+// Pradesh is not.
+//
+// What it will NOT do is search on nothing. The old version fell back to a
+// pincode-only query even when there was no pincode, which asks Nominatim for
+// "anything, in India" — and that is how a Kerala listing got a pin in
+// Chhindwara.
+type GeoQuery = Record<string, string>;
+
+const askNominatim = async (params: GeoQuery) => {
+  const response = await axios.get(process.env.NOMINATIM_SEARCH_API!, {
+    headers: {
+      "User-Agent": `real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,
+      "Accept-Language": "en",
     },
-  })
- if(response.data.length>0){
-  const result=coordinates(response.data,postalcode)
-  await cacheSet(`geoLocation:${street}|${city}|${state}|${postalcode}`,JSON.stringify(result),60*60*24)
-  return result
+    timeout: 5000,
+    params: { ...params, country: NOMINATIM_COUNTRY, format: "jsonv2" },
+  });
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const geoCodingService = async (
+  street: string | undefined,
+  city: string,
+  district: string,
+  state: string,
+  postalcode: string,
+) => {
+  const clean = (value: string | undefined) => (value ?? "").trim();
+  const [road, town, dist, region, pin] = [
+    clean(street),
+    clean(city),
+    clean(district),
+    clean(state),
+    clean(postalcode),
+  ];
+
+  const key = `geoLocation:${road}|${town}|${dist}|${region}|${pin}`;
+  const cached = await cacheGet(key);
+  if (cached !== null) return JSON.parse(cached);
+
+  // Only rungs with something to search on. `postalcode` alone is included
+  // because an Indian pincode is specific enough to stand by itself.
+  const ladder: GeoQuery[] = [];
+  if (road || town || dist || region || pin) {
+    const exact: GeoQuery = {};
+    if (road) exact.street = road;
+    if (town) exact.city = town;
+    if (dist) exact.county = dist;
+    if (region) exact.state = region;
+    if (pin) exact.postalcode = pin;
+    ladder.push(exact);
   }
-  if(response.data.length===0){
-    response=await axios.get(process.env.NOMINATIM_SEARCH_API!,{
-    headers:{"User-Agent":`real-estate-app/1.0(${process.env.NOMINATIM_CONTACT_EMAIL})`,"Accept-Language":"en"},
-    timeout:5000,
-    params:{postalcode,country:NOMINATIM_COUNTRY,
-    format:"jsonv2"
-    },
-  })
-const result=coordinates(response.data,postalcode)
-await cacheSet(`geoLocation:${street}|${city}|${state}|${postalcode}`,JSON.stringify(result),60*60*24*5)
-return result
+  if (town && region) ladder.push({ city: town, state: region });
+  if (pin) ladder.push({ postalcode: pin });
+  if (dist && region) ladder.push({ city: dist, state: region });
+  if (region) ladder.push({ state: region });
+
+  for (const [index, query] of ladder.entries()) {
+    const results = await askNominatim(query);
+    if (results.length === 0) continue;
+    const found = coordinates(results, pin);
+    if (!found || !Number.isFinite(found.lat) || !Number.isFinite(found.lon)) continue;
+    // The exact rung is worth keeping for a day; a broad one is a guess the
+    // seller will correct, so it expires sooner.
+    await cacheSet(key, JSON.stringify(found), index === 0 ? 60 * 60 * 24 : 60 * 60 * 6);
+    return found;
   }
-}
+
+  // Nothing to say. Cached briefly so a typo being retyped does not hammer
+  // Nominatim, but not for long — the place may simply be missing today.
+  await cacheSet(key, JSON.stringify(null), 60 * 30);
+  return null;
+};
 
 export const reverseGeoCodingService=async(lat:number,lon:number)=>{
   const cached=await cacheGet(`reverseGeo:${lat}|${lon}`)

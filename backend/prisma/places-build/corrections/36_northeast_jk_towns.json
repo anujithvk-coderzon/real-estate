@@ -1,0 +1,1118 @@
+{
+ "source": "Assam DMA ULB register and district profiles, https://assamurban.in/ulb ; Arunachal district portals and dcourts.gov.in ; https://mahud.mn.gov.in/?p=2787 ; https://meghalaya.gov.in/districts ; https://lad.mizoram.gov.in/ ; https://municipalaffairs.nagaland.gov.in/general-information/ ; http://udd.tripura.gov.in/ulb-contact-list ; https://ulbk.jk.gov.in/ , https://ulbjammu.jk.gov.in/ ; https://ladakh.gov.in/?p=56271",
+ "why": "Towns still on the Census 2011 district map; official ULB spellings; missing ULBs and new-district headquarters. Itanagar and Naharlagun are NOT moved: LGD lists 27 Arunachal districts and the Capital Complex sits inside Papum Pare.",
+ "ops": [
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Barpeta",
+   "to": "Bajali",
+   "city": "Pathsala"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Nagaon",
+   "to": "Hojai",
+   "city": "Hojai"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Nagaon",
+   "to": "Hojai",
+   "city": "Lanka"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Nagaon",
+   "to": "Hojai",
+   "city": "Doboka"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Nagaon",
+   "to": "Hojai",
+   "city": "Lumding"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Nagaon",
+   "to": "Hojai",
+   "city": "Jamunamukh"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Sonitpur",
+   "to": "Biswanath",
+   "city": "Biswanath Chariali"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Sonitpur",
+   "to": "Biswanath",
+   "city": "Gohpur"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Sivasagar",
+   "to": "Charaideo",
+   "city": "Sonari"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Karbi Anglong",
+   "to": "West Karbi Anglong",
+   "city": "Hamren"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Karbi Anglong",
+   "to": "West Karbi Anglong",
+   "city": "Donkamokam"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Dhubri",
+   "to": "South Salmara-Mankachar",
+   "city": "Mankachar"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Baksa",
+   "to": "Tamulpur",
+   "city": "No.2 Goreswar"
+  },
+  {
+   "op": "rename",
+   "state": "Assam",
+   "district": "Dibrugarh",
+   "city": "Naharkatiya",
+   "to": "Naharkatia"
+  },
+  {
+   "op": "rename",
+   "state": "Assam",
+   "district": "Dhubri",
+   "city": "Golokganj",
+   "to": "Golukganj"
+  },
+  {
+   "op": "rename",
+   "state": "Assam",
+   "district": "Jorhat",
+   "city": "Titabor",
+   "to": "Titabar"
+  },
+  {
+   "op": "rename",
+   "state": "Assam",
+   "district": "Karbi Anglong",
+   "city": "Howraghat",
+   "to": "Howaraghat"
+  },
+  {
+   "op": "rename",
+   "state": "Assam",
+   "district": "Jorhat",
+   "city": "Mariani",
+   "to": "Moriani"
+  },
+  {
+   "op": "add_alias",
+   "state": "Assam",
+   "district": "Sivasagar",
+   "city": "Sivasagar",
+   "add": [
+    "Sibsagar"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Assam",
+   "district": "Biswanath",
+   "city": "Biswanath Chariali",
+   "add": [
+    "B. Chariali"
+   ]
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Ambicapur Pt VIII",
+   "alias": "Ambicapur Pt VI"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Ambikapur Part-X",
+   "alias": "Ambikapur Part"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Durga Nagar Part-V",
+   "alias": "Durga Nagar Part"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Kanakpur Part-II",
+   "alias": "Kanakpur Part"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Silchar Part-X",
+   "alias": "Silchar Part"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Uttar Krishnapur Part-I",
+   "alias": "Uttar Krishnapur Part"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Goalpara",
+   "city": "Nidanpur Pt-II",
+   "alias": "Nidanpur Pt"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Goalpara",
+   "city": "Salpara Molandubi Pt.-I",
+   "alias": "Salpara Molandubi Pt"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Goalpara",
+   "city": "Thekashu Pt.-II",
+   "alias": "Thekashu Pt"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Assam",
+   "district": "Goalpara",
+   "city": "Thekashu Pt.-II",
+   "alias": "Thekashu Pt-I"
+  },
+  {
+   "op": "add_town",
+   "state": "Assam",
+   "district": "Majuli",
+   "city": "Majuli",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Majuli",
+   "city": "Majuli",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Bongaigaon",
+   "to": "Chirang",
+   "city": "Kajalgaon"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Chirang",
+   "city": "Kajalgaon",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Barpeta",
+   "to": "Bajali",
+   "city": "Patacharkuchi"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Bajali",
+   "city": "Patacharkuchi",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Sonitpur",
+   "to": "Biswanath",
+   "city": "Sootea"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Biswanath",
+   "city": "Sootea",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Sivasagar",
+   "city": "Demow",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Sonitpur",
+   "city": "Jamugurihat",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Sonai",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Cachar",
+   "city": "Sonai",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Assam",
+   "district": "Karbi Anglong",
+   "city": "Bokolia",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Karbi Anglong",
+   "city": "Bokolia",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Assam",
+   "district": "Karbi Anglong",
+   "city": "Langhin",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Karbi Anglong",
+   "city": "Langhin",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Assam",
+   "from": "Karbi Anglong",
+   "to": "West Karbi Anglong",
+   "city": "Baithalangso"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "West Karbi Anglong",
+   "city": "Baithalangso",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Darrang",
+   "city": "Sipajhar",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Sribhumi",
+   "city": "Ramkrishnanagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Kokrajhar",
+   "city": "Fakiragram",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Assam",
+   "district": "Hojai",
+   "city": "Lumding Rly. Col.",
+   "tier": "census town",
+   "aka": [],
+   "src": [
+    "census"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Assam",
+   "district": "Hojai",
+   "city": "Lumding Rly. Col.",
+   "tier": "census town"
+  },
+  {
+   "op": "move",
+   "state": "Arunachal Pradesh",
+   "from": "Lohit",
+   "to": "Namsai",
+   "city": "Namsai"
+  },
+  {
+   "op": "move",
+   "state": "Arunachal Pradesh",
+   "from": "Tirap",
+   "to": "Longding",
+   "city": "Longding"
+  },
+  {
+   "op": "move",
+   "state": "Arunachal Pradesh",
+   "from": "East Siang",
+   "to": "Siang",
+   "city": "Boleng"
+  },
+  {
+   "op": "move",
+   "state": "Arunachal Pradesh",
+   "from": "West Siang",
+   "to": "Leparada",
+   "city": "Basar"
+  },
+  {
+   "op": "move",
+   "state": "Arunachal Pradesh",
+   "from": "East Siang",
+   "to": "Siang",
+   "city": "Pangin"
+  },
+  {
+   "op": "move",
+   "state": "Arunachal Pradesh",
+   "from": "Kurung Kumey",
+   "to": "Kra Daadi",
+   "city": "Palin"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Imphal East",
+   "to": "Jiribam",
+   "city": "Jiribam"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Senapati",
+   "to": "Kangpokpi",
+   "city": "Kangpokpi"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Thoubal",
+   "to": "Kakching",
+   "city": "Kakching"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Thoubal",
+   "to": "Kakching",
+   "city": "Kakching Khunou"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Thoubal",
+   "to": "Kakching",
+   "city": "Sugnu"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Thoubal",
+   "to": "Imphal West",
+   "city": "Samurou"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Imphal West",
+   "to": "Bishnupur",
+   "city": "Nambol"
+  },
+  {
+   "op": "rename",
+   "state": "Manipur",
+   "district": "Imphal West",
+   "city": "Sekmai Bazar",
+   "to": "Sekmai"
+  },
+  {
+   "op": "rename",
+   "state": "Manipur",
+   "district": "Imphal West",
+   "city": "Thongkhong Laxmi Bazar",
+   "to": "Thongkhong Laxmi"
+  },
+  {
+   "op": "rename",
+   "state": "Manipur",
+   "district": "Thoubal",
+   "city": "Wangjing",
+   "to": "Wangjing Lamding"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Manipur",
+   "district": "Thoubal",
+   "city": "Thoubal",
+   "alias": "Thoubal Block"
+  },
+  {
+   "op": "add_alias",
+   "state": "Manipur",
+   "district": "Thoubal",
+   "city": "Sikhong Sekmai",
+   "add": [
+    "Shikhong Sekmai"
+   ]
+  },
+  {
+   "op": "add_town",
+   "state": "Manipur",
+   "district": "Noney",
+   "city": "Longmai",
+   "tier": "locality",
+   "aka": [
+    "Noney"
+   ],
+   "src": [
+    "district-portal"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Manipur",
+   "district": "Noney",
+   "city": "Longmai",
+   "tier": "locality"
+  },
+  {
+   "op": "move",
+   "state": "Manipur",
+   "from": "Churachandpur",
+   "to": "Pherzawl",
+   "city": "Pherzawl"
+  },
+  {
+   "op": "move",
+   "state": "Meghalaya",
+   "from": "West Khasi Hills",
+   "to": "Eastern West Khasi Hills",
+   "city": "Mairang"
+  },
+  {
+   "op": "move",
+   "state": "Meghalaya",
+   "from": "East Garo Hills",
+   "to": "North Garo Hills",
+   "city": "Resubelpara"
+  },
+  {
+   "op": "rename",
+   "state": "Meghalaya",
+   "district": "East Khasi Hills",
+   "city": "Cherrapunjee",
+   "to": "Sohra"
+  },
+  {
+   "op": "move",
+   "state": "Meghalaya",
+   "from": "West Garo Hills",
+   "to": "South West Garo Hills",
+   "city": "Ampati"
+  },
+  {
+   "op": "move",
+   "state": "Mizoram",
+   "from": "Champhai",
+   "to": "Khawzawl",
+   "city": "Khawhai"
+  },
+  {
+   "op": "move",
+   "state": "Mizoram",
+   "from": "Champhai",
+   "to": "Khawzawl",
+   "city": "Biate"
+  },
+  {
+   "op": "set_tier",
+   "state": "Mizoram",
+   "district": "Khawzawl",
+   "city": "Khawhai",
+   "tier": "census town"
+  },
+  {
+   "op": "rename",
+   "state": "Mizoram",
+   "district": "Saiha",
+   "city": "Saiha",
+   "to": "Siaha"
+  },
+  {
+   "op": "add_alias",
+   "state": "Mizoram",
+   "district": "Kolasib",
+   "city": "N. Kawnpui",
+   "add": [
+    "North Kawnpui"
+   ]
+  },
+  {
+   "op": "rename",
+   "state": "Nagaland",
+   "district": "Chumoukedima",
+   "city": "Chumukedima",
+   "to": "Chumoukedima"
+  },
+  {
+   "op": "rename",
+   "state": "Nagaland",
+   "district": "Zunheboto",
+   "city": "Satakha Hq.",
+   "to": "Satakha"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Meluri",
+   "city": "Meluri",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Nagaland",
+   "district": "Dimapur",
+   "city": "East Dimapur",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Dimapur",
+   "city": "East Dimapur",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Wokha",
+   "city": "Bhandari",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Phek",
+   "city": "Chozuba",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Nagaland",
+   "district": "Mokokchung",
+   "city": "Mangkolemba",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Mokokchung",
+   "city": "Mangkolemba",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Peren",
+   "city": "Tening",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Zunheboto",
+   "city": "Aghunato",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Zunheboto",
+   "city": "Atoizu",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Kohima",
+   "city": "Chiephobozou",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Nagaland",
+   "district": "Shamator",
+   "city": "Shamator",
+   "tier": "municipality"
+  },
+  {
+   "op": "rename",
+   "state": "Tripura",
+   "district": "South Tripura",
+   "city": "Santir Bazar",
+   "to": "Santirbazar"
+  },
+  {
+   "op": "set_tier",
+   "state": "Tripura",
+   "district": "West Tripura",
+   "city": "Agartala",
+   "tier": "corporation"
+  },
+  {
+   "op": "set_tier",
+   "state": "Tripura",
+   "district": "North Tripura",
+   "city": "Panisagar",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Tripura",
+   "district": "West Tripura",
+   "city": "Jirania",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Tripura",
+   "district": "West Tripura",
+   "city": "Jirania",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Tripura",
+   "district": "West Tripura",
+   "city": "Mohanpur",
+   "tier": "municipality"
+  },
+  {
+   "op": "move",
+   "state": "Tripura",
+   "from": "West Tripura",
+   "to": "Sepahijala",
+   "city": "Melaghar"
+  },
+  {
+   "op": "set_tier",
+   "state": "Tripura",
+   "district": "Sepahijala",
+   "city": "Melaghar",
+   "tier": "municipality"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Rajouri",
+   "city": "Rajauri",
+   "to": "Rajouri"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Budgam",
+   "city": "Badgam",
+   "to": "Budgam"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Bandipora",
+   "city": "Bandipore",
+   "to": "Bandipora"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Pulwama",
+   "city": "Pampora",
+   "to": "Pampore"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Koker Nag",
+   "to": "Kokernag"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Budgam",
+   "city": "Chadura",
+   "to": "Chadoora"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Achhabal",
+   "to": "Achabal"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Rajouri",
+   "city": "Nowshehra",
+   "to": "Nowshera"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Baramulla",
+   "city": "Watra Gam",
+   "to": "Watergam"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Budgam",
+   "city": "Charar-i-Sharief",
+   "to": "Chrar-i-Sharief"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Samba",
+   "city": "Bari Brahamana",
+   "to": "Bari Brahmana"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Jammu",
+   "city": "Bishna",
+   "to": "Bishnah"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Jammu",
+   "city": "Ghomanhasan",
+   "to": "Ghou Manhasan"
+  },
+  {
+   "op": "drop_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Budgam",
+   "city": "Charar-i-Sharief",
+   "alias": "Sharief"
+  },
+  {
+   "op": "add_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Budgam",
+   "city": "Charar-i-Sharief",
+   "add": [
+    "Chrar-e-Sharief"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Qazi Gund",
+   "add": [
+    "Qazigund"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Aishmuquam",
+   "add": [
+    "Aishmuqam"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Duru Verinag",
+   "add": [
+    "Dooru Verinag"
+   ]
+  },
+  {
+   "op": "add_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Baramulla",
+   "city": "Watra Gam",
+   "add": [
+    "Wattergam"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Arwani",
+   "tier": "locality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "city": "Shangus",
+   "tier": "locality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Baramulla",
+   "city": "Gulmarg",
+   "tier": "locality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Doda",
+   "city": "Thathri",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Baramulla",
+   "city": "Tangmarg",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Kupwara",
+   "city": "Langate",
+   "tier": "municipality"
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Jammu",
+   "city": "R.S. Pura",
+   "tier": "municipality"
+  },
+  {
+   "op": "add_town",
+   "state": "Jammu and Kashmir",
+   "district": "Rajouri",
+   "city": "Kalakote",
+   "tier": "municipality",
+   "aka": [],
+   "src": [
+    "state-ulb-register"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Jammu and Kashmir",
+   "district": "Rajouri",
+   "city": "Kalakote",
+   "tier": "municipality"
+  },
+  {
+   "op": "rename",
+   "state": "Ladakh",
+   "district": "Leh",
+   "city": "Chuglamsar",
+   "to": "Choglamsar"
+  },
+  {
+   "op": "move",
+   "state": "Ladakh",
+   "from": "Leh",
+   "to": "Nubra",
+   "city": "Diskit"
+  },
+  {
+   "op": "add_town",
+   "state": "Ladakh",
+   "district": "Sham",
+   "city": "Khaltse",
+   "tier": "locality",
+   "aka": [
+    "Khaltsi",
+    "Khalatse"
+   ],
+   "src": [
+    "district-portal"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Ladakh",
+   "district": "Sham",
+   "city": "Khaltse",
+   "tier": "locality"
+  },
+  {
+   "op": "add_town",
+   "state": "Ladakh",
+   "district": "Changthang",
+   "city": "Nyoma",
+   "tier": "locality",
+   "aka": [],
+   "src": [
+    "district-portal"
+   ]
+  },
+  {
+   "op": "set_tier",
+   "state": "Ladakh",
+   "district": "Changthang",
+   "city": "Nyoma",
+   "tier": "locality"
+  },
+  {
+   "op": "move",
+   "state": "Ladakh",
+   "from": "Kargil",
+   "to": "Zanskar",
+   "city": "Padum"
+  },
+  {
+   "op": "move",
+   "state": "Ladakh",
+   "from": "Kargil",
+   "to": "Drass",
+   "city": "Drass"
+  },
+  {
+   "op": "add_alias",
+   "state": "Ladakh",
+   "district": "Drass",
+   "city": "Drass",
+   "add": [
+    "Dras",
+    "Drass-Ranbirpura"
+   ]
+  },
+  {
+   "op": "move",
+   "state": "Ladakh",
+   "from": "Kargil",
+   "to": "Sankoo",
+   "city": "Sankoo"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Poonch",
+   "city": "Punch",
+   "to": "Poonch"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Samba",
+   "city": "Vijay Pur",
+   "to": "Vijaypur"
+  },
+  {
+   "op": "rename",
+   "state": "Jammu and Kashmir",
+   "district": "Jammu",
+   "city": "Khore",
+   "to": "Khour"
+  },
+  {
+   "op": "add_alias",
+   "state": "Jammu and Kashmir",
+   "district": "Baramulla",
+   "city": "Kunzer",
+   "add": [
+    "Kunzar"
+   ]
+  },
+  {
+   "op": "merge",
+   "state": "Jammu and Kashmir",
+   "district": "Anantnag",
+   "keep": "Aishmuquam",
+   "drop": "Ashmuqam"
+  }
+ ]
+}

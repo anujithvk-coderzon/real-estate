@@ -1,0 +1,216 @@
+{
+ "source": "LGD active-district and sub-district feeds https://lgdirectory.gov.in/webservices/lgd/napix/districts/v1/status/active ; jamshedpur/chaibasa/palamu/bokaro/seraikela .nic.in ; https://ceowestbengal.wb.gov.in/Distlist ; gaya.nic.in",
+ "why": "Headquarters and major-city names placed in their district by LGD's own block-to-district table.",
+ "ops": [
+  {
+   "op": "district_aliases",
+   "state": "Jharkhand",
+   "district": "East Singhbhum",
+   "add": [
+    "Jamshedpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Jharkhand",
+   "district": "West Singhbhum",
+   "add": [
+    "Chaibasa"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Jharkhand",
+   "district": "Palamu",
+   "add": [
+    "Daltonganj",
+    "Medininagar"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Jharkhand",
+   "district": "Bokaro",
+   "add": [
+    "Bokaro Steel City"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Jharkhand",
+   "district": "Saraikela-Kharsawan",
+   "add": [
+    "Seraikela",
+    "Seraikela-Kharsawan",
+    "Saraikella Kharsawan"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Manendragarh-Chirmiri-Bharatpur",
+   "add": [
+    "Chirmiri"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Durg",
+   "add": [
+    "Bhilai"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Baloda Bazar-Bhatapara",
+   "add": [
+    "Bhatapara"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Janjgir-Champa",
+   "add": [
+    "Champa"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Sarangarh-Bilaigarh",
+   "add": [
+    "Bilaigarh"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Khairagarh-Chhuikhadan-Gandai",
+   "add": [
+    "Gandai",
+    "Chhuikhadan"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Mohla-Manpur-Ambagarh Chowki",
+   "add": [
+    "Ambagarh Chowki",
+    "Ambagarh Chouki"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Chhattisgarh",
+   "district": "Gaurella-Pendra-Marwahi",
+   "add": [
+    "Pendra",
+    "Pendra Road",
+    "Marwahi",
+    "Gaurela"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "Birbhum",
+   "add": [
+    "Suri"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "Paschim Bardhaman",
+   "add": [
+    "Durgapur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "Purba Medinipur",
+   "add": [
+    "Haldia"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "Nadia",
+   "add": [
+    "Ranaghat"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "Murshidabad",
+   "add": [
+    "Kandi",
+    "Behrampore",
+    "Behrampur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "North 24 Parganas",
+   "add": [
+    "Barrackpore",
+    "Barrackpur"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "West Bengal",
+   "district": "Hooghly",
+   "add": [
+    "Chuchura",
+    "Chunchura"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Bihar",
+   "district": "Gaya",
+   "add": [
+    "Gayaji"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Bihar",
+   "district": "Nalanda",
+   "add": [
+    "Biharsharif"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Andaman and Nicobar Islands",
+   "district": "South Andaman",
+   "add": [
+    "South Andamans"
+   ]
+  },
+  {
+   "op": "district_aliases",
+   "state": "Telangana",
+   "district": "Jayashankar Bhupalpally",
+   "add": [
+    "Jayashankar Bhupalapally"
+   ]
+  },
+  {
+   "op": "district_note",
+   "state": "West Bengal",
+   "field": "disagreement",
+   "text": "23 notified districts, confirmed 18 Nov 2026 against the LGD active-district feed (no creation since Paschim Bardhaman, 21 Apr 2017), the CEO West Bengal district list and the absence of any district website for an announced name. The 22 Jun 2026 budget announced Kolkata (as a full revenue district), Basirhat, Sundarbans, Jangipur and Arambagh; none is notified. Their names are parked as aliases on their parent districts, each parent verified at block level in LGD: Basirhat -> North 24 Parganas, Sundarban -> South 24 Parganas (Canning, Kakdwip), Jangipur -> Murshidabad, Arambagh -> Hooghly. 'Sundarban' is a known misfile risk: the region also covers North 24 Parganas blocks (Hingalganj, Sandeshkhali). The bare old-district names Midnapore and Bishnupur are deliberately not aliased: each is claimable by two current districts."
+  }
+ ]
+}

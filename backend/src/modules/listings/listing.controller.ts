@@ -179,9 +179,10 @@ export const updateListing=async(req:Request,res:Response)=>{
 export const geoCode=async(req:Request,res:Response)=>{
     const street=req.query.street as string||undefined
     const city=req.query.city as string
+    const district=req.query.district as string
     const state=req.query.state as string
     const postalcode=req.query.postalcode as string
- const response=await geoCodingService(street,city,state,postalcode)
+ const response=await geoCodingService(street,city,district,state,postalcode)
  return res.status(200).json({message:"geoCoded Successfully",response})
 }
 
