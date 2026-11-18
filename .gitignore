@@ -6,3 +6,6 @@ dist/
 build/ 
 !.env.example
 
+# Python bytecode from the places build
+__pycache__/
+*.pyc

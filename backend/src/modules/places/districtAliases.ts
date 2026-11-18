@@ -1,10 +1,11 @@
-// GENERATED FILE - do not edit by hand.
-// Source: prisma/places-build/districts.json, written by apply_corrections.py.
+// Every verified district of India (DISTRICTS) and the other names people type
+// for them (DISTRICT_ALIASES). Edit both by hand; keep DISTRICTS in step with
+// the districts in prisma/data/india-places.json.
 //
 // An alias is a former official name, a dissolved predecessor district, an
 // alternate romanisation, or the district's headquarters town - people write
 // the HQ town where a district is asked for. An alias two districts of the
-// same state could claim is never added; districts.json records why.
+// same state could claim is never added.
 
 export const DISTRICT_ALIASES: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
   "Andaman and Nicobar Islands": {

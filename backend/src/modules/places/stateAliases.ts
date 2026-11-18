@@ -1,4 +1,3 @@
-// GENERATED FILE - do not edit by hand.
 // Alternate and historical names for states and union territories.
 // Verified against the Local Government Directory, the Legislative
 // Department's list of Central Acts, and the relevant gazette notifications.
