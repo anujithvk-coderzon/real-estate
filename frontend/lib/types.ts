@@ -163,13 +163,13 @@ export type Listing = {
   totalFloors: number | null;
   propertyStatus: PropertyStatus | null;
   availableFrom: string | null;
-  addressLine: string;
+  addressLine: string | null;
   landmark: string | null;
-  locality: string;
+  locality: string | null;
   city: string;
   district: string;
   state: string;
-  pincode: string;
+  pincode: string | null;
   latitude: number | null;
   longitude: number | null;
   contactName: string | null;

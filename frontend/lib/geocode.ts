@@ -19,18 +19,28 @@ export const addressFromPin = async ([lng, lat]: LngLat) => {
   return toAddressFields(response.data.response ?? {});
 };
 
+// Coordinates → only the state, district and town, for the listing forms.
+// The property name, locality and pincode are the seller's own words; a pin
+// dropped a few metres off would otherwise overwrite them with a neighbour's.
+export const placeFromPin = async (location: LngLat) => {
+  const { city, district, state } = await addressFromPin(location);
+  return { city, district, state };
+};
+
 // Address fields → coordinates, or null when nothing matches.
+//
+// Only the town, district and state are sent. The locality and pincode are
+// optional and typed freely, so a misspelt street or a wrong pincode made
+// Nominatim miss a town it would otherwise have found.
 export const pinFromAddress = async (data: ListingFormData): Promise<LngLat | null> => {
   const response = await api.get("/list/details/geocode", {
     params: {
-      street: data.locality,
       city: data.city,
       // The district is the rung the server falls back to when the town is
       // misspelt or simply not on the map. Without it the ladder skips
       // straight from the town to the whole state.
       district: data.district,
       state: data.state,
-      postalcode: data.pincode,
     },
   });
   const result = response.data.response;

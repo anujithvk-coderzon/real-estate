@@ -204,13 +204,13 @@ model Listing {
   propertyStatus           PropertyStatus?
   availableFrom            DateTime?
   //location  
-  addressLine              String
+  addressLine              String?
   landmark                 String?
-  locality                 String
+  locality                 String?
   city                     String
   district                 String
   state                    String
-  pincode                  String
+  pincode                  String?
   latitude                 Float?
   longitude                Float?
   //contact 

@@ -76,7 +76,7 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
       onSubmit={findOnMap}
       className="mt-5 space-y-4 border-t border-line pt-5"
     >
-      <Field id="addressLine" label="Property name or number">
+      <Field id="addressLine" label="Property name or number" optional>
         <input
           {...input("addressLine", "Building or house name, or its number")}
         />
@@ -84,7 +84,7 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
       <Field id="landmark" label="Landmark" optional>
         <input {...input("landmark", "A well-known place nearby")} />
       </Field>
-      <Field id="locality" label="Locality or street">
+      <Field id="locality" label="Locality or street" optional>
         <input {...input("locality", "Neighbourhood, then the street")} />
       </Field>
 
@@ -148,7 +148,7 @@ const AddressForm = ({ data, setData, onLocate, onCancel }: Props) => {
             onPick={(city) => setPlace("city", city)}
           />
         </Field>
-        <Field id="pincode" label="Pincode">
+        <Field id="pincode" label="Pincode" optional>
           <input
             {...input("pincode", "6 digits")}
             inputMode="numeric"

@@ -337,7 +337,9 @@ const MySpecificListing = ({ id }: Props) => {
             {listing.title}
           </h1>
           <p className="mt-2 text-[15px] text-muted">
-            {[listing.locality, listing.city, listing.district].join(", ")}
+            {[listing.locality, listing.city, listing.district]
+              .filter(Boolean)
+              .join(", ")}
           </p>
         </div>
 
@@ -450,10 +452,12 @@ const MySpecificListing = ({ id }: Props) => {
             <address className="mt-4 text-[15px] not-italic leading-relaxed">
               {listing.addressLine}
               {listing.landmark && (
-                <span className="text-muted"> · Near {listing.landmark}</span>
+                <span className="text-muted">
+                  {listing.addressLine ? " · " : ""}Near {listing.landmark}
+                </span>
               )}
-              <br />
-              {listing.locality}, {listing.city}
+              {(listing.addressLine || listing.landmark) && <br />}
+              {[listing.locality, listing.city].filter(Boolean).join(", ")}
               <br />
               {listing.district}, {listing.state}{" "}
               <span className="tabular-nums">{listing.pincode}</span>

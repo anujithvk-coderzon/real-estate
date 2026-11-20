@@ -495,12 +495,11 @@ export const getMissingFields = (
     ["bedrooms", !residential || data.bedrooms !== ""],
     ["bathrooms", !residential || data.bathrooms !== ""],
     ["security deposit", !rental || data.securityDeposit !== ""],
-    ["property name or number", data.addressLine.trim() !== ""],
-    ["locality", data.locality.trim() !== ""],
     ["city", data.city.trim() !== ""],
     ["district", data.district.trim() !== ""],
     ["state", data.state.trim() !== ""],
-    ["pincode", /^\d{6}$/.test(data.pincode)],
+    // Optional, but a half-typed one is a mistake, not a choice.
+    ["a 6-digit pincode", data.pincode === "" || /^\d{6}$/.test(data.pincode)],
     ["a pin on the map", location !== null],
     // The only route a buyer has to the seller: the account email is never
     // shown, and the API refuses to publish a listing without this. Checked
@@ -741,13 +740,15 @@ export const buildListingPayload = (
   propertyStatus: data.propertyStatus || undefined,
   availableFrom: data.availableFrom || undefined,
 
-  addressLine: data.addressLine.trim(),
+  // null, not undefined, for the optional address parts: an edit that empties
+  // one has to clear it, and Prisma skips undefined.
+  addressLine: data.addressLine.trim() || null,
   landmark: textOrUndefined(data.landmark),
-  locality: data.locality.trim(),
+  locality: data.locality.trim() || null,
   city: data.city.trim(),
   district: data.district.trim(),
   state: data.state.trim(),
-  pincode: data.pincode,
+  pincode: data.pincode || null,
   latitude: location?.[1],
   longitude: location?.[0],
 
@@ -792,13 +793,13 @@ export const listingToFormData = (listing: Listing): ListingFormData => ({
   contactPhoneVisibility: listing.contactPhoneVisibility ?? true,
   contactWatsappVisibility: listing.contactWatsappVisibility ?? true,
   contactInappVisibility: listing.contactInappVisibility ?? true,
-  addressLine: listing.addressLine,
+  addressLine: listing.addressLine ?? "",
   landmark: listing.landmark ?? "",
-  locality: listing.locality,
+  locality: listing.locality ?? "",
   city: listing.city,
   district: listing.district,
   state: listing.state,
-  pincode: listing.pincode,
+  pincode: listing.pincode ?? "",
   amenityIds: listing.amenities.map((amenity) => amenity.id),
 });
 

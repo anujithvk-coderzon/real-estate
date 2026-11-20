@@ -10,7 +10,7 @@ import ListingStart from "@/components/ListingStart";
 import ProjectPicker, { MANUAL, NONE } from "@/components/ProjectPicker";
 import PropertyDetailsForm from "@/components/PropertyDetailsForm";
 import { api } from "@/lib/api";
-import { addressFromPin, pinFromAddress } from "@/lib/geocode";
+import { pinFromAddress, placeFromPin } from "@/lib/geocode";
 import { buildListingPayload, getMissingFields } from "@/lib/listing";
 import { errorToast, successToast } from "@/lib/toast";
 import { labelOf } from "@/lib/listing";
@@ -184,12 +184,13 @@ const CreateListing = () => {
   // address" rewrote the whole form to a village in Madhya Pradesh.
   //
   // A pin from GPS or one dragged by hand IS new information, and those still
-  // fill the fields.
+  // fill the state, district and town. Never the property name, locality or
+  // pincode: those are the seller's own, and a pin is never that precise.
   useEffect(() => {
     if (!location || source === "region" || source === "address") return;
-    addressFromPin(location)
-      .then((address) => {
-        setTyped((prev) => ({ ...prev, ...address }));
+    placeFromPin(location)
+      .then((place) => {
+        setTyped((prev) => ({ ...prev, ...place }));
         setShowAddressForm(true);
       })
       .catch(() => {
@@ -238,9 +239,7 @@ const CreateListing = () => {
   // surfaces on page one rather than vanishing between the two.
   const PAGE_TWO = new Set([
     "project",
-    "property name or number",
-    "locality",
-    "pincode",
+    "a 6-digit pincode",
     "a pin on the map",
     "a contact name",
     "a contact phone number",

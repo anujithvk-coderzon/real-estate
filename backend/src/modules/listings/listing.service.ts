@@ -77,13 +77,13 @@ const post=await prisma.listing.create({data:{
     // Cleared when a number was given, so the two can never disagree on the page.
     projectReraAbsence:data.projectId||data.projectReraText ? null : (data.projectReraAbsence??null),
     builderNameText:data.projectId ? null : (data.builderNameText??null),
-    addressLine:data.addressLine,
+    addressLine:data.addressLine??null,
     landmark:data.landmark??null,
-    locality:data.locality,
+    locality:data.locality??null,
     district:data.district,
     city:data.city,
     state:data.state,
-    pincode:data.pincode,
+    pincode:data.pincode??null,
     latitude:data.latitude??null,
     longitude:data.longitude??null,
     contactName:data.contactName??null,
@@ -838,7 +838,8 @@ const where:ListingWhereInput={
   AND:[
     {id:{not:listing.id},status:'ACTIVE'},
     {OR:[
-      {locality:listing.locality},
+      // No locality means no locality match, not "every listing without one".
+      ...(listing.locality ? [{locality:listing.locality}] : []),
       {city:listing.city},
       {district:listing.district},
     ]}

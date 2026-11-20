@@ -37,13 +37,15 @@ export const listingFields=z.object({
     propertyStatus: z.enum(["READY_TO_MOVE", "UNDER_CONSTRUCTION"]).optional(),
     availableFrom: z.coerce.date().optional(),
 
-    addressLine: z.string().trim().min(5, "Enter the property name or number"),
+    // Optional, and null clears it on an edit: Prisma ignores undefined, so a
+    // seller who empties the field would otherwise keep the old value.
+    addressLine: z.string().trim().min(2, "Property name or number is too short").nullable().optional(),
     landmark: z.string().trim().optional(),
-    locality: z.string().trim().min(2, "Enter the locality or street"),
+    locality: z.string().trim().min(2, "Locality or street is too short").nullable().optional(),
     district: z.string().trim().min(2, "Enter the district"),
     city: z.string().trim().min(2, "Enter the city or town"),
     state: z.string().trim().min(2, "Enter the state"),
-    pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits"),
+    pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits").nullable().optional(),
     latitude: z.number().min(6.5, "Location must be inside India").max(37.6, "Location must be inside India").optional(),
     longitude: z.number().min(68.1, "Location must be inside India").max(97.4, "Location must be inside India").optional(),
 

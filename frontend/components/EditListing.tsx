@@ -10,7 +10,7 @@ import MapPicker from "@/components/MapPicker";
 import PropertyDetailsForm from "@/components/PropertyDetailsForm";
 import { api } from "@/lib/api";
 import { formatFileSize } from "@/lib/format";
-import { addressFromPin } from "@/lib/geocode";
+import { placeFromPin } from "@/lib/geocode";
 import {
   INDIA_CENTER,
   buildListingPayload,
@@ -297,18 +297,18 @@ const EditListing = ({ id }: Props) => {
             <button
               type="button"
               onClick={() =>
-                addressFromPin(location)
-                  .then((address) => {
-                    setData((prev) => ({ ...prev, ...address }));
+                placeFromPin(location)
+                  .then((place) => {
+                    setData((prev) => ({ ...prev, ...place }));
                     successToast(
-                      "Address filled from the pin. Check it before saving.",
+                      "Town, district and state filled from the pin. Check them before saving.",
                     );
                   })
                   .catch((error) => errorToast(apiMessage(error)))
               }
               className={`mt-3 w-full ${secondaryButton}`}
             >
-              Get address from pin location
+              Get town from pin location
             </button>
           )}
         </section>
