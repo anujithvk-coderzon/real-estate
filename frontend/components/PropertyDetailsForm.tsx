@@ -5,6 +5,7 @@ import AmenitiesPicker from "@/components/form/AmenitiesPicker";
 import ChoiceCards from "@/components/form/ChoiceCards";
 import PlaceAutocomplete from "@/components/form/PlaceAutocomplete";
 import { Field, Select } from "@/components/form/Field";
+import InfoTip from "@/components/form/InfoTip";
 import { api } from "@/lib/api";
 import {
   AREA_UNITS,
@@ -583,11 +584,8 @@ const PropertyDetailsForm = ({
         <Field
           id="description"
           label="Description"
-          hint={
-            data.description.trim() === ""
-              ? "Say what a photograph cannot: water supply, road access, who the neighbours are, and what is within walking distance."
-              : `${data.description.length}/5000 · at least 30 characters`
-          }
+          hint={`${data.description.length}/5000 · at least 30 characters`}
+          info="Say what a photograph cannot: water supply, road access, who the neighbours are, and what is within walking distance."
         >
           <textarea
             id="description"
@@ -680,12 +678,14 @@ const PropertyDetailsForm = ({
       {/* ---------- contact ---------- */}
       {show("contact") && (
       <div className={`space-y-4 ${group}`}>
-        <h3 className={groupTitle}>Contact for visits</h3>
-        <p className="-mt-2 text-[13px] text-muted">
-          The phone number is the only way a buyer can reach you &mdash; your
-          account email is never shown. A listing cannot be published without
-          one.
-        </p>
+        <div className="flex items-center gap-1.5">
+          <h3 className={groupTitle}>Contact for visits</h3>
+          <InfoTip label="Why a phone number is needed">
+            The phone number is the only way a buyer can reach you &mdash; your
+            account email is never shown. A listing cannot be published without
+            one.
+          </InfoTip>
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <ContactNamePhone data={data} handleChange={handleChange} />
         </div>
@@ -694,14 +694,14 @@ const PropertyDetailsForm = ({
             options are greyed out until there is a number to put behind them —
             a Call button on no number is a dead end for the buyer. */}
         <fieldset className="rounded-lg border border-line p-4">
-          <legend className="px-1 text-[14px] font-medium text-ink">
+          <legend className="flex items-center gap-1.5 px-1 text-[14px] font-medium text-ink">
             How buyers can reach you
+            <InfoTip label="About contact options">
+              Turn off anything you would rather not receive. Whatever stays on
+              becomes a button on your listing.
+            </InfoTip>
           </legend>
-          <p className="text-[13px] text-muted">
-            Turn off anything you would rather not receive. Whatever stays on
-            becomes a button on your listing.
-          </p>
-          <div className="mt-3 space-y-3.5">
+          <div className="mt-1 space-y-3.5">
             {CONTACT_CHANNELS.map((channel) => {
               const needsPhone = channel.name !== "contactInappVisibility";
               const disabled = needsPhone && data.contactPhone.trim() === "";

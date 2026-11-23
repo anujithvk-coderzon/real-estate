@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Field, Select } from "@/components/form/Field";
+import InfoTip from "@/components/form/InfoTip";
 import { api } from "@/lib/api";
 import { RERA_ABSENCE_OPTIONS } from "@/lib/rera";
 import { inputClass, labelClass, secondaryButton } from "@/lib/ui";
@@ -114,15 +115,25 @@ const ManualFields = ({
           genuinely not exist — anything completed before May 2017 was never
           registered — and a required field there is answered with "NA", which
           we would then publish as though it were a registration. */}
-      <label htmlFor="manualRera" className={labelClass}>
-        Project RERA number
-        {mustHaveProject && (
-          <span className="text-danger" aria-hidden="true">
-            {" "}
-            *
-          </span>
-        )}
-      </label>
+      <div className="mb-2 flex items-center gap-1.5">
+        <label
+          htmlFor="manualRera"
+          className={labelClass.replace("mb-2 ", "")}
+        >
+          Project RERA number
+          {mustHaveProject && (
+            <span className="text-danger" aria-hidden="true">
+              {" "}
+              *
+            </span>
+          )}
+        </label>
+        <InfoTip label="About the RERA number">
+          {self
+            ? "This project is not registered here yet, so this number is the only way a buyer can check it on the state RERA site."
+            : "The builder has not registered this project here, so this number is the only way a buyer can check it on the state RERA site."}
+        </InfoTip>
+      </div>
       <input
         id="manualRera"
         type="text"
@@ -132,24 +143,23 @@ const ManualFields = ({
         placeholder="e.g. K-RERA/PRJ/ERN/123/2024"
         className={`${inputClass} tabular-nums`}
       />
-      <p className="mt-1.5 text-[13px] text-muted">
-        {self
-          ? "This project is not registered here yet, so this number is the only way a buyer can check it on the state RERA site."
-          : "The builder has not registered this project here, so this number is the only way a buyer can check it on the state RERA site."}
-        {mustHaveProject &&
-          " A unit under construction is sold off-plan, so the advertisement cannot go out without it."}
-      </p>
+      {/* A requirement, so it stays on screen rather than behind the i. */}
+      {mustHaveProject && (
+        <p className="mt-1.5 text-[13px] text-muted">
+          Required for a unit under construction.
+        </p>
+      )}
 
       {!mustHaveProject && (
         <fieldset className="mt-3 rounded-xl border border-line px-4 py-3">
-          <legend className="px-1 text-[13px] font-medium">
+          <legend className="flex items-center gap-1.5 px-1 text-[13px] font-medium">
             Or, if the project has no number
+            <InfoTip label="About having no RERA number">
+              Pick the reason instead of typing one in. Buyers are told which
+              of these it is, in these words — so never invent a number to fill
+              the box above.
+            </InfoTip>
           </legend>
-          <p className="text-[13px] leading-snug text-muted">
-            Pick the reason instead of typing one in. Buyers are told which of
-            these it is, in these words — so never invent a number to fill the
-            box above.
-          </p>
           <div className="mt-2 space-y-1.5">
             {RERA_ABSENCE_OPTIONS.map((option) => (
               <label
@@ -181,10 +191,13 @@ const ManualFields = ({
       )}
     </div>
 
-    <p className="text-[13px] leading-snug text-muted sm:col-span-2">
-      {self
-        ? "These details are shown to buyers as stated by you. Register the project and they come from the record instead, with its own page and one number against every unit in it."
-        : "These details are shown to buyers as stated by you, not as confirmed by the builder, until the builder registers the project here."}
+    <p className="flex items-center gap-1.5 text-[13px] leading-snug text-muted sm:col-span-2">
+      Shown to buyers as stated by you.
+      <InfoTip label="About typed project details">
+        {self
+          ? "Register the project and these details come from the record instead, with its own page and one number against every unit in it."
+          : "They are not confirmed by the builder until the builder registers the project here."}
+      </InfoTip>
     </p>
   </div>
 );

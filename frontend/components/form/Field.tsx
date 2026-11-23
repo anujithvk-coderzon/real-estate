@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import InfoTip from "@/components/form/InfoTip";
 import type { Option } from "@/lib/listing";
 import { inputClass, labelClass } from "@/lib/ui";
 
@@ -7,6 +8,8 @@ type FieldProps = {
   label: string;
   optional?: boolean;
   hint?: string;
+  // The longer "why", behind an i button beside the label.
+  info?: ReactNode;
   error?: string;
   children: ReactNode;
 };
@@ -17,11 +20,16 @@ export const Field = ({
   label,
   optional,
   hint,
+  info,
   error,
   children,
 }: FieldProps) => (
   <div>
-    <label htmlFor={id} className={labelClass}>
+    {/* The button sits beside the label, not inside it: a click inside a
+        label also focuses its input, which would open the keyboard on a phone
+        just to read the note. */}
+    <div className={info ? "mb-2 flex items-center gap-1.5" : "contents"}>
+    <label htmlFor={id} className={info ? "block text-[12.5px] font-medium text-muted" : labelClass}>
       {label}
       {optional ? (
         <span className="font-normal text-muted/70"> (optional)</span>
@@ -36,6 +44,8 @@ export const Field = ({
         </>
       )}
     </label>
+    {info && <InfoTip label={`About ${label.toLowerCase()}`}>{info}</InfoTip>}
+    </div>
     {children}
     {error ? (
       <p id={`${id}-error`} className="mt-1.5 text-[13px] text-warn">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddressForm from "@/components/AddressForm";
+import InfoTip from "@/components/form/InfoTip";
 import MapPicker from "@/components/MapPicker";
 import AgentReraForm from "@/components/AgentReraForm";
 import CardStack from "@/components/form/CardStack";
@@ -366,10 +367,12 @@ const CreateListing = () => {
       </div>
 
       {role === "BROKER" && purpose === "SALE" && reraStatus === "PENDING" && (
-        <p className="mt-4 rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
-          Your RERA number is with us and not published yet. A verified badge
-          appears on your listings once someone checks it against the state
-          register.
+        <p className="mt-4 flex items-center gap-1.5 rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
+          Your RERA number is waiting to be verified.
+          <InfoTip label="About RERA verification">
+            It is not published yet. A verified badge appears on your listings
+            once someone checks it against the state register.
+          </InfoTip>
         </p>
       )}
 
@@ -431,18 +434,19 @@ const CreateListing = () => {
           too late — and some of them have good reasons not to show it. The
           wording offers the alternative rather than only the warning, because
           a caution with no way out just makes people abandon the step. */}
-      <div className="mt-4 max-w-2xl rounded-lg border border-line bg-ground px-4 py-3.5">
+      {/* The one line stays visible; the detail is a tap away. */}
+      <div className="mt-4 flex max-w-2xl items-center gap-1.5 rounded-lg border border-line bg-ground px-4 py-3">
         <p className="text-[14px] font-medium text-ink">
           Anyone viewing your listing sees this pin
         </p>
-        <p className="mt-1 text-[14px] leading-relaxed text-muted">
+        <InfoTip label="Who can see the pin">
           It is shown to every visitor, not only to people you have spoken to.
           Place it on the property if you want buyers to find it easily. If you
           would rather not show the exact building, put the pin on the nearest
           junction or landmark instead &mdash; your listing still appears in
           searches for this area, and you can give the precise address when
           someone contacts you.
-        </p>
+        </InfoTip>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-5 sm:mt-5 lg:grid-cols-[minmax(320px,380px)_1fr] lg:gap-6">
@@ -462,19 +466,17 @@ const CreateListing = () => {
               <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
               <path d="M11 18.5h2" />
             </svg>
-            <div>
+            <div className="flex items-center gap-1.5">
               <p className="text-[13px] font-semibold text-accent">
-                Recommended: be at the property
+                Most accurate: be at the property
               </p>
-              <p className="mt-1 text-[13px] leading-snug text-ink/80">
+              <InfoTip label="Why be at the property">
                 Open this page on your phone while you&apos;re at the property
                 and tap{" "}
-                <span className="font-medium text-ink">
-                  Use my current location
-                </span>
-                . Phone GPS is accurate to a few metres, so buyers and renters
+                <span className="font-medium">Use my current location</span>.
+                Phone GPS is accurate to a few metres, so buyers and renters
                 see exactly where the property is.
-              </p>
+              </InfoTip>
             </div>
           </div>
 
@@ -549,11 +551,16 @@ const CreateListing = () => {
 
       {sellerSale && (
         <section className="mt-5 rounded-lg border border-line bg-panel p-4 sm:mt-6 sm:p-5 lg:p-6">
-          <h2 className={sectionTitle}>Which project is this unit in?</h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className={sectionTitle}>Which project is this unit in?</h2>
+            <InfoTip label="About the project">
+              {role === "BUILDER"
+                ? "A project carries the RERA registration number a sale advertisement needs, so every unit you list in it is covered by the same number. If the project is not registered here yet, type its name and number instead. A ready resale or a single plot needs no project."
+                : "If we do not have the project yet, type its name and RERA number as the builder gave them to you. A resale or a plot needs no project."}
+            </InfoTip>
+          </div>
           <p className="mt-1 max-w-prose text-[14px] leading-relaxed text-muted">
-            {role === "BUILDER"
-              ? "A project carries the RERA registration number a sale advertisement needs, so every unit you list in it is covered by the same number. If the project is not registered here yet, type its name and number instead. A ready resale or a single plot needs no project."
-              : "Search the project this unit is in. If we do not have it yet, type its name and RERA number as the builder gave them to you. A resale or a plot needs no project."}
+            Search for it, or type its name and RERA number.
           </p>
 
           <div className="mt-5">
