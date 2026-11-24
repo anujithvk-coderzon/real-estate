@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddressForm from "@/components/AddressForm";
 import InfoTip from "@/components/form/InfoTip";
@@ -15,6 +15,14 @@ import { pinFromAddress, placeFromPin } from "@/lib/geocode";
 import { buildListingPayload, getMissingFields } from "@/lib/listing";
 import { errorToast, successToast } from "@/lib/toast";
 import { labelOf } from "@/lib/listing";
+import { formatTimeAgo } from "@/lib/format";
+import {
+  clearDraft,
+  isBlankForm,
+  type ListingDraft,
+  readDraft,
+  writeDraft,
+} from "@/lib/listingDraft";
 import {
   type AuthUser,
   emptyListing,
@@ -55,6 +63,13 @@ const PIN_NOTES: Record<LocationSource, { heading: string; help: string }> = {
 const ROLES: PostedBy[] = ["OWNER", "BROKER", "BUILDER"];
 const PURPOSES: ListingType[] = ["SALE", "RENT", "PG"];
 
+const NO_MANUAL = {
+  manualName: "",
+  manualRera: "",
+  manualBuilder: "",
+  manualAbsence: "",
+};
+
 const CreateListing = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,6 +81,8 @@ const CreateListing = () => {
   // The signed-in user decides two things here: the pre-selected role on the start
   // screen, and whether an agent still has to give their RERA number.
   const [user, setUser] = useState<AuthUser | null>(null);
+  // Drafts are kept per account; no id, no draft.
+  const userId = user?.id;
   // Asked for, not demanded. A broker who has not got round to their
   // registration can still list — and the listing says "No RERA number" in
   // public until they do, which is the honest consequence rather than a locked
@@ -78,24 +95,51 @@ const CreateListing = () => {
   // Selling: which project the unit is in. Either one of our records, or the
   // name and RERA number the lister types in, or an explicit "no project".
   const [projectId, setProjectId] = useState("");
-  const [manual, setManual] = useState({
-    manualName: "",
-    manualRera: "",
-    manualBuilder: "",
-    manualAbsence: "",
-  });
+  const [manual, setManual] = useState(NO_MANUAL);
   const [reraStatus, setReraStatus] = useState<VerificationStatus | null>(null);
 
+  // ---- draft ----
+  // A saved draft that was not restored on its own: it was for another role or
+  // purpose, or the seller had already started typing. Saving waits until they
+  // choose, so the old draft is never overwritten without being offered.
+  const [draftOffer, setDraftOffer] = useState<ListingDraft | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [restored, setRestored] = useState(false);
+  // Set by any edit to the form, so a draft arriving late never overwrites
+  // what the seller has typed in the meantime.
+  const touched = useRef(false);
+  // A restored pin is the seller's own; it must not trigger "fill the address
+  // from the pin", which would overwrite the town they typed. Compared by
+  // coordinates, not a skip-once flag: a flag can be used up by one render and
+  // then miss the next, and restoring may set the same pin twice.
+  const restoredPin = useRef<LngLat | null>(null);
+
   useEffect(() => {
+    // In development React runs this twice; only the second answer counts, so
+    // the draft is restored once.
+    let cancelled = false;
     api
       .get("/auth/me")
       .then((response) => {
-        setUser(response.data.user);
-        setReraStatus(response.data.user.agentReraStatus ?? "NONE");
+        if (cancelled) return;
+        const me: AuthUser = response.data.user;
+        setUser(me);
+        setReraStatus(me.agentReraStatus ?? "NONE");
+        const draft = me.id ? readDraft(me.id) : null;
+        if (!draft) return;
+        // role and purpose here are the ones in the URL on arrival.
+        if (draft.role === role && draft.purpose === purpose && !touched.current)
+          restoreDraft(draft);
+        else setDraftOffer(draft);
       })
       .catch(() => {
         // The flow still works; the role just is not pre-selected.
       });
+    return () => {
+      cancelled = true;
+    };
+    // Once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [typed, setTyped] = useState<ListingFormData>(emptyListing);
@@ -112,7 +156,8 @@ const CreateListing = () => {
   // "clear the construction status unless this is a sale") would undo the choice.
   const setData: React.Dispatch<React.SetStateAction<ListingFormData>> = (
     update,
-  ) =>
+  ) => {
+    touched.current = true;
     setTyped((previous) => {
       const base: ListingFormData = {
         ...previous,
@@ -123,6 +168,7 @@ const CreateListing = () => {
         ? (update as (value: ListingFormData) => ListingFormData)(base)
         : update;
     });
+  };
   const [location, setLocation] = useState<LngLat | null>(null);
   const [source, setSource] = useState<LocationSource | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -132,6 +178,111 @@ const CreateListing = () => {
   const placePin = (next: LngLat, how: LocationSource) => {
     setLocation(next);
     setSource(how);
+  };
+
+  // The state, district and town the pin was placed against, noted when the
+  // seller leaves the map. If they go back and change any of the three, the
+  // pin belongs to the old place and has to move with them.
+  const placeKey = (d: ListingFormData) =>
+    [d.state, d.district, d.city].map((part) => part.trim().toLowerCase()).join("|");
+  const pinnedPlace = useRef<string | null>(null);
+
+  // Puts a saved draft back, and moves the URL to its role and purpose so the
+  // form asks the questions that draft was answering.
+  function restoreDraft(draft: ListingDraft) {
+    restoredPin.current = draft.location;
+    setTyped(draft.data);
+    setLocation(draft.location);
+    setSource(draft.source);
+    setStep(draft.step);
+    setProjectId(draft.projectId);
+    setManual(draft.manual);
+    pinnedPlace.current = draft.pinnedPlace;
+    setShowAddressForm(draft.step === "contact");
+    setDraftOffer(null);
+    setDraftSavedAt(draft.savedAt);
+    setRestored(true);
+    if (draft.role !== role || draft.purpose !== purpose)
+      router.replace(`/list/create?as=${draft.role}&for=${draft.purpose}`);
+  }
+
+  const discardDraft = () => {
+    if (userId) clearDraft(userId);
+    setDraftOffer(null);
+  };
+
+  // Back to an empty form, and the saved copy goes too.
+  const startOver = () => {
+    if (!window.confirm("Clear everything you have entered and start again?"))
+      return;
+    if (userId) clearDraft(userId);
+    touched.current = false;
+    setTyped(emptyListing);
+    setLocation(null);
+    setSource(null);
+    setStep("details");
+    setProjectId("");
+    setManual(NO_MANUAL);
+    pinnedPlace.current = null;
+    restoredPin.current = null;
+    setShowAddressForm(false);
+    setDraftSavedAt(null);
+    setRestored(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  // Saved half a second after the last change rather than on every keystroke.
+  // The latest copy is also kept in a ref, so closing the tab inside that half
+  // second still saves it.
+  const latestDraft = useRef<ListingDraft | null>(null);
+  useEffect(() => {
+    latestDraft.current = null;
+    if (!userId || draftOffer || !role || !purpose) return;
+    if (isBlankForm(typed) && !location && !projectId) return;
+    const draft: ListingDraft = {
+      role,
+      purpose,
+      step,
+      data: typed,
+      location,
+      source,
+      pinnedPlace: pinnedPlace.current,
+      projectId,
+      manual,
+      savedAt: new Date().toISOString(),
+    };
+    latestDraft.current = draft;
+    const timer = window.setTimeout(() => {
+      if (writeDraft(userId, draft)) setDraftSavedAt(draft.savedAt);
+      latestDraft.current = null;
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [userId, draftOffer, role, purpose, step, typed, location, source, projectId, manual]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const flush = () => {
+      if (latestDraft.current) writeDraft(userId, latestDraft.current);
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, [userId]);
+
+  const backToDetails = () => {
+    pinnedPlace.current = location ? placeKey(data) : null;
+    setStep("details");
+    window.scrollTo({ top: 0 });
+  };
+
+  // A pin left in the old town would be published there, so a changed place
+  // drops it. An unchanged place keeps the pin they set, however it was set.
+  const toMap = () => {
+    if (location && pinnedPlace.current !== placeKey(data)) {
+      setLocation(null);
+      setSource(null);
+    }
+    setStep("contact");
+    window.scrollTo({ top: 0 });
   };
 
   const detectCurrentLocation = () => {
@@ -151,6 +302,9 @@ const CreateListing = () => {
   // the first page rather than over the whole country. Nominatim is asked for
   // the town, not the property — the pin still has to be placed by hand, and
   // the note under it says so.
+  //
+  // Also runs when they come back having changed the place: Continue drops the
+  // old pin (toMap), so this sees no pin and centres on the new town.
   useEffect(() => {
     if (step !== "contact" || location) return;
     if (!data.city.trim() && !data.district.trim()) return;
@@ -189,6 +343,8 @@ const CreateListing = () => {
   // pincode: those are the seller's own, and a pin is never that precise.
   useEffect(() => {
     if (!location || source === "region" || source === "address") return;
+    const kept = restoredPin.current;
+    if (kept && kept[0] === location[0] && kept[1] === location[1]) return;
     placeFromPin(location)
       .then((place) => {
         setTyped((prev) => ({ ...prev, ...place }));
@@ -261,6 +417,10 @@ const CreateListing = () => {
         ...(typedAbsence && { projectReraAbsence: typedAbsence }),
         ...(typedBuilder && { builderNameText: typedBuilder }),
       });
+      // Published, so the draft has done its job. The pending save is
+      // dropped too, or closing the tab now would write the draft back.
+      latestDraft.current = null;
+      if (userId) clearDraft(userId);
       successToast(response.data.message);
       router.push(`/list/create/media/${response.data.post.id}`);
     } catch (error) {
@@ -280,6 +440,15 @@ const CreateListing = () => {
       <ListingStart
         key={user?.accountType ?? "loading"}
         defaultRole={user?.accountType}
+        draft={
+          draftOffer && {
+            label: `${labelOf(draftOffer.role)} · ${labelOf(draftOffer.purpose)}`,
+            title: draftOffer.data.title.trim(),
+            savedAgo: formatTimeAgo(draftOffer.savedAt),
+          }
+        }
+        onContinueDraft={() => draftOffer && restoreDraft(draftOffer)}
+        onDiscardDraft={discardDraft}
       />
     );
   }
@@ -317,10 +486,8 @@ const CreateListing = () => {
       <button
         type="button"
         onClick={() => {
-          if (step === "contact") {
-            setStep("details");
-            window.scrollTo({ top: 0 });
-          } else router.push("/list/create");
+          if (step === "contact") backToDetails();
+          else router.push("/list/create");
         }}
         className="-ml-2 mb-3 inline-flex min-h-11 items-center gap-1.5 self-start rounded-lg px-2 text-[15px] font-medium text-muted transition-colors hover:text-ink"
       >
@@ -365,6 +532,59 @@ const CreateListing = () => {
           Change
         </button>
       </div>
+
+      {/* Said quietly: the seller should know their work is kept, without a
+          banner for something that needs no action. */}
+      {!draftOffer && draftSavedAt && (
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 text-[13px] text-muted">
+          <span>
+            {restored
+              ? `Restored your draft · saved on this device`
+              : "Draft saved on this device"}
+          </span>
+          <button
+            type="button"
+            onClick={startOver}
+            className="-my-2 inline-flex min-h-11 items-center px-1 font-medium underline underline-offset-2 hover:text-ink"
+          >
+            Start over
+          </button>
+        </p>
+      )}
+
+      {draftOffer && (
+        <div
+          role="status"
+          className="mt-4 flex flex-col gap-3 rounded-lg border border-accent/25 bg-accent-soft px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-[14px] leading-snug text-ink">
+            <span className="font-medium">You have an unfinished listing</span>
+            <span className="text-muted">
+              {" "}
+              ({labelOf(draftOffer.role)} · {labelOf(draftOffer.purpose)}
+              {draftOffer.data.title.trim() && `, “${draftOffer.data.title.trim()}”`}
+              , saved {formatTimeAgo(draftOffer.savedAt)}). Nothing here is
+              saved until you choose.
+            </span>
+          </p>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={() => restoreDraft(draftOffer)}
+              className={primaryButton}
+            >
+              Continue it
+            </button>
+            <button
+              type="button"
+              onClick={discardDraft}
+              className={secondaryButton}
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
 
       {role === "BROKER" && purpose === "SALE" && reraStatus === "PENDING" && (
         <p className="mt-4 flex items-center gap-1.5 rounded-lg bg-accent-soft px-3.5 py-3 text-[13px] leading-snug text-accent">
@@ -610,10 +830,7 @@ const CreateListing = () => {
           {step === "contact" && (
             <button
               type="button"
-              onClick={() => {
-                setStep("details");
-                window.scrollTo({ top: 0 });
-              }}
+              onClick={backToDetails}
               className={`shrink-0 ${secondaryButton}`}
             >
               Back
@@ -623,8 +840,7 @@ const CreateListing = () => {
             type="button"
             onClick={() => {
               if (step === "details") {
-                setStep("contact");
-                window.scrollTo({ top: 0 });
+                toMap();
                 return;
               }
               void handleSubmit();

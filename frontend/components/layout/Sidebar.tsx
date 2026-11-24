@@ -15,6 +15,7 @@ import {
   PROFILE_UPDATED,
 } from "@/lib/events";
 import type { AuthUser } from "@/lib/types";
+import { clearAllDrafts } from "@/lib/listingDraft";
 
 // accountType joins the three the panel shows, because one nav item is
 // builders-only and /auth/me already sends it; notificationsCount is what the
@@ -237,6 +238,9 @@ const Sidebar = () => {
     } finally {
       // Leave this browser signed out even if the request failed.
       setAccessToken(null);
+      // An unfinished listing holds a phone number; the next person at this
+      // computer should not find it.
+      clearAllDrafts();
       // A full load, not router.push: it clears everything this tab remembered
       // about the user, and works even when logging out from the home page itself.
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- the full reload is intended

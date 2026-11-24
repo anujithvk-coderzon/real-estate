@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { primaryButton } from "@/lib/ui";
-import { api } from "@/lib/api";
-import { errorToast } from "@/lib/toast";
-import { apiMessage } from "@/lib/validation/apiError";
+import { primaryButton, secondaryButton } from "@/lib/ui";
 
 // Real radio inputs keep arrow-key support and screen-reader grouping;
 // the card around each one is only styling.
@@ -36,27 +33,23 @@ const PURPOSES = [
 type Props = {
   // Pre-selects the role from the account's usual one (accountType).
   defaultRole?: string | undefined;
+  // An unfinished listing saved in this browser, offered before a new one.
+  draft?: { label: string; title: string; savedAgo: string } | null;
+  onContinueDraft?: () => void;
+  onDiscardDraft?: () => void;
 };
 
 // Asked before the create form opens, because these two answers decide what the
 // form (and later, the RERA rules) need to ask.
-const ListingStart = ({ defaultRole = "OWNER" }: Props) => {
-  const [user, setUser] = useState();
+const ListingStart = ({
+  defaultRole = "OWNER",
+  draft,
+  onContinueDraft,
+  onDiscardDraft,
+}: Props) => {
   const router = useRouter();
   const [role, setRole] = useState(defaultRole);
   const [purpose, setPurpose] = useState("");
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await api.get("/auth/me");
-        setUser(response.data.user);
-      } catch (error) {
-        errorToast(apiMessage(error));
-      }
-    };
-    fetchUser();
-  }, []);
-  console.log(user);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -74,6 +67,37 @@ const ListingStart = ({ defaultRole = "OWNER" }: Props) => {
         Two quick questions first: they decide what we need to ask you about the
         property.
       </p>
+
+      {draft && (
+        <section
+          aria-label="Unfinished listing"
+          className="mt-6 rounded-xl bg-accent-soft p-4 ring-1 ring-accent/25"
+        >
+          <p className="text-[15px] font-semibold text-ink">
+            Continue your unfinished listing?
+          </p>
+          <p className="mt-1 text-[13px] leading-snug text-muted">
+            {draft.label}
+            {draft.title && ` · “${draft.title}”`} · saved {draft.savedAgo}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onContinueDraft}
+              className={primaryButton}
+            >
+              Continue
+            </button>
+            <button
+              type="button"
+              onClick={onDiscardDraft}
+              className={secondaryButton}
+            >
+              Discard
+            </button>
+          </div>
+        </section>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8">
         {/* ---------- who ---------- */}
